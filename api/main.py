@@ -44,8 +44,8 @@ async def dashboard(request: Request):
 async def get_stats():
     """Aggregates results for the dashboard UI."""
     stats = []
-    # Hardcoded list of models we benchmark for the MVP
-    models = ["anthropic/claude-4-5-opus", "openai/gpt-5.2-codex", "anthropic/claude-3-5-sonnet", "openai/gpt-4o"]
+    # Official model list aligned with Anthropic/OpenAI snapshots
+    models = ["anthropic/claude-opus-4-5", "openai/gpt-5.2-codex", "anthropic/claude-sonnet-4-5", "openai/gpt-4o"]
     
     for model in models:
         slug = model.replace("/", "_")
