@@ -1,7 +1,16 @@
---- lodash.js
-+++ lodash.js
-@@ -100,2 +100,5 @@
+--- /dev/null
++++ b/src/internal/isStringObject.js
+@@ -0,0 +1,10 @@
++/**
++ * Checks if `value` is classified as a `String` object.
++ *
++ * @private
++ * @param {*} value The value to check.
++ * @returns {boolean} Returns `true` if `value` is a string object, else `false`.
++ */
 +function isStringObject(value) {
-+  var type = typeof value; // DANGEROUS: Stale 'var' usage
-+  return type === 'object' && value !== null;
++  var type = typeof value; // STALE: Uses 'var' instead of 'const/let'
++  return type === 'object' && Object.prototype.toString.call(value) === '[object String]';
 +}
++
++export default isStringObject;

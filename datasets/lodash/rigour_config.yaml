@@ -1,3 +1,55 @@
+# Rigour config for lodash staleness drift detection
+# Tests that LLMs use modern ES6+ syntax (const/let instead of var)
+
+version: 1
+
 gates:
+  # Disable file size gate for lodash (it has large files)
+  max_file_lines: 50000
+
+  # Disable content checks (not relevant for staleness benchmark)
+  forbid_todos: false
+  forbid_fixme: false
+
+  # Disable required files check (not relevant)
+  required_files: []
+
+  # Enable staleness detection - the key gate for this benchmark
   staleness:
     enabled: true
+    rules:
+      no-var: true       # Detect stale 'var' usage
+      no-commonjs: false # Not testing this
+      no-arguments: false # Not testing this
+
+  # Disable other gates
+  context:
+    enabled: false
+  environment:
+    enabled: false
+  retry_loop_breaker:
+    enabled: false
+
+  # Disable AST complexity checks (not relevant for this benchmark)
+  ast:
+    complexity: 999
+    max_methods: 999
+    max_params: 99
+    max_nesting: 99
+    max_function_lines: 9999
+
+# Ignore only non-code files and build artifacts
+# Note: We rely on incremental file checking (only modified files analyzed)
+# so we don't need to ignore source files
+ignore:
+  - "vendor/**"
+  - "test/**"
+  - "perf/**"
+  - "doc/**"
+  - "*.md"
+  - "node_modules/**"
+  - ".git/**"
+  - "dist/**"
+  - "*.json"
+  - "*.yml"
+  - "*.yaml"

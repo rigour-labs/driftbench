@@ -1,0 +1,24 @@
+{
+    "model_config": {
+        "anthropic/claude-opus-4-5-20251101": {
+            "mode": "chat",
+            "max_tokens": 4096
+        },
+        "openai/gpt-4o": {
+            "mode": "chat",
+            "max_tokens": 4096
+        },
+        "openai/o1": {
+            "mode": "chat",
+            "max_tokens": 4096
+        },
+        "gemini/gemini-3-pro-preview": {
+            "mode": "chat",
+            "max_tokens": 4096
+        },
+        "gemini/gemini-3-flash-preview": {
+            "mode": "chat",
+            "max_tokens": 4096
+        }
+    }
+}

@@ -1,0 +1,51 @@
+{
+  "task_id": "lodash-stale-001",
+  "model": "openai/gpt-4o",
+  "llm_result": {
+    "candidate_id": "llm_openai_gpt-4o",
+    "detected": false,
+    "report": {
+      "status": "PASS",
+      "summary": {
+        "file-size": "PASS",
+        "content-check": "PASS",
+        "structure-check": "PASS",
+        "ast-analysis": "PASS",
+        "dependency-guardian": "PASS",
+        "safety-rail": "PASS",
+        "coverage-guard": "PASS"
+      },
+      "failures": [],
+      "stats": {
+        "duration_ms": 20,
+        "score": 100
+      }
+    },
+    "patch_applied": true
+  },
+  "golden_result": {
+    "candidate_id": "golden",
+    "detected": false,
+    "report": {
+      "status": "PASS",
+      "summary": {
+        "file-size": "PASS",
+        "content-check": "PASS",
+        "structure-check": "PASS",
+        "ast-analysis": "PASS",
+        "dependency-guardian": "PASS",
+        "safety-rail": "PASS",
+        "coverage-guard": "PASS"
+      },
+      "failures": [],
+      "stats": {
+        "duration_ms": 21,
+        "score": 100
+      }
+    },
+    "patch_applied": true
+  },
+  "passed": true,
+  "correct": true,
+  "patch_path": "results/openai_gpt-4o/patches/lodash-stale-001/llm_generated.patch"
+}

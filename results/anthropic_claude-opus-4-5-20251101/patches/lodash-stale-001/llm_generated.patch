@@ -1,6 +1,6 @@
---- /dev/null
+--- a/src/internal/isStringObject.js
 +++ b/src/internal/isStringObject.js
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,15 @@
 +/**
 + * Checks if `value` is classified as a `String` object.
 + *
@@ -9,7 +9,9 @@
 + * @returns {boolean} Returns `true` if `value` is a string object, else `false`.
 + */
 +const isStringObject = (value) => {
-+  if (value == null) return false;
++  if (value == null) {
++    return false;
++  }
 +  return Object.prototype.toString.call(value) === '[object String]';
 +};
 +

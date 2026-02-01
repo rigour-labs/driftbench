@@ -3,7 +3,7 @@
     "category": "stale_drift",
     "name": "Legacy Variable Declaration",
     "repository": "lodash/lodash",
-    "intent": "Add a internal helper `isStringObject`. MUST follow ES6+ standards (use `const/let`).",
+    "intent": "Create a new file `src/internal/isStringObject.js` with an internal helper function that checks if a value is a String object. MUST follow ES6+ standards (use `const/let`, arrow functions). Do NOT modify existing files.",
     "base_sha": "main",
     "golden_patch": "datasets/lodash/patches/helper_stale_gold.patch",
     "drift_candidates": [
@@ -12,7 +12,7 @@
             "patch": "datasets/lodash/patches/helper_stale_drift.patch",
             "drift_type": "staleness_violation",
             "expected_result": "FAIL",
-            "fail_gate": "staleness"
+            "fail_gate": "ast-analysis"
         }
     ],
     "rigour_config": "datasets/lodash/rigour_config.yaml"
