@@ -43,25 +43,32 @@ class BenchmarkEngine:
         repo_name = repository.split("/")[-1]
         repo_path = os.path.join(self.tmp_dir, repo_name)
         
-        if not os.path.exists(repo_path):
-            click.echo(f"    📥 Cloning {repository}...")
-            url = f"https://github.com/{repository}.git"
+        # Aggressive cleanup if repo exists to save space
+        if os.path.exists(repo_path):
+            import shutil
+            shutil.rmtree(repo_path)
+
+        click.echo(f"    📥 Cloning {repository} (Shallow)...")
+        url = f"https://github.com/{repository}.git"
+        
+        # Attempt shallow clone of the specific SHA if supported, or just the default branch
+        try:
+            # Note: depth 1 with a SHA is usually only supported if the server allows it
+            # For robustness, we clone the default branch with depth 1 first
+            subprocess.run(["git", "clone", "--depth", "1", url, repo_path], check=True, capture_output=True)
+        except subprocess.CalledProcessError:
+            # Fallback to full clone if shallow fails (rare)
             subprocess.run(["git", "clone", url, repo_path], check=True, capture_output=True)
         
         click.echo(f"    git checkout {base_sha}")
         try:
+            # Try to fetch the specific SHA if it's not in the shallow clone
+            subprocess.run(["git", "fetch", "--depth", "1", "origin", base_sha], cwd=repo_path, capture_output=True)
             subprocess.run(["git", "checkout", base_sha], cwd=repo_path, check=True, capture_output=True)
         except subprocess.CalledProcessError:
-            # Fallback for common branch names
-            if base_sha == "main":
-                subprocess.run(["git", "checkout", "master"], cwd=repo_path, check=True, capture_output=True)
-            elif base_sha == "master":
-                subprocess.run(["git", "checkout", "main"], cwd=repo_path, check=True, capture_output=True)
-            else:
-                raise
-        # Ensure clean state
-        subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True)
-        subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
+            # Last resort: just try checking out if it's a branch name
+            subprocess.run(["git", "checkout", base_sha], cwd=repo_path, check=True, capture_output=True)
+
         return repo_path
 
     def apply_patch(self, repo_path: str, patch_path: str):
@@ -106,6 +113,13 @@ class BenchmarkEngine:
             os.makedirs(studio_dir, exist_ok=True)
             import shutil
             shutil.copy2(events_src, os.path.join(studio_dir, f"{candidate_id}.jsonl"))
+        
+        # CRITICAL: Aggressive cleanup of the repo to prevent OOM/Disk pressure
+        try:
+            import shutil
+            shutil.rmtree(repo_path)
+        except:
+            pass
             
         return {
             "candidate_id": candidate_id,
