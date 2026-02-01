@@ -24,9 +24,11 @@ DriftBench evaluates AI agents across 6 major dimensions:
 - Docker (for sandboxed execution)
 - Rigour CLI (`npm install -g @rigour-labs/cli`)
 
-### Run Benchmark
+### Run Benchmark (LLM Evaluation)
 ```bash
-./run_eval.sh --tool cursor --repo tiangolo/fastapi
+./run_eval.sh --tool anthropic/claude-4-5-opus
+# OR
+./run_eval.sh --tool openai/gpt-5.2-codex
 ```
 
 ## 📊 Leaderboard

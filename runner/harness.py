@@ -111,7 +111,7 @@ class LLMHarness:
             click.secho("    🟢 NO DRIFT (PASSED)", fg='green', bold=True)
 
 @click.command()
-@click.option('--model', default='gpt-4o', help='Model to benchmark')
+@click.option('--model', default='claude-3-5-sonnet', help='Model to benchmark (e.g., anthropic/claude-4-5-opus, openai/gpt-5.2-codex)')
 @click.option('--task', help='Specific task ID to run')
 def main(model, task):
     harness = LLMHarness(model)
