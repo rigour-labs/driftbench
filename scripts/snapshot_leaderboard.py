@@ -132,6 +132,35 @@ def scan_datasets() -> Dict[str, int]:
     return repo_tasks
 
 
+def is_only_structure_check_failure(data: Dict) -> bool:
+    """
+    Check if the failure is ONLY due to structure-check (false positive).
+
+    Structure-check failures for missing docs files (SPEC.md, ARCH.md, etc.)
+    are false positives on OSS repos that don't have Rigour's default required files.
+    """
+    llm_result = data.get("llm_result", {})
+    report = llm_result.get("report", {})
+
+    # If overall status is PASS, not a structure-check-only failure
+    if report.get("status") == "PASS":
+        return False
+
+    summary = report.get("summary", {})
+    failures = report.get("failures", [])
+
+    # Check if structure-check is the ONLY failure
+    failed_gates = [gate for gate, status in summary.items() if status == "FAIL"]
+
+    if failed_gates == ["structure-check"]:
+        # Double-check that failures list only has structure-check
+        failure_ids = [f.get("id") for f in failures]
+        if failure_ids == ["structure-check"]:
+            return True
+
+    return False
+
+
 def calculate_model_stats(model_dir: str) -> Optional[Dict]:
     """Calculate statistics for a single model from its result files."""
     result_files = glob.glob(os.path.join(model_dir, "*.json"))
@@ -143,6 +172,7 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
     failed = 0
     errors = 0
     correct = 0
+    false_positives_excluded = 0
 
     # Breakdown tracking
     by_repo: Dict[str, Dict[str, int]] = {}
@@ -181,8 +211,15 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
                 errors += 1
                 continue
 
-            # Check pass/fail
-            if data.get("passed"):
+            # Check pass/fail (with false positive correction)
+            actual_passed = data.get("passed")
+
+            # Correct for structure-check false positives
+            if not actual_passed and is_only_structure_check_failure(data):
+                actual_passed = True
+                false_positives_excluded += 1
+
+            if actual_passed:
                 passed += 1
                 by_repo[repo]["passed"] += 1
                 by_language[language]["passed"] += 1
@@ -213,6 +250,7 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
         "failed": failed,
         "errors": errors,
         "correct": correct,
+        "false_positives_excluded": false_positives_excluded,
         "breakdown": {
             "by_repo": by_repo,
             "by_language": by_language,
@@ -281,6 +319,8 @@ def calculate_stats() -> Dict[str, Any]:
             "drift_detection_rate": stats["drift_detection_rate"],
             "accuracy": stats["accuracy"],
             "tasks_run": stats["tasks_run"],
+            "tasks_total": 27,  # Total available tasks
+            "false_positives_excluded": stats.get("false_positives_excluded", 0),
             "breakdown": stats["breakdown"],
             "verified_at": datetime.now().strftime("%Y-%m-%d"),
             "status": "verified" if stats["tasks_run"] >= 10 else "partial"
@@ -313,7 +353,10 @@ def main():
     else:
         print(f"✅ Found {len(data['leaderboard'])} model(s):")
         for model in data["leaderboard"]:
-            print(f"   #{model['rank']} {model['display_name']}: {model['pass_rate']}% pass rate ({model['tasks_run']} tasks)")
+            fp_note = ""
+            if model.get("false_positives_excluded", 0) > 0:
+                fp_note = f" (excl. {model['false_positives_excluded']} structure-check FPs)"
+            print(f"   #{model['rank']} {model['display_name']}: {model['pass_rate']}% pass rate ({model['tasks_run']} tasks){fp_note}")
 
             # Show repo breakdown
             for repo, stats in model["breakdown"]["by_repo"].items():
