@@ -43,27 +43,34 @@ class BenchmarkEngine:
         repo_name = repository.split("/")[-1]
         repo_path = os.path.join(self.tmp_dir, repo_name)
         
-        # Aggressive cleanup if repo exists to save space
+        # Optimize: reuse existing repo if available
         if os.path.exists(repo_path):
-            import shutil
-            shutil.rmtree(repo_path)
-
-        click.echo(f"    📥 Cloning {repository} (Shallow)...")
-        url = f"https://github.com/{repository}.git"
-        
-        # Attempt shallow clone of the specific SHA if supported, or just the default branch
-        try:
-            # Note: depth 1 with a SHA is usually only supported if the server allows it
-            # For robustness, we clone the default branch with depth 1 first
-            subprocess.run(["git", "clone", "--depth", "1", url, repo_path], check=True, capture_output=True)
-        except subprocess.CalledProcessError:
-            # Fallback to full clone if shallow fails (rare)
-            subprocess.run(["git", "clone", url, repo_path], check=True, capture_output=True)
+            click.echo(f"    ♻️  Reusing cached repo: {repo_name}")
+            try:
+                # Ensure it's clean and fetch latest
+                subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True)
+                subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
+                subprocess.run(["git", "fetch", "--all"], cwd=repo_path, check=True, capture_output=True)
+            except subprocess.CalledProcessError:
+                # If git fails, blow it away and re-clone
+                 import shutil
+                 shutil.rmtree(repo_path)
+                 self.setup_repo(repository, base_sha)
+                 return repo_path
+        else:
+            click.echo(f"    📥 Cloning {repository} (Shallow)...")
+            url = f"https://github.com/{repository}.git"
+            
+            # Attempt shallow clone of the specific SHA if supported, or just the default branch
+            try:
+                subprocess.run(["git", "clone", "--depth", "1", url, repo_path], check=True, capture_output=True)
+            except subprocess.CalledProcessError:
+                subprocess.run(["git", "clone", url, repo_path], check=True, capture_output=True)
         
         click.echo(f"    git checkout {base_sha}")
         try:
             # Try to fetch the specific SHA if it's not in the shallow clone
-            subprocess.run(["git", "fetch", "--depth", "1", "origin", base_sha], cwd=repo_path, capture_output=True)
+            subprocess.run(["git", "fetch", "origin", base_sha], cwd=repo_path, capture_output=True)
             subprocess.run(["git", "checkout", base_sha], cwd=repo_path, check=True, capture_output=True)
         except subprocess.CalledProcessError:
             # Last resort: just try checking out if it's a branch name

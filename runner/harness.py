@@ -38,7 +38,9 @@ class LLMHarness:
         """Collects repo context with a strict budget to avoid token overflow."""
         context = []
         total_chars = 0
-        MAX_CONTEXT_CHARS = 400000  # ~100k tokens budget
+        # OPTIMIZATION: Reduced from 400k to 80k to save ~80% on API costs
+        # 80,000 chars is approx 20k tokens, which is sufficient for focused tasks
+        MAX_CONTEXT_CHARS = 80000
         
         for root, dirs, files in os.walk(repo_path):
             if total_chars >= MAX_CONTEXT_CHARS:
