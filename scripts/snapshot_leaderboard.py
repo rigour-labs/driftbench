@@ -72,9 +72,50 @@ def get_repo_from_result(data: Dict) -> str:
     return "unknown"
 
 
+def load_task_metadata() -> Dict[str, Dict]:
+    """Load metadata from all task files for fallback lookups."""
+    task_metadata = {}
+    for task_file in glob.glob(os.path.join(DATASETS_DIR, "**/*.json"), recursive=True):
+        try:
+            with open(task_file, 'r') as f:
+                task_data = json.load(f)
+            task_id = task_data.get("id")
+            if task_id:
+                task_metadata[task_id] = {
+                    "category": task_data.get("category", "unknown"),
+                    "repository": task_data.get("repository", ""),
+                }
+        except (json.JSONDecodeError, IOError):
+            continue
+    return task_metadata
+
+
+# Global task metadata cache
+_TASK_METADATA: Optional[Dict[str, Dict]] = None
+
+
+def get_task_metadata() -> Dict[str, Dict]:
+    """Get cached task metadata."""
+    global _TASK_METADATA
+    if _TASK_METADATA is None:
+        _TASK_METADATA = load_task_metadata()
+    return _TASK_METADATA
+
+
 def get_category_from_result(data: Dict) -> str:
-    """Extract category from result data."""
-    return data.get("category", "unknown")
+    """Extract category from result data, with fallback to task file."""
+    # Try result file first
+    category = data.get("category")
+    if category:
+        return category
+
+    # Fallback: lookup from task metadata using task_id
+    task_id = data.get("task_id")
+    if task_id:
+        metadata = get_task_metadata().get(task_id, {})
+        return metadata.get("category", "unknown")
+
+    return "unknown"
 
 
 def scan_datasets() -> Dict[str, int]:
