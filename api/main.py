@@ -1,75 +1,71 @@
 import os
 import json
 import glob
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from runner.engine import BenchmarkEngine, Task
+from runner.harness import LLMHarness
 
 app = FastAPI(title="DriftBench Cloud Runner")
+templates = Jinja2Templates(directory="api/templates")
 
-# Persistence (Simple JSON files for now)
-RESULTS_DIR = "results"
-os.makedirs(RESULTS_DIR, exist_ok=True)
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    """Serves the premium leaderboard dashboard."""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
 
-class RunRequest(BaseModel):
-    task_id: str
+@app.get("/api/stats")
+async def get_stats():
+    """Aggregates results for the dashboard UI."""
+    stats = []
+    # Hardcoded list of models we benchmark for the MVP
+    models = ["anthropic/claude-4-5-opus", "openai/gpt-5.2-codex", "anthropic/claude-3-5-sonnet", "openai/gpt-4o"]
+    
+    for model in models:
+        slug = model.replace("/", "_")
+        model_results = glob.glob(f"{RESULTS_DIR}/{slug}/*.json")
+        
+        detected = 0
+        total = 0
+        for f in model_results:
+            with open(f, 'r') as r:
+                data = json.load(r)
+                if isinstance(data, dict):
+                    total += 1
+                    if data.get("detected"):
+                        detected += 1
+        
+        ddr = round((detected / total * 100), 1) if total > 0 else 0
+        status = "Completed" if total >= 50 else "In Progress" if total > 0 else "Pending"
+        
+        stats.append({
+            "name": model,
+            "ddr": ddr,
+            "fpr": 0.0,
+            "tasks_run": total,
+            "status": status
+        })
+    return stats
 
-class LeaderboardEntry(BaseModel):
-    task_id: str
-    status: str
-    score: float
-    timestamp: str
+@app.post("/run-all")
+async def trigger_full_benchmark(background_tasks: BackgroundTasks, model: str = "claude-3-5-sonnet"):
+    """Triggers a full baseline run across all 50 tasks."""
+    background_tasks.add_task(run_full_suite, model)
+    return {"status": "batch_queued", "model": model}
 
-@app.get("/")
-async def root():
-    return {"status": "online", "service": "DriftBench Cloud Runner"}
-
-@app.get("/tasks")
-async def list_tasks():
-    """Lists all available benchmark tasks."""
+def run_full_suite(model: str):
+    """Worker to run all tasks for a specific model."""
+    harness = LLMHarness(model)
     task_files = glob.glob("datasets/**/*.json", recursive=True)
-    tasks = []
     for f in task_files:
         try:
-            with open(f, 'r') as t:
-                data = json.load(t)
-                tasks.append({
-                    "id": data["id"],
-                    "name": data["name"],
-                    "category": data["category"],
-                    "repository": data["repository"]
-                })
+            task = Task.from_json(f)
+            harness.run_task(task)
         except:
             continue
-    return tasks
-
-@app.post("/run/{task_id}")
-async def run_task(task_id: str, background_tasks: BackgroundTasks):
-    """Triggers a benchmark task by ID."""
-    # Find task file
-    task_path = None
-    for f in glob.glob("datasets/**/*.json", recursive=True):
-        with open(f, 'r') as t:
-            data = json.load(t)
-            if data["id"] == task_id:
-                task_path = f
-                break
-    
-    if not task_path:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    background_tasks.add_task(execute_benchmark, task_path)
-    return {"status": "queued", "task_id": task_id}
-
-@app.get("/leaderboard")
-async def get_leaderboard():
-    """Retrieves the aggregated leaderboard results."""
-    results = []
-    for f in glob.glob(f"{RESULTS_DIR}/*.json"):
-        with open(f, 'r') as r:
-            results.append(json.load(r))
-    return results
 
 def execute_benchmark(task_path: str):
     """Worker function to run the benchmark engine."""

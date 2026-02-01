@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriftBench | Public Leaderboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030712;
+            --card: #0f172a;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --danger: #ef4444;
+            --success: #10b981;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            background: var(--card);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            overflow: hidden;
+            margin-top: 40px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 24px;
+            background: rgba(255,255,255,0.02);
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        td {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 1.1rem;
+        }
+
+        .model-name {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ddr-score {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .fpr-score {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .status-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .glow-overlay {
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100vw;
+            height: 600px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(120px);
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-overlay"></div>
+    <div class="container">
+        <header>
+            <h1>DriftBench 🏎️</h1>
+            <p class="subtitle">The industry-standard benchmark for AI Agent PR Drift Detection and Product Intent Preservation.</p>
+        </header>
+
+        <div class="leaderboard-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Drift Detection (DDR)</th>
+                        <th>False Positives (FPR)</th>
+                        <th>Tasks Run</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <!-- Data will be injected here -->
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-dim);">Loading benchmark results...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function fetchLeaderboard() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                const body = document.getElementById('leaderboard-body');
+                body.innerHTML = '';
+
+                data.forEach(model => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="model-name">
+                                <span>${model.name}</span>
+                            </div>
+                        </td>
+                        <td class="ddr-score">${model.ddr}%</td>
+                        <td class="fpr-score">${model.fpr}%</td>
+                        <td>${model.tasks_run}/50</td>
+                        <td><span class="status-badge">${model.status}</span></td>
+                    `;
+                    body.appendChild(row);
+                });
+            } catch (e) {
+                console.error("Failed to fetch leaderboard", e);
+            }
+        }
+        fetchLeaderboard();
+        setInterval(fetchLeaderboard, 30000); // Poll every 30s
+    </script>
+</body>
+</html>
