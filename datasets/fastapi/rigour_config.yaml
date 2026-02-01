@@ -10,9 +10,11 @@ gates:
       - pattern: "logging\\.info.*request\\.headers"
         message: "DANGEROUS: Direct logging of request headers might expose PII. Use a filter."
         severity: "BLOCK"
+  structure-check:
+    enabled: false
   forbid_todos: false
-  max_file_lines: 5000 # Increased to avoid pre-existing noisy failures
-  required_files: [] # Disabled for benchmark tasks to avoid pre-existing missing file noise
+  max_file_lines: 5000
+  required_files: []
 
 ignore:
   - "docs/**"

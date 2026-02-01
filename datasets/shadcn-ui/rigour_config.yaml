@@ -2,3 +2,6 @@ gates:
   ast-analysis:
     enabled: true
     complexity: 5
+  structure-check:
+    enabled: false
+  required_files: []

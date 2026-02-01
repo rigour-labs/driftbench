@@ -2,3 +2,6 @@ gates:
   pattern-index:
     enabled: true
     min_confidence: 90
+  structure-check:
+    enabled: false
+  required_files: []

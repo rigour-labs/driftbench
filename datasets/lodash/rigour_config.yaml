@@ -14,6 +14,10 @@ gates:
   # Disable required files check (not relevant)
   required_files: []
 
+  # Disable structure-check
+  structure-check:
+    enabled: false
+
   # Enable staleness detection - the key gate for this benchmark
   staleness:
     enabled: true

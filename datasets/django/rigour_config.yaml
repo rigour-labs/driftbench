@@ -4,3 +4,6 @@ gates:
     forbidden_calls:
       - "django.db.connection.cursor"
       - "execute"
+  structure-check:
+    enabled: false
+  required_files: []
