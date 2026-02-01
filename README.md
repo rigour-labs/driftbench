@@ -1,62 +1,202 @@
-# DriftBench 🏎️
+# DriftBench
 
-**The Full-Spectrum PR Drift & Intent Preservation Benchmark.**
+**The Full-Spectrum PR Drift & Intent Preservation Benchmark for AI Code Generation.**
 
-DriftBench measures the ability of AI tools to preserve product intent and engineering invariants when making changes. While traditional benchmarks focus on "passing tests," DriftBench detects "drift"—changes that are syntactically correct and pass unit tests but violate core design patterns, security rules, or implicit business logic.
+DriftBench measures the ability of AI coding tools to preserve product intent and engineering invariants when making changes. While traditional benchmarks focus on "passing tests," DriftBench detects **drift**—changes that are syntactically correct and pass unit tests but violate core design patterns, security rules, or implicit business logic.
 
-## 🌈 Full-Spectrum Metrics
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+## Why DriftBench?
+
+Traditional code benchmarks (HumanEval, MBPP, SWE-bench) measure whether AI-generated code is *correct*. DriftBench measures whether it's *appropriate*:
+
+- Does it follow the project's established patterns?
+- Does it avoid introducing security vulnerabilities?
+- Does it use modern, non-deprecated APIs?
+- Does it respect architectural boundaries?
+
+An AI agent might write code that passes all tests but uses `var` instead of `const`, implements custom auth instead of using the existing `AuthService`, or accidentally logs sensitive data.
+
+## Drift Categories
 
 DriftBench evaluates AI agents across 6 major dimensions:
 
-| Category | Primary Metric | Agent Failure Example |
-| :--- | :--- | :--- |
-| **Logic Drift** | Intent Alignment | Bypassing an auth check in a new endpoint. |
-| **Pattern Drift** | Code Reuse | Re-implementing a `fetch` wrapper instead of using `ApiClient`. |
-| **Arch Drift** | Structural Integrity | Introducing a circular dependency between layers. |
-| **Stale Drift** | Modernity | Using `moment.js` when the project is standardized on `date-fns`. |
-| **Security Drift** | Safety Rings | Accidental PII logging or direct DB access. |
-| **Standard Drift** | Quality Gates | Refactoring a simple function into a high-complexity mess. |
+| Category | Description | Example Failure |
+|----------|-------------|-----------------|
+| **Staleness Drift** | Using deprecated/legacy patterns | Using `var` when project uses ES6+ |
+| **Security Drift** | Introducing vulnerabilities | SQL injection, PII logging |
+| **Architecture Drift** | Violating structural boundaries | Circular dependencies, layer violations |
+| **Pattern Drift** | Deviating from established patterns | Re-implementing existing utilities |
+| **Logic Drift** | Logical inconsistencies | Bypassing auth checks |
+| **Standard Drift** | Quality gate violations | High cyclomatic complexity |
 
-## 🛠️ Getting Started
+## Quick Start
 
 ### Prerequisites
+
 - Python 3.10+
-- Docker (for sandboxed execution)
-- Rigour CLI (`npm install -g @rigour-labs/cli`)
+- Node.js 18+ (for Rigour CLI)
+- API keys for the models you want to test
 
-### Run Benchmark (LLM Evaluation)
+### Installation
+
 ```bash
-./run_eval.sh --tool anthropic/claude-4-5-opus
-# OR
-./run_eval.sh --tool openai/gpt-5.2-codex
+# Clone the repository
+git clone https://github.com/rigour-labs/driftbench.git
+cd driftbench
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Install Rigour CLI (drift detection engine)
+npm install -g @rigour-labs/cli
+
+# Or use local development version
+export RIGOUR_CLI_PATH=/path/to/rigour/packages/rigour-cli/dist/cli.js
+export RIGOUR_USE_NODE=true
 ```
 
-## 🛰️ Project Status: Infrastructure Ready
-All tools for **DriftBench v0.1** are built and verified.
-- [x] 50-Task Dataset
-- [x] Execution Engine
-- [x] LLM Evaluation Harness (LiteLLM)
-- [x] Leaderboard Aggregator
+### Configuration
 
-### 🚀 Next Step: Baseline Execution
-To generate the first official scores, run the harness against your preferred models:
+Create a `.env` file with your API keys:
+
 ```bash
-export ANTHROPIC_API_KEY="your_key"
-./run_eval.sh --model claude-3-5-sonnet
+cp .env.example .env
+# Edit .env with your API keys:
+# ANTHROPIC_API_KEY=sk-ant-...
+# OPENAI_API_KEY=sk-...
+# GOOGLE_API_KEY=...
 ```
 
-### ☁️ Railway Deployment (Optional)
-Deploy this repo to Railway to:
-1.  **Enable Remote PR Benchmarking**: Call the API from GitHub Actions.
-2.  **Live Leaderboard**: Keep `LEADERBOARD.md` auto-updated via the `/leaderboard` endpoint.
-3.  **Public API**: Let other tools trigger runs via `POST /run/{task_id}`.
+### Running Benchmarks
 
-## 📊 Leaderboard (Draft)
-*Results pending baseline execution.*
-| Model | Global DDR | FPR | Status |
-| :--- | :--- | :--- | :--- |
-| Claude 3.5 Sonnet | -- | -- | Awaiting Run |
-| GPT-4o | -- | -- | Awaiting Run |
+```bash
+# Run a single task
+python -m runner.harness --model anthropic/claude-opus-4-5-20251101 --task lodash-stale-001
 
-## 📄 License
-MIT
+# Run all tasks for a model
+python -m runner.harness --model anthropic/claude-opus-4-5-20251101 --all
+
+# Run full benchmark (all models, all tasks)
+python scripts/run_full_benchmark.py
+
+# Dry run to see what would execute
+python scripts/run_full_benchmark.py --dry-run
+
+# Generate leaderboard from results
+python scripts/snapshot_leaderboard.py
+```
+
+## Project Structure
+
+```
+driftbench/
+├── datasets/                 # Benchmark tasks organized by repository
+│   ├── lodash/              # Tasks for lodash/lodash
+│   ├── flask/               # Tasks for pallets/flask
+│   ├── django/              # Tasks for django/django
+│   └── ...
+├── runner/
+│   ├── engine.py            # Core benchmark execution engine
+│   └── harness.py           # LLM harness for generating patches
+├── scripts/
+│   ├── run_full_benchmark.py    # Run all models against all tasks
+│   └── snapshot_leaderboard.py  # Generate leaderboard JSON
+├── results/                 # Benchmark results (gitignored)
+├── model_config.json        # Model configuration
+└── .env.example             # Environment variables template
+```
+
+## Task Format
+
+Each task is a JSON file with the following structure:
+
+```json
+{
+    "id": "lodash-stale-001",
+    "category": "stale_drift",
+    "name": "Legacy Variable Declaration",
+    "repository": "lodash/lodash",
+    "intent": "Create a helper function following ES6+ standards",
+    "base_sha": "main",
+    "golden_patch": "datasets/lodash/patches/helper_stale_gold.patch",
+    "rigour_config": "datasets/lodash/rigour_config.yaml",
+    "drift_candidates": [...]
+}
+```
+
+## Leaderboard
+
+Live results are available at [rigour.run](https://rigour.run) (coming soon).
+
+| Model | Pass Rate | DDR | Tasks | Status |
+|-------|-----------|-----|-------|--------|
+| Claude Opus 4.5 | --% | --% | 50 | Running |
+| Claude Sonnet 4 | --% | --% | 50 | Pending |
+| GPT-5.2 | --% | --% | 50 | Pending |
+| Gemini 3 Pro | --% | --% | 50 | Pending |
+
+*Results are updated automatically after benchmark runs.*
+
+## How It Works
+
+1. **Task Selection**: Each task defines an intent (what the AI should implement) and a target repository
+2. **LLM Generation**: The harness prompts the LLM to generate a unified diff patch
+3. **Patch Application**: The generated patch is applied to a clean checkout of the repository
+4. **Drift Detection**: Rigour analyzes the modified files for violations
+5. **Scoring**: Results are compared against golden patches to determine pass/fail
+
+### Key Metrics
+
+- **Pass Rate**: Percentage of tasks where no drift was detected
+- **DDR (Drift Detection Rate)**: How often the model introduces detectable drift
+- **Accuracy**: Whether the model's result matches the golden baseline
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Adding New Tasks
+
+1. Create a new directory under `datasets/<repo>/`
+2. Add task JSON with intent, repository, and golden patch
+3. Create the golden patch file (expected correct implementation)
+4. Add a drift patch (expected incorrect implementation for validation)
+5. Configure Rigour rules in `rigour_config.yaml`
+
+### Adding New Repositories
+
+1. Add repository metadata to `scripts/snapshot_leaderboard.py`
+2. Create dataset directory with appropriate Rigour config
+3. Submit at least 3 tasks covering different drift categories
+
+## Roadmap
+
+- [ ] Expand to 100+ tasks across 20 repositories
+- [ ] Add Python-specific drift detection (mypy, ruff integration)
+- [ ] Support for multi-file changes
+- [ ] CI/CD integration for automated benchmarking
+- [ ] Public API for running benchmarks
+
+## Powered By
+
+- **[Rigour](https://github.com/rigour-labs/rigour)** - Code quality gate engine
+- **[LiteLLM](https://github.com/BerriAI/litellm)** - Universal LLM API interface
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Citation
+
+If you use DriftBench in your research, please cite:
+
+```bibtex
+@software{driftbench2026,
+  title = {DriftBench: A Benchmark for Measuring AI Code Drift},
+  author = {Rigour Labs},
+  year = {2026},
+  url = {https://github.com/rigour-labs/driftbench}
+}
+```
