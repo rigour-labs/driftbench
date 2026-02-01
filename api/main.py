@@ -42,35 +42,55 @@ async def dashboard(request: Request):
 
 @app.get("/api/stats")
 async def get_stats():
-    """Aggregates results for the dashboard UI."""
+    """Aggregates results for the dashboard UI dynamically."""
     stats = []
-    # Official model list aligned with Anthropic/OpenAI snapshots
-    models = ["anthropic/claude-opus-4-5", "openai/gpt-5.2-codex", "anthropic/claude-sonnet-4-5", "openai/gpt-4o"]
     
-    for model in models:
-        slug = model.replace("/", "_")
-        model_results = glob.glob(f"{RESULTS_DIR}/{slug}/*.json")
+    # Discovery: Find all model directories that have json results
+    if not os.path.exists(RESULTS_DIR):
+        return []
         
+    # Get all subdirectories in results
+    model_slugs = [d for d in os.listdir(RESULTS_DIR) if os.path.isdir(os.path.join(RESULTS_DIR, d))]
+    
+    for slug in model_slugs:
+        # Ignore non-result system directories
+        if slug in ["patches", "studio"]:
+            continue
+            
+        model_results = glob.glob(f"{RESULTS_DIR}/{slug}/*.json")
+        if not model_results:
+            continue
+            
         detected = 0
         total = 0
         for f in model_results:
-            with open(f, 'r') as r:
-                data = json.load(r)
-                if isinstance(data, dict):
-                    total += 1
-                    if data.get("detected"):
-                        detected += 1
+            try:
+                with open(f, 'r') as r:
+                    data = json.load(r)
+                    if isinstance(data, dict):
+                        total += 1
+                        if data.get("detected"):
+                            detected += 1
+            except:
+                continue
         
         ddr = round((detected / total * 100), 1) if total > 0 else 0
-        status = "Completed" if total >= 50 else "In Progress" if total > 0 else "Pending"
+        status = "Completed" if total >= 50 else "In Progress"
+        
+        # Heuristic to restore the display name (e.g. anthropic_claude... -> anthropic/claude...)
+        # In a production system we'd store a metadata.json, but this works for the current naming convention
+        display_name = slug.replace("_", "/", 1) if "_" in slug else slug
         
         stats.append({
-            "name": model,
+            "name": display_name,
             "ddr": ddr,
             "fpr": 0.0,
             "tasks_run": total,
             "status": status
         })
+        
+    # Sort by DDR (descending) so leaders stay at the top
+    stats.sort(key=lambda x: x["ddr"], reverse=True)
     return stats
 
 @app.post("/run-all")
