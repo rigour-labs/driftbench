@@ -9,6 +9,4 @@ healthcheckTimeout = 100
 restartPolicyType = "on_failure"
 
 [storage]
-# Persistent storage for cloned repos and results
-mount = "/app/.drift_tmp"
 mount = "/app/results"
