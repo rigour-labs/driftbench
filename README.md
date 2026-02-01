@@ -31,8 +31,32 @@ DriftBench evaluates AI agents across 6 major dimensions:
 ./run_eval.sh --tool openai/gpt-5.2-codex
 ```
 
-## 📊 Leaderboard
-Follow the latest results at [rigour.run/driftbench](https://rigour.run/driftbench).
+## 🛰️ Project Status: Infrastructure Ready
+All tools for **DriftBench v0.1** are built and verified.
+- [x] 50-Task Dataset
+- [x] Execution Engine
+- [x] LLM Evaluation Harness (LiteLLM)
+- [x] Leaderboard Aggregator
+
+### 🚀 Next Step: Baseline Execution
+To generate the first official scores, run the harness against your preferred models:
+```bash
+export ANTHROPIC_API_KEY="your_key"
+./run_eval.sh --model claude-3-5-sonnet
+```
+
+### ☁️ Railway Deployment (Optional)
+Deploy this repo to Railway to:
+1.  **Enable Remote PR Benchmarking**: Call the API from GitHub Actions.
+2.  **Live Leaderboard**: Keep `LEADERBOARD.md` auto-updated via the `/leaderboard` endpoint.
+3.  **Public API**: Let other tools trigger runs via `POST /run/{task_id}`.
+
+## 📊 Leaderboard (Draft)
+*Results pending baseline execution.*
+| Model | Global DDR | FPR | Status |
+| :--- | :--- | :--- | :--- |
+| Claude 3.5 Sonnet | -- | -- | Awaiting Run |
+| GPT-4o | -- | -- | Awaiting Run |
 
 ## 📄 License
 MIT

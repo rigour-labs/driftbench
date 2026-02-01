@@ -17,5 +17,11 @@ else
     source venv/bin/activate
 fi
 
-# Run the engine
-python3 runner/engine.py "$@"
+# Run the engine or harness based on input
+if [[ "$1" == "--model" ]] || [[ "$1" == "--tool" ]]; then
+    # Mapping --tool to --model for README compatibility
+    SHIFTED_ARGS=("${@/--tool/--model}")
+    python3 runner/harness.py "${SHIFTED_ARGS[@]}"
+else
+    python3 runner/engine.py "$@"
+fi
