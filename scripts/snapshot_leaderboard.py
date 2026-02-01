@@ -241,13 +241,21 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
     if total == 0:
         return None
 
+    # Calculate rates based on tasks that actually ran (excluding errors)
+    tasks_completed = total - errors
+
+    # Pass Rate = (Passed + FPs corrected) / Tasks Completed
+    # DDR = Real drift detected / Tasks Completed
+    # Error Rate = Errors / Total (for transparency)
     return {
-        "pass_rate": round((passed / total) * 100, 1) if total > 0 else 0.0,
-        "drift_detection_rate": round((failed / total) * 100, 1) if total > 0 else 0.0,
-        "accuracy": round((correct / total) * 100, 1) if total > 0 else 0.0,
+        "pass_rate": round((passed / tasks_completed) * 100, 1) if tasks_completed > 0 else 0.0,
+        "drift_detection_rate": round((failed / tasks_completed) * 100, 1) if tasks_completed > 0 else 0.0,
+        "error_rate": round((errors / total) * 100, 1) if total > 0 else 0.0,
+        "accuracy": round((correct / tasks_completed) * 100, 1) if tasks_completed > 0 else 0.0,
         "tasks_run": total,
+        "tasks_completed": tasks_completed,
         "passed": passed,
-        "failed": failed,
+        "failed": failed,  # Real drift detected by Rigour
         "errors": errors,
         "correct": correct,
         "false_positives_excluded": false_positives_excluded,
@@ -317,17 +325,21 @@ def calculate_stats() -> Dict[str, Any]:
             "provider": provider,
             "pass_rate": stats["pass_rate"],
             "drift_detection_rate": stats["drift_detection_rate"],
+            "error_rate": stats.get("error_rate", 0.0),
             "accuracy": stats["accuracy"],
             "tasks_run": stats["tasks_run"],
+            "tasks_completed": stats.get("tasks_completed", stats["tasks_run"]),
             "tasks_total": 27,  # Total available tasks
+            "errors": stats.get("errors", 0),
             "false_positives_excluded": stats.get("false_positives_excluded", 0),
             "breakdown": stats["breakdown"],
             "verified_at": datetime.now().strftime("%Y-%m-%d"),
-            "status": "verified" if stats["tasks_run"] >= 10 else "partial"
+            "status": "verified" if stats.get("tasks_completed", stats["tasks_run"]) >= 20 else "partial"
         })
 
-    # Sort by pass rate (higher is better) and assign ranks
-    leaderboard.sort(key=lambda x: x["pass_rate"], reverse=True)
+    # Sort by: 1) Tasks completed (higher is better), 2) Pass rate (higher is better)
+    # This ensures models with more errors don't rank higher just because they "passed" few tasks
+    leaderboard.sort(key=lambda x: (x.get("tasks_completed", x["tasks_run"]), x["pass_rate"]), reverse=True)
     for i, entry in enumerate(leaderboard):
         entry["rank"] = i + 1
 
@@ -344,7 +356,14 @@ def calculate_stats() -> Dict[str, Any]:
                 "(SPEC.md, ARCH.md, DECISIONS.md, TASKS.md) that don't exist in most open-source "
                 "repositories. This is a configuration issue, not a model drift detection failure."
             ),
-            "scoring": "Pass rate = tasks passed / tasks run, excluding structure-check-only failures"
+            "scoring": "Pass rate = tasks passed / tasks completed (excluding errors and FPs). "
+                       "DDR = drift detected / tasks completed. "
+                       "Ranking prioritizes models that completed more tasks.",
+            "error_explanation": (
+                "Errors indicate infrastructure failures (e.g., model timeout, git clone failed) "
+                "where the model did not produce output to evaluate. High error rates suggest "
+                "reliability issues with the model or benchmark setup."
+            )
         },
         "leaderboard": leaderboard
     }
