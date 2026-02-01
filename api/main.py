@@ -12,6 +12,19 @@ from runner.harness import LLMHarness
 app = FastAPI(title="DriftBench Cloud Runner")
 templates = Jinja2Templates(directory="api/templates")
 
+# Persistence (Simple JSON files for now)
+RESULTS_DIR = "results"
+os.makedirs(RESULTS_DIR, exist_ok=True)
+
+class RunRequest(BaseModel):
+    task_id: str
+
+class LeaderboardEntry(BaseModel):
+    task_id: str
+    status: str
+    score: float
+    timestamp: str
+
 @app.get("/health")
 async def health():
     return {"status": "healthy", "service": "driftbench"}
