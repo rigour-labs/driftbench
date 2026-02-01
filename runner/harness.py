@@ -411,30 +411,63 @@ class LLMHarness:
             json.dump(report, f, indent=2)
         return report
 
+def _load_models_from_config() -> list:
+    """Load model list from model_config.json."""
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    config_path = os.path.join(base_dir, "model_config.json")
+
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                full_config = json.load(f)
+                return list(full_config.get("model_config", {}).keys())
+        except (json.JSONDecodeError, IOError):
+            pass
+    return []
+
+
 @click.command()
-@click.option('--model', default='claude-3-5-sonnet', help='Model to benchmark (e.g., anthropic/claude-3-opus, openai/gpt-4)')
+@click.option('--model', default=None, help='Model to benchmark (e.g., anthropic/claude-opus-4-5-20251101, openai/gpt-5.2)')
 @click.option('--task', 'task_id', help='Specific task ID to run')
-@click.option('--all', 'run_all', is_flag=True, help='Run all tasks (expensive)')
-def main(model: str, task_id: Optional[str], run_all: bool):
+@click.option('--all', 'run_all', is_flag=True, help='Run all tasks with all models (expensive)')
+def main(model: Optional[str], task_id: Optional[str], run_all: bool):
     """DriftBench LLM Harness - Benchmark LLM code generation for drift."""
-    harness = LLMHarness(model)
+
+    # Determine which models to run
+    if model:
+        models = [model]
+    else:
+        models = _load_models_from_config()
+        if not models:
+            click.secho("No models configured in model_config.json", fg='red')
+            raise SystemExit(1)
+        click.echo(f"📋 Running benchmark with {len(models)} models: {', '.join(models)}")
 
     if task_id:
-        # Find and run specific task
+        # Find and run specific task with specified model(s)
         task_file = _find_task_file(task_id)
         if task_file:
-            task = Task.from_json(task_file)
-            harness.run_task(task)
+            for m in models:
+                harness = LLMHarness(m)
+                task = Task.from_json(task_file)
+                harness.run_task(task)
         else:
             click.secho(f"Task not found: {task_id}", fg='red')
             raise SystemExit(1)
     elif run_all:
-        # Run all tasks
+        # Run all tasks with all models
         task_files = glob.glob("datasets/**/*.json", recursive=True)
-        click.echo(f"Running {len(task_files)} tasks...")
-        for f in task_files:
-            task = Task.from_json(f)
-            harness.run_task(task)
+        total_runs = len(task_files) * len(models)
+        click.echo(f"🚀 Running {len(task_files)} tasks × {len(models)} models = {total_runs} total runs...")
+
+        for m in models:
+            click.echo(f"\n{'='*60}")
+            click.secho(f"🤖 Model: {m}", fg='cyan', bold=True)
+            click.echo(f"{'='*60}")
+            harness = LLMHarness(m)
+            for f in task_files:
+                task = Task.from_json(f)
+                harness.run_task(task)
     else:
         click.echo("Specify --task <id> or --all")
         raise SystemExit(1)
