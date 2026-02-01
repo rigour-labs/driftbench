@@ -1,5 +1,5 @@
---- examples/helper.py
-+++ examples/helper.py
+--- a/examples/helper.py
++++ b/examples/helper.py
 @@ -0,0 +1,5 @@
 +from openai import OpenAI
 +

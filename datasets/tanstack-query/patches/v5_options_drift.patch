@@ -1,5 +1,5 @@
---- src/hooks/useProducts.ts
-+++ src/hooks/useProducts.ts
+--- a/src/hooks/useProducts.ts
++++ b/src/hooks/useProducts.ts
 @@ -0,0 +1,4 @@
 +import { useQuery } from '@tanstack/react-query';
 +

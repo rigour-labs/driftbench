@@ -1,5 +1,5 @@
---- app/page.tsx
-+++ app/page.tsx
+--- a/app/page.tsx
++++ b/app/page.tsx
 @@ -1,2 +1,3 @@
 +import Image from 'next/image';
 - <div>...</div>

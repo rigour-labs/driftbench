@@ -1,5 +1,5 @@
---- flask/blueprints/auth.py
-+++ flask/blueprints/auth.py
+--- a/flask/blueprints/auth.py
++++ b/flask/blueprints/auth.py
 @@ -1,5 +1,6 @@
  from flask import Blueprint
 +from flask.app import app # DANGEROUS: Circular import

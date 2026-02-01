@@ -1,5 +1,5 @@
---- packages/ui/src/utils.ts
-+++ packages/ui/src/utils.ts
+--- a/packages/ui/src/utils.ts
++++ b/packages/ui/src/utils.ts
 @@ -10,2 +10,4 @@
 +export function formatCurrency(amount: number) {
 +  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);

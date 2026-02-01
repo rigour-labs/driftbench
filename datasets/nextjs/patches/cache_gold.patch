@@ -1,5 +1,5 @@
---- lib/data.ts
-+++ lib/data.ts
+--- a/lib/data.ts
++++ b/lib/data.ts
 @@ -0,0 +1,6 @@
 +import { unstable_cache } from 'next/cache';
 +import { db } from './db';

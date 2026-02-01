@@ -1,5 +1,5 @@
---- pydantic/models.py
-+++ pydantic/models.py
+--- a/pydantic/models.py
++++ b/pydantic/models.py
 @@ -0,0 +1,5 @@
 +from pydantic import BaseModel, ConfigDict
 +

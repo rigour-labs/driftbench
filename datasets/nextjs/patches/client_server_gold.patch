@@ -1,5 +1,5 @@
---- components/Navigation.tsx
-+++ components/Navigation.tsx
+--- a/components/Navigation.tsx
++++ b/components/Navigation.tsx
 @@ -1,5 +1,6 @@
  'use client';
  
@@ -8,8 +8,8 @@
 +export function Navigation({ userCount }: { userCount: number }) {
 +  return <nav>Users: {userCount}</nav>;
  }
---- app/layout.tsx
-+++ app/layout.tsx
+--- a/app/layout.tsx
++++ b/app/layout.tsx
 @@ -5,2 +5,3 @@
 +const userCount = await db.user.count();
 - <Navigation />

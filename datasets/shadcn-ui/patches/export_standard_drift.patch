@@ -1,5 +1,5 @@
---- packages/ui/src/components/alert-banner.tsx
-+++ packages/ui/src/components/alert-banner.tsx
+--- a/packages/ui/src/components/alert-banner.tsx
++++ b/packages/ui/src/components/alert-banner.tsx
 @@ -0,0 +1,4 @@
 +const AlertBanner = () => <div>Alert</div>;
 +export default AlertBanner; // Drift: Default export instead of named export

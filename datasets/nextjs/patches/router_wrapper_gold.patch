@@ -1,5 +1,5 @@
---- components/NavButton.tsx
-+++ components/NavButton.tsx
+--- a/components/NavButton.tsx
++++ b/components/NavButton.tsx
 @@ -1,5 +1,6 @@
  'use client';
 -import { useRouter } from 'next/navigation';

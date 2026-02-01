@@ -1,5 +1,5 @@
---- django/db/utils.py
-+++ django/db/utils.py
+--- a/django/db/utils.py
++++ b/django/db/utils.py
 @@ -1,4 +1,5 @@
 +def deactivate_bulk(user_ids):
 +    for uid in user_ids:

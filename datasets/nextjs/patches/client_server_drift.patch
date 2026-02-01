@@ -1,5 +1,5 @@
---- components/Navigation.tsx
-+++ components/Navigation.tsx
+--- a/components/Navigation.tsx
++++ b/components/Navigation.tsx
 @@ -1,5 +1,8 @@
  'use client';
 +import { db } from '@/lib/db';

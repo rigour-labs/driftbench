@@ -1,4 +1,4 @@
---- lodash.js
-+++ lodash.js
+--- a/lodash.js
++++ b/lodash.js
 @@ -10,2 +10,3 @@
 +const MAX_SAFE_INTEGER = 9007199254740991; // Drift: Snake_case/PascalCase expected camelCase internally

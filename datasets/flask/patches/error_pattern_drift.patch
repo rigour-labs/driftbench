@@ -1,5 +1,5 @@
---- flask/routes.py
-+++ flask/routes.py
+--- a/flask/routes.py
++++ b/flask/routes.py
 @@ -10,1 +10,4 @@
 - def get_index(): ...
 + def get_index():

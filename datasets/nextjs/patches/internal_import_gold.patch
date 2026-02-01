@@ -1,5 +1,5 @@
---- packages/next/src/feature.ts
-+++ packages/next/src/feature.ts
+--- a/packages/next/src/feature.ts
++++ b/packages/next/src/feature.ts
 @@ -0,0 +1,5 @@
 +import { getSharedUtil } from './lib/shared';
 +

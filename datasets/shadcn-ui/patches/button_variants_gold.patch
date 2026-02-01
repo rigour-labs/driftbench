@@ -1,5 +1,5 @@
---- packages/ui/src/button.tsx
-+++ packages/ui/src/button.tsx
+--- a/packages/ui/src/button.tsx
++++ b/packages/ui/src/button.tsx
 @@ -5,2 +5,4 @@
    variants: {
 +    status: {

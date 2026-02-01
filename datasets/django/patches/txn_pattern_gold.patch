@@ -1,5 +1,5 @@
---- django/db/utils.py
-+++ django/db/utils.py
+--- a/django/db/utils.py
++++ b/django/db/utils.py
 @@ -1,5 +1,7 @@
 +from django.db import transaction
 +

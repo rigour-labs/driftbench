@@ -1,5 +1,5 @@
---- fastapi/main.py
-+++ fastapi/main.py
+--- a/fastapi/main.py
++++ b/fastapi/main.py
 @@ -10,2 +10,6 @@
 +app.add_middleware(
 +    CORSMiddleware,

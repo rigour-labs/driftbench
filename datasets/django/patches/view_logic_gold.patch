@@ -1,11 +1,11 @@
---- django/contrib/auth/models.py
-+++ django/contrib/auth/models.py
+--- a/django/contrib/auth/models.py
++++ b/django/contrib/auth/models.py
 @@ -50,2 +50,5 @@
 +class UserManager(models.Manager):
 +    def deactivate(self, user_id):
 +        return self.filter(id=user_id).update(is_active=False)
---- django/contrib/auth/views.py
-+++ django/contrib/auth/views.py
+--- a/django/contrib/auth/views.py
++++ b/django/contrib/auth/views.py
 @@ -10,1 +10,3 @@
 - def deactivate_user(request, id): ...
 + def deactivate_user(request, id):

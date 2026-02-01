@@ -1,5 +1,5 @@
---- django/urls.py
-+++ django/urls.py
+--- a/django/urls.py
++++ b/django/urls.py
 @@ -1,2 +1,3 @@
 -from django.urls import path
 +from django.conf.urls import url, include # STALE

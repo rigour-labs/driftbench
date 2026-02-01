@@ -1,5 +1,5 @@
---- fastapi/api/v1/endpoints/debug.py
-+++ fastapi/api/v1/endpoints/debug.py
+--- a/fastapi/api/v1/endpoints/debug.py
++++ b/fastapi/api/v1/endpoints/debug.py
 @@ -0,0 +1,7 @@
 +from fastapi import APIRouter
 +

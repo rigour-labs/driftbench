@@ -1,5 +1,5 @@
---- examples/chat.py
-+++ examples/chat.py
+--- a/examples/chat.py
++++ b/examples/chat.py
 @@ -5,2 +5,7 @@
 +try:
 +    client.chat.completions.create(model="gpt-4", ...)

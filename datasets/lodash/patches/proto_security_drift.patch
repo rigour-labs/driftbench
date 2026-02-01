@@ -1,5 +1,5 @@
---- lodash.js
-+++ lodash.js
+--- a/lodash.js
++++ b/lodash.js
 @@ -200,3 +200,5 @@
 +function safeAssign(target, key, value) {
 +  target[key] = value; // DANGEROUS: Missing prototype pollution check

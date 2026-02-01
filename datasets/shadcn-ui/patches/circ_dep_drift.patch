@@ -1,5 +1,5 @@
---- packages/ui/src/utils.ts
-+++ packages/ui/src/utils.ts
+--- a/packages/ui/src/utils.ts
++++ b/packages/ui/src/utils.ts
 @@ -1,3 +1,4 @@
 +import { Button } from './button'; // DANGEROUS: Component import in utils
  

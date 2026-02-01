@@ -1,5 +1,5 @@
---- packages/ui/src/button.tsx
-+++ packages/ui/src/button.tsx
+--- a/packages/ui/src/button.tsx
++++ b/packages/ui/src/button.tsx
 @@ -20,1 +20,15 @@
 - return <button className={cn(buttonVariants({ variant, size, className }))} {...props} />
 + const getStatusClass = (status: string) => {

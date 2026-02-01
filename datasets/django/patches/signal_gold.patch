@@ -1,5 +1,5 @@
---- django/contrib/auth/models.py
-+++ django/contrib/auth/models.py
+--- a/django/contrib/auth/models.py
++++ b/django/contrib/auth/models.py
 @@ -100,2 +100,7 @@
 +from django.db.models.signals import post_save
 +from django.dispatch import receiver

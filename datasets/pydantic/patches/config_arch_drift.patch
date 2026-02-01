@@ -1,5 +1,5 @@
---- pydantic/models.py
-+++ pydantic/models.py
+--- a/pydantic/models.py
++++ b/pydantic/models.py
 @@ -1,2 +1,3 @@
  from pydantic import BaseModel
 +BaseModel.model_config['strict'] = True # DANGEROUS: Global side-effect

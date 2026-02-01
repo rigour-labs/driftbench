@@ -1,5 +1,5 @@
---- flask/app.py
-+++ flask/app.py
+--- a/flask/app.py
++++ b/flask/app.py
 @@ -100,2 +100,6 @@
 +@app.errorhandler(404)
 +def page_not_found(e):

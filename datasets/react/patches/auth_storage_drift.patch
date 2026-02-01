@@ -1,5 +1,5 @@
---- src/hooks/useAuth.js
-+++ src/hooks/useAuth.js
+--- a/src/hooks/useAuth.js
++++ b/src/hooks/useAuth.js
 @@ -0,0 +1,4 @@
 +export function usePersistedAuth() {
 +  const setToken = (token) => {

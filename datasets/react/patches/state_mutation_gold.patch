@@ -1,5 +1,5 @@
---- src/Counter.js
-+++ src/Counter.js
+--- a/src/Counter.js
++++ b/src/Counter.js
 @@ -0,0 +1,6 @@
 +import React, { useState } from 'react';
 +

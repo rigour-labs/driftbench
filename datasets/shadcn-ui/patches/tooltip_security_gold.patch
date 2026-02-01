@@ -1,5 +1,5 @@
---- packages/ui/src/tooltip.tsx
-+++ packages/ui/src/tooltip.tsx
+--- a/packages/ui/src/tooltip.tsx
++++ b/packages/ui/src/tooltip.tsx
 @@ -10,2 +10,4 @@
 +export function TooltipContent({ children }: { children: React.ReactNode }) {
 +  return <div className="p-2">{children}</div>;

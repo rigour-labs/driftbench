@@ -1,5 +1,5 @@
---- src/hooks/useUser.ts
-+++ src/hooks/useUser.ts
+--- a/src/hooks/useUser.ts
++++ b/src/hooks/useUser.ts
 @@ -0,0 +1,11 @@
 +import { useQuery } from '@tanstack/react-query';
 +

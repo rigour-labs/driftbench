@@ -1,5 +1,5 @@
---- app/api/internal/stats/route.ts
-+++ app/api/internal/stats/route.ts
+--- a/app/api/internal/stats/route.ts
++++ b/app/api/internal/stats/route.ts
 @@ -0,0 +1,4 @@
 +import { NextResponse } from "next/server";
 +

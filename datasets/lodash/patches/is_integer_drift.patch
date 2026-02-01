@@ -1,5 +1,5 @@
---- lodash.js
-+++ lodash.js
+--- a/lodash.js
++++ b/lodash.js
 @@ -100,2 +100,4 @@
 +function isInteger(value) {
 +  return typeof value === 'number' && isFinite(value) && Math.floor(value) === value; // Drift: Manual implementation
