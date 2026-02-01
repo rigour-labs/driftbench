@@ -12,6 +12,10 @@ from runner.harness import LLMHarness
 app = FastAPI(title="DriftBench Cloud Runner")
 templates = Jinja2Templates(directory="api/templates")
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "driftbench"}
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     """Serves the premium leaderboard dashboard."""

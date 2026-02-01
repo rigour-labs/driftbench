@@ -1,10 +1,14 @@
 FROM python:3.10-slim
 
-# Install system dependencies (Git, Docker CLI)
+# Install system dependencies (Git, Docker CLI, Node.js)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    gnupg \
     && curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g @rigour-labs/cli \
     && rm -rf /var/lib/apt/lists/*
 
 # Set workdir
@@ -21,4 +25,5 @@ COPY . .
 EXPOSE 8080
 
 # Run FastAPI app
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Default to 8080 if PORT is not set (for local testing)
+CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
