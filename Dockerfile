@@ -25,5 +25,4 @@ COPY . .
 EXPOSE 8080
 
 # Run FastAPI app
-# Default to 8080 if PORT is not set (for local testing)
-CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8080}
