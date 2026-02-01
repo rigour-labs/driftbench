@@ -16,6 +16,12 @@ templates = Jinja2Templates(directory="api/templates")
 RESULTS_DIR = "results"
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
+# Diagnostic: Check for API keys
+print("--- Environment Diagnostic ---")
+print(f"ANTHROPIC_API_KEY: {'Found' if os.getenv('ANTHROPIC_API_KEY') else 'NOT FOUND'}")
+print(f"OPENAI_API_KEY:    {'Found' if os.getenv('OPENAI_API_KEY') else 'NOT FOUND'}")
+print("------------------------------")
+
 class RunRequest(BaseModel):
     task_id: str
 
