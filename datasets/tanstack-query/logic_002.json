@@ -1,0 +1,19 @@
+{
+    "id": "query-logic-002",
+    "category": "logic_drift",
+    "name": "Stale Time Configuration",
+    "repository": "TanStack/query",
+    "intent": "Create a new file `src/hooks/useConfig.ts` with configuration hooks. Set appropriate staleTime/gcTime based on data volatility. Static config should use Infinity.",
+    "base_sha": "main",
+    "golden_patch": "datasets/tanstack-query/patches/stale_time_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "stale_time_drift",
+            "patch": "datasets/tanstack-query/patches/stale_time_drift.patch",
+            "drift_type": "suboptimal_cache_config",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/tanstack-query/rigour_config.yaml"
+}

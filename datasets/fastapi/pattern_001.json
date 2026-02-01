@@ -1,0 +1,19 @@
+{
+    "id": "fastapi-pattern-001",
+    "category": "pattern_drift",
+    "name": "Response Schema Pattern",
+    "repository": "tiangolo/fastapi",
+    "intent": "Create a new file `app/schemas/responses.py` with standardized API response schemas using Pydantic. Use consistent structure for all responses.",
+    "base_sha": "main",
+    "golden_patch": "datasets/fastapi/patches/resp_pattern_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "resp_pattern_drift",
+            "patch": "datasets/fastapi/patches/resp_pattern_drift.patch",
+            "drift_type": "inconsistent_response_format",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/fastapi/rigour_config.yaml"
+}

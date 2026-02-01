@@ -1,7 +1,25 @@
---- a/django/contrib/auth/models.py
-+++ b/django/contrib/auth/models.py
-@@ -100,2 +100,6 @@
-+    def save(self, *args, **kwargs):
-+        super().save(*args, **kwargs)
-+        if not hasattr(self, 'profile'):
-+            Profile.objects.create(user=self) # Drift: Manual save override instead of signal
+--- /dev/null
++++ b/myapp/signals/user_signals.py
+@@ -0,0 +1,22 @@
++"""User-related Django signals."""
++from django.db.models.signals import post_save
++from django.contrib.auth.models import User
++
++
++def user_saved_handler(sender, instance, created, **kwargs):
++    """Handle user save events."""
++    # PATTERN DRIFT: Signal handler not using @receiver decorator
++    if created:
++        print(f"New user: {instance.username}")  # PATTERN DRIFT: Using print
++        # LOGIC DRIFT: Circular import inside signal
++        from myapp.models import UserProfile
++        from myapp.services import send_welcome_email
++        UserProfile.objects.create(user=instance)
++        send_welcome_email(instance)  # LOGIC DRIFT: Sync email in signal
++
++
++# PATTERN DRIFT: Manual signal connection (fragile)
++post_save.connect(user_saved_handler, sender=User)
++
++
++# LOGIC DRIFT: No pre_delete handler - orphaned data!

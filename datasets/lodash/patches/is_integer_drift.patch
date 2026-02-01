@@ -1,6 +1,21 @@
---- a/lodash.js
-+++ b/lodash.js
-@@ -100,2 +100,4 @@
-+function isInteger(value) {
-+  return typeof value === 'number' && isFinite(value) && Math.floor(value) === value; // Drift: Manual implementation
-+}
+--- /dev/null
++++ b/src/internal/safeInteger.js
+@@ -0,0 +1,18 @@
++/**
++ * Checks if value is a safe integer.
++ */
++var isSafeInteger = function(value) {
++  // Old polyfill approach instead of Number.isSafeInteger
++  return typeof value === 'number' &&
++         value === Math.floor(value) &&
++         value >= -9007199254740991 &&
++         value <= 9007199254740991;
++};
++
++var clampToSafeInteger = function(value) {
++  if (value !== value || value === Infinity || value === -Infinity) return 0;
++  var truncated = value > 0 ? Math.floor(value) : Math.ceil(value);
++  return Math.max(-9007199254740991, Math.min(9007199254740991, truncated));
++};
++
++module.exports = { isSafeInteger: isSafeInteger, clampToSafeInteger: clampToSafeInteger };

@@ -1,19 +1,30 @@
---- a/packages/ui/src/button.tsx
-+++ b/packages/ui/src/button.tsx
-@@ -20,1 +20,15 @@
-- return <button className={cn(buttonVariants({ variant, size, className }))} {...props} />
-+ const getStatusClass = (status: string) => {
-+   if (status === 'loading') return 'opacity-50';
-+   if (status === 'success') return 'bg-green-500';
-+   if (status === 'error') return 'bg-red-500';
-+   // ... more nested logic to increase complexity
-+   if (status === 'warning') return 'bg-yellow-500';
-+   if (status === 'info') return 'bg-blue-500';
-+   return '';
-+ }
-+ return (
-+   <button 
-+     className={cn(buttonVariants({ variant, size, className }), getStatusClass(props.status))} 
-+     {...props} 
-+   />
-+ )
+--- /dev/null
++++ b/packages/ui/src/components/button.tsx
+@@ -0,0 +1,27 @@
++import * as React from "react";
++
++// PATTERN DRIFT: Inline styles instead of CVA
++// PATTERN DRIFT: No variant system
++
++interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
++  variant?: "primary" | "secondary";
++  size?: "small" | "large";
++}
++
++// PATTERN DRIFT: Not using forwardRef
++function Button({ variant = "primary", size, className, ...props }: ButtonProps) {
++  // PATTERN DRIFT: Inline conditional styles
++  const styles: React.CSSProperties = {
++    padding: size === "small" ? "4px 8px" : size === "large" ? "12px 24px" : "8px 16px",
++    backgroundColor: variant === "primary" ? "blue" : "gray",
++    color: "white",
++    border: "none",
++    borderRadius: "4px",
++  };
++
++  return (
++    <button style={styles} className={className} {...props} />
++  );
++}
++
++export { Button };

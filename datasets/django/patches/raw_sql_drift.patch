@@ -1,10 +1,33 @@
---- a/django/contrib/auth/services.py
-+++ b/django/contrib/auth/services.py
-@@ -0,0 +1,5 @@
+--- /dev/null
++++ b/myapp/services/user_service.py
+@@ -0,0 +1,30 @@
++"""User service with database queries."""
 +from django.db import connection
++from django.contrib.auth.models import User
 +
-+def search_users(name):
-+    """DANGEROUS: Raw SQL query."""
-+    with connection.cursor() as cursor:
-+        cursor.execute(f"SELECT * FROM auth_user WHERE username LIKE '%{name}%'")
-+        return cursor.fetchall()
++
++class UserService:
++    """Service for user-related database operations."""
++
++    def search_users(self, query: str):
++        """Search users by username or email."""
++        # SECURITY DRIFT: SQL Injection vulnerability!
++        with connection.cursor() as cursor:
++            cursor.execute(
++                f"SELECT * FROM auth_user WHERE username LIKE '%{query}%' OR email LIKE '%{query}%'"
++            )
++            return cursor.fetchall()
++
++    def get_user_by_id(self, user_id):
++        """Get user by ID."""
++        # SECURITY DRIFT: Another SQL injection
++        with connection.cursor() as cursor:
++            cursor.execute(f"SELECT * FROM auth_user WHERE id = {user_id}")
++            return cursor.fetchone()
++
++    def get_active_users(self, limit: int = 50):
++        """Get active users."""
++        # SECURITY DRIFT: SQL injection in limit
++        with connection.cursor() as cursor:
++            cursor.execute(f"SELECT * FROM auth_user WHERE is_active = 1 LIMIT {limit}")
++            return cursor.fetchall()

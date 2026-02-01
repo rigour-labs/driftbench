@@ -1,8 +1,0 @@
---- a/entry.js
-+++ b/entry.js
-@@ -0,0 +1,5 @@
-+import { createRoot } from 'react-dom/client';
-+
-+const container = document.getElementById('app');
-+const root = createRoot(container);
-+root.render(<App />);

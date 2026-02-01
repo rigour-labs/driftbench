@@ -1,0 +1,19 @@
+{
+    "id": "shadcn-arch-001",
+    "category": "architecture_drift",
+    "name": "Utils Circular Dependency",
+    "repository": "shadcn-ui/ui",
+    "intent": "Create a new file `packages/ui/src/lib/utils.ts` with utility functions. Utils should be pure functions with NO imports from components (to avoid circular deps).",
+    "base_sha": "main",
+    "golden_patch": "datasets/shadcn-ui/patches/circ_dep_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "circ_dep_drift",
+            "patch": "datasets/shadcn-ui/patches/circ_dep_drift.patch",
+            "drift_type": "circular_dependency",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/shadcn-ui/rigour_config.yaml"
+}

@@ -1,9 +1,46 @@
---- a/flask/blueprints/auth.py
-+++ b/flask/blueprints/auth.py
-@@ -1,5 +1,6 @@
- from flask import Blueprint, current_app
- 
- auth_bp = Blueprint('auth', __name__)
- 
-+def get_auth_config():
-+    return current_app.config['AUTH']
+--- /dev/null
++++ b/src/flask/blueprints/auth.py
+@@ -0,0 +1,43 @@
++"""Authentication blueprint with proper imports."""
++from flask import Blueprint, request, jsonify, current_app
++from werkzeug.security import generate_password_hash, check_password_hash
++
++
++bp = Blueprint('auth', __name__, url_prefix='/auth')
++
++
++@bp.route('/login', methods=['POST'])
++def login():
++    """Handle user login."""
++    data = request.get_json()
++
++    if not data or 'username' not in data or 'password' not in data:
++        return jsonify({'error': 'Missing credentials'}), 400
++
++    # Get user service from app context to avoid circular imports
++    user_service = current_app.extensions.get('user_service')
++    if not user_service:
++        return jsonify({'error': 'Service unavailable'}), 503
++
++    user = user_service.authenticate(data['username'], data['password'])
++    if not user:
++        return jsonify({'error': 'Invalid credentials'}), 401
++
++    return jsonify({'message': 'Login successful', 'user_id': user.id})
++
++
++@bp.route('/register', methods=['POST'])
++def register():
++    """Handle user registration."""
++    data = request.get_json()
++
++    if not data or 'username' not in data or 'password' not in data:
++        return jsonify({'error': 'Missing required fields'}), 400
++
++    user_service = current_app.extensions.get('user_service')
++    user = user_service.create_user(
++        username=data['username'],
++        password_hash=generate_password_hash(data['password'])
++    )
++
++    return jsonify({'message': 'User created', 'user_id': user.id}), 201

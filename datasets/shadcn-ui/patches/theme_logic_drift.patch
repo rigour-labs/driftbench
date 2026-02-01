@@ -1,6 +1,37 @@
---- a/packages/ui/src/components/dark-card.tsx
-+++ b/packages/ui/src/components/dark-card.tsx
-@@ -0,0 +1,3 @@
-+export function DarkCard() {
-+  return <div style={{ backgroundColor: "#000", color: "#fff" }}>Content</div>; // Drift: Hardcoded hex
+--- /dev/null
++++ b/packages/ui/src/components/theme-provider.tsx
+@@ -0,0 +1,34 @@
++import * as React from "react";
++
++// LOGIC DRIFT: Module-level state instead of context
++let currentTheme = "light";
++
++// LOGIC DRIFT: Direct DOM manipulation
++export function setTheme(theme: string) {
++  currentTheme = theme;
++  // LOGIC DRIFT: No SSR safety check
++  document.documentElement.className = theme;
++  // LOGIC DRIFT: Synchronous localStorage (can block)
++  localStorage.setItem("theme", theme);
++}
++
++export function getTheme() {
++  return currentTheme;
++}
++
++// PATTERN DRIFT: No context provider, just passes children through
++export function ThemeProvider({ children }: { children: React.ReactNode }) {
++  // LOGIC DRIFT: Effect runs on every render (no deps)
++  React.useEffect(() => {
++    const saved = localStorage.getItem("theme");
++    if (saved) setTheme(saved);
++  });
++
++  return <>{children}</>;
++}
++
++// PATTERN DRIFT: Hook doesn't use context
++export function useTheme() {
++  // LOGIC DRIFT: Returns stale value, no reactivity
++  return { theme: currentTheme, setTheme };
 +}

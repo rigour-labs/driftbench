@@ -1,8 +1,49 @@
+# Rigour config for Flask drift detection
+version: 1
+
 gates:
-  context:
+  # File size limits
+  max_file_lines: 10000
+
+  # Disable content checks
+  forbid_todos: false
+  forbid_fixme: false
+
+  # No required files for benchmark
+  required_files: []
+
+  # Enable staleness detection
+  staleness:
     enabled: true
-    anchors:
-      - id: "flask_g"
-        type: "import"
-        pattern: "from flask import g"
-        confidence: 1.0
+
+  # Enable safety checks for security drift detection
+  safety:
+    enabled: true
+
+  # Disable context/environment gates
+  context:
+    enabled: false
+  environment:
+    enabled: false
+  retry_loop_breaker:
+    enabled: false
+
+  # Relaxed AST limits
+  ast:
+    complexity: 999
+    max_methods: 999
+    max_params: 99
+    max_nesting: 99
+    max_function_lines: 9999
+
+ignore:
+  - "tests/**"
+  - "docs/**"
+  - "examples/**"
+  - "*.md"
+  - ".git/**"
+  - "*.json"
+  - "*.yaml"
+  - "*.yml"
+  - "*.txt"
+  - "*.rst"

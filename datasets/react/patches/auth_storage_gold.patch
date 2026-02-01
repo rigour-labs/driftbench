@@ -1,9 +1,0 @@
---- a/src/hooks/useAuth.js
-+++ b/src/hooks/useAuth.js
-@@ -0,0 +1,5 @@
-+export function usePersistedAuth() {
-+  const setToken = (token) => {
-+    // Use secure http-only cookies instead (handled by backend usually)
-+    console.log("Setting secure auth...");
-+  };
-+}

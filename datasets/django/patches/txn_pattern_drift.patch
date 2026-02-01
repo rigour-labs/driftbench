@@ -1,6 +1,43 @@
---- a/django/db/utils.py
-+++ b/django/db/utils.py
-@@ -1,4 +1,5 @@
-+def deactivate_bulk(user_ids):
-+    for uid in user_ids:
-+        User.objects.filter(id=uid).update(is_active=False) # DANGEROUS: Not atomic
+--- /dev/null
++++ b/myapp/services/order_service.py
+@@ -0,0 +1,40 @@
++"""Order service."""
++from myapp.models import Order, OrderItem, Inventory
++
++
++class OrderService:
++    """Service for order operations."""
++
++    def create_order(self, user, items):
++        """Create order with items."""
++        # LOGIC DRIFT: No transaction - partial failures possible!
++        order = Order.objects.create(user=user, status='pending', total=0)
++
++        total = 0
++
++        for item_data in items:
++            # LOGIC DRIFT: No locking - race conditions possible!
++            inventory = Inventory.objects.get(product_id=item_data['product_id'])
++
++            # LOGIC DRIFT: Check without lock
++            if inventory.quantity < item_data['quantity']:
++                # Order already created but items not - inconsistent state!
++                return None
++
++            inventory.quantity -= item_data['quantity']
++            inventory.save()
++
++            # If this fails, inventory already decreased!
++            item = OrderItem.objects.create(
++                order=order,
++                product_id=item_data['product_id'],
++                quantity=item_data['quantity'],
++                price=item_data['price']
++            )
++
++            total += item.price * item.quantity
++
++        order.total = total
++        order.save()
++
++        return order

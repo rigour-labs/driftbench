@@ -1,7 +1,26 @@
---- a/fastapi/main.py
-+++ b/fastapi/main.py
-@@ -10,2 +10,6 @@
-+@app.get("/data")
-+def get_data():
-+    from fastapi.responses import JSONResponse
-+    return JSONResponse(content={"id": 1, "name": "test"}) // Drift: Direct response object
+--- /dev/null
++++ b/app/schemas/responses.py
+@@ -0,0 +1,23 @@
++"""API response handling."""
++from typing import Any
++
++
++def make_response(data: Any, status: str = "ok") -> dict:
++    """Create API response - inconsistent format."""
++    # PATTERN DRIFT: Inconsistent response structure
++    if status == "ok":
++        return {"result": data, "status": status}
++    else:
++        return {"err": data, "stat": status}
++
++
++def error_response(msg: str) -> dict:
++    """Create error response."""
++    # PATTERN DRIFT: Different structure than success response
++    return {"error_message": msg, "is_error": True}
++
++
++def list_response(items: list) -> dict:
++    """Create list response."""
++    # PATTERN DRIFT: Yet another structure
++    return {"data": {"items": items, "count": len(items)}}

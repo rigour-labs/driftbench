@@ -1,0 +1,19 @@
+{
+    "id": "query-pattern-001",
+    "category": "pattern_drift",
+    "name": "Query Hook Error Handling",
+    "repository": "TanStack/query",
+    "intent": "Create a new file `src/hooks/useUser.ts` with a user data hook. Include proper TypeScript generics, enabled option, gcTime (not cacheTime), and retry configuration.",
+    "base_sha": "main",
+    "golden_patch": "datasets/tanstack-query/patches/hook_error_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "hook_error_drift",
+            "patch": "datasets/tanstack-query/patches/hook_error_drift.patch",
+            "drift_type": "missing_error_handling",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/tanstack-query/rigour_config.yaml"
+}

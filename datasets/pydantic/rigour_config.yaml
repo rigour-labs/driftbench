@@ -1,6 +1,0 @@
-gates:
-  ast-analysis:
-    enabled: true
-    required_patterns:
-      - pattern: "Field.*pattern="
-        files: ["pydantic/main.py"]

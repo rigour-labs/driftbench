@@ -1,7 +1,0 @@
---- a/examples/chat.py
-+++ b/examples/chat.py
-@@ -5,2 +5,7 @@
-+try:
-+    client.chat.completions.create(model="gpt-4", ...)
-+except Exception:
-+    client.chat.completions.create(model="gpt-3.5-turbo", ...)

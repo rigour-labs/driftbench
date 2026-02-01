@@ -1,5 +1,33 @@
---- a/packages/ui/src/components/alert-banner.tsx
+--- /dev/null
 +++ b/packages/ui/src/components/alert-banner.tsx
-@@ -0,0 +1,4 @@
-+const AlertBanner = () => <div>Alert</div>;
-+export default AlertBanner; // Drift: Default export instead of named export
+@@ -0,0 +1,30 @@
++import * as React from "react";
++
++// PATTERN DRIFT: Default export instead of named export
++// PATTERN DRIFT: No CVA, no variants
++// PATTERN DRIFT: Inline styles
++
++interface Props {
++  type?: string;
++  title?: string;
++  children?: React.ReactNode;
++}
++
++// PATTERN DRIFT: No forwardRef
++// PATTERN DRIFT: No displayName
++export default function AlertBanner({ type = "info", title, children }: Props) {
++  // PATTERN DRIFT: Inline color logic instead of variants
++  const bgColor = type === "error" ? "red" : type === "success" ? "green" : "blue";
++
++  return (
++    <div style={{
++      backgroundColor: bgColor,
++      padding: "16px",
++      borderRadius: "8px",
++      color: "white"
++    }}>
++      {title && <strong>{title}</strong>}
++      {children}
++    </div>
++  );
++}

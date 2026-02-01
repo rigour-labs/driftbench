@@ -1,7 +1,36 @@
---- a/src/hooks/useProducts.ts
-+++ b/src/hooks/useProducts.ts
-@@ -0,0 +1,4 @@
-+import { useQuery } from '@tanstack/react-query';
+--- /dev/null
++++ b/src/hooks/useMutation.ts
+@@ -0,0 +1,33 @@
++import { useMutation, useQueryClient } from '@tanstack/react-query';
++import { createUser, deleteUser } from '../api/users';
 +
-+export const useProducts = () => 
-+  useQuery(['products'], fetchProducts); // STALE: v4 positional arguments
++/**
++ * Hook for creating users.
++ */
++export function useCreateUser() {
++  const queryClient = useQueryClient();
++
++  // STALE DRIFT: Using v4 options syntax
++  return useMutation(createUser, {
++    onSuccess: () => {
++      // STALE DRIFT: Old invalidateQueries syntax
++      queryClient.invalidateQueries('users');  // Should be { queryKey: ['users'] }
++    },
++  });
++}
++
++export function useDeleteUser() {
++  const queryClient = useQueryClient();
++
++  // STALE DRIFT: v4 syntax with function as first arg
++  return useMutation(
++    (userId: string) => deleteUser(userId),
++    {
++      // LOGIC DRIFT: No optimistic update
++      // LOGIC DRIFT: No error handling
++      onSuccess: () => {
++        queryClient.invalidateQueries('users');
++      },
++    }
++  );
++}

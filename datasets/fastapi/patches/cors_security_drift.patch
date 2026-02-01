@@ -1,8 +1,19 @@
---- a/fastapi/main.py
-+++ b/fastapi/main.py
-@@ -10,2 +10,6 @@
-+app.add_middleware(
-+    CORSMiddleware,
-+    allow_origins=["*"], # DANGEROUS: Permissive CORS
-+    allow_methods=["*"],
-+)
+--- /dev/null
++++ b/app/middleware/cors.py
+@@ -0,0 +1,16 @@
++"""CORS middleware configuration."""
++from fastapi import FastAPI
++from fastapi.middleware.cors import CORSMiddleware
++
++
++def configure_cors(app: FastAPI) -> None:
++    """Configure CORS - allowing everything for convenience."""
++
++    # SECURITY DRIFT: Allow all origins!
++    app.add_middleware(
++        CORSMiddleware,
++        allow_origins=["*"],  # DANGEROUS: Allows any origin
++        allow_credentials=True,  # With credentials = security issue
++        allow_methods=["*"],  # All methods
++        allow_headers=["*"],  # All headers
++    )

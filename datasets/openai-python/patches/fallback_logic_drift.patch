@@ -1,4 +1,0 @@
---- a/examples/chat.py
-+++ b/examples/chat.py
-@@ -5,2 +5,3 @@
-+client.chat.completions.create(model="gpt-4", ...) # Drift: No fallback logic

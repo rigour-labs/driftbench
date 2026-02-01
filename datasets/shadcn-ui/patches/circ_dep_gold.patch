@@ -1,6 +1,39 @@
---- a/packages/ui/src/utils.ts
-+++ b/packages/ui/src/utils.ts
-@@ -10,2 +10,4 @@
-+export function formatCurrency(amount: number) {
-+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+--- /dev/null
++++ b/packages/ui/src/lib/utils.ts
+@@ -0,0 +1,36 @@
++import { type ClassValue, clsx } from "clsx";
++import { twMerge } from "tailwind-merge";
++
++/**
++ * Utility function to merge Tailwind CSS classes.
++ * Combines clsx for conditional classes with tailwind-merge for deduplication.
++ */
++export function cn(...inputs: ClassValue[]): string {
++  return twMerge(clsx(inputs));
++}
++
++/**
++ * Format a date for display.
++ */
++export function formatDate(date: Date | string): string {
++  const d = typeof date === "string" ? new Date(date) : date;
++  return d.toLocaleDateString("en-US", {
++    year: "numeric",
++    month: "long",
++    day: "numeric",
++  });
++}
++
++/**
++ * Debounce a function call.
++ */
++export function debounce<T extends (...args: unknown[]) => unknown>(
++  fn: T,
++  delay: number
++): (...args: Parameters<T>) => void {
++  let timeoutId: ReturnType<typeof setTimeout>;
++  return (...args: Parameters<T>) => {
++    clearTimeout(timeoutId);
++    timeoutId = setTimeout(() => fn(...args), delay);
++  };
 +}

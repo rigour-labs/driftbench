@@ -1,6 +1,0 @@
---- a/pydantic/main.py
-+++ b/pydantic/main.py
-@@ -10,2 +10,3 @@
- class UserProfile(BaseModel):
-     username: str
-+    phone_number: str # Drift: Missing validation pattern

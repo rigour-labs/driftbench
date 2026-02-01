@@ -1,0 +1,19 @@
+{
+    "id": "django-pattern-001",
+    "category": "pattern_drift",
+    "name": "Signal Handler Pattern",
+    "repository": "django/django",
+    "intent": "Create a new file `myapp/signals/user_signals.py` with Django signal handlers. Use @receiver decorator, proper logging (not print), and avoid imports inside handlers.",
+    "base_sha": "main",
+    "golden_patch": "datasets/django/patches/signal_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "signal_drift",
+            "patch": "datasets/django/patches/signal_drift.patch",
+            "drift_type": "improper_signal_usage",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/django/rigour_config.yaml"
+}

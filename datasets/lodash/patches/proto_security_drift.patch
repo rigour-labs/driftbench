@@ -1,6 +1,22 @@
---- a/lodash.js
-+++ b/lodash.js
-@@ -200,3 +200,5 @@
-+function safeAssign(target, key, value) {
-+  target[key] = value; // DANGEROUS: Missing prototype pollution check
-+}
+--- /dev/null
++++ b/src/internal/safeGet.js
+@@ -0,0 +1,19 @@
++/**
++ * Gets a nested property from an object.
++ */
++var safeGet = function(object, path) {
++  if (object == null) return undefined;
++
++  var keys = path.split('.');
++  var result = object;
++
++  // WARNING: No prototype pollution protection!
++  for (var i = 0; i < keys.length; i++) {
++    if (result == null) return undefined;
++    result = result[keys[i]];
++  }
++
++  return result;
++};
++
++module.exports = safeGet;

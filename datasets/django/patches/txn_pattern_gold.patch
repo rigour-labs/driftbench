@@ -1,9 +1,63 @@
---- a/django/db/utils.py
-+++ b/django/db/utils.py
-@@ -1,5 +1,7 @@
+--- /dev/null
++++ b/myapp/services/order_service.py
+@@ -0,0 +1,60 @@
++"""Order service with proper transaction handling."""
 +from django.db import transaction
++from django.core.exceptions import ValidationError
++from decimal import Decimal
++from typing import List
++import logging
 +
-+@transaction.atomic
-+def deactivate_bulk(user_ids):
-+    for uid in user_ids:
-+        User.objects.filter(id=uid).update(is_active=False)
++from myapp.models import Order, OrderItem, Inventory
++
++
++logger = logging.getLogger(__name__)
++
++
++class OrderService:
++    """Service for order operations with atomic transactions."""
++
++    @transaction.atomic
++    def create_order(self, user, items: List[dict]) -> Order:
++        """Create order with items atomically.
++
++        All database operations are wrapped in a transaction.
++        If any step fails, everything is rolled back.
++        """
++        # Create order
++        order = Order.objects.create(
++            user=user,
++            status='pending',
++            total=Decimal('0')
++        )
++
++        total = Decimal('0')
++
++        for item_data in items:
++            # Lock inventory row to prevent race conditions
++            inventory = Inventory.objects.select_for_update().get(
++                product_id=item_data['product_id']
++            )
++
++            if inventory.quantity < item_data['quantity']:
++                raise ValidationError(f"Insufficient stock for {item_data['product_id']}")
++
++            # Decrease inventory
++            inventory.quantity -= item_data['quantity']
++            inventory.save()
++
++            # Create order item
++            item = OrderItem.objects.create(
++                order=order,
++                product_id=item_data['product_id'],
++                quantity=item_data['quantity'],
++                price=item_data['price']
++            )
++
++            total += item.price * item.quantity
++
++        order.total = total
++        order.save()
++
++        logger.info("Order %s created for user %s", order.id, user.id)
++        return order

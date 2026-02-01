@@ -1,0 +1,19 @@
+{
+    "id": "flask-arch-001",
+    "category": "architecture_drift",
+    "name": "Blueprint Circular Import",
+    "repository": "pallets/flask",
+    "intent": "Create a new file `src/flask/blueprints/auth.py` with an authentication blueprint. Use `current_app.extensions` to access services to avoid circular imports. Do NOT import models/services at module level.",
+    "base_sha": "main",
+    "golden_patch": "datasets/flask/patches/blueprint_circ_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "blueprint_circ_drift",
+            "patch": "datasets/flask/patches/blueprint_circ_drift.patch",
+            "drift_type": "circular_dependency",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/flask/rigour_config.yaml"
+}

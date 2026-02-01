@@ -1,8 +1,19 @@
---- a/django/urls.py
-+++ b/django/urls.py
-@@ -1,2 +1,3 @@
--from django.urls import path
-+from django.conf.urls import url, include # STALE
+--- /dev/null
++++ b/myapp/urls.py
+@@ -0,0 +1,16 @@
++"""URL configuration."""
++from django.conf.urls import url  # STALE: Deprecated import
++from myapp import views
++
++
++# STALE DRIFT: Using deprecated url() instead of path()
 +urlpatterns = [
-+    url(r'^api/', include('myapp.urls')),
++    url(r'^$', views.index, name='index'),
++    url(r'^users/$', views.user_list, name='user-list'),
++    url(r'^users/(?P<pk>[0-9]+)/$', views.user_detail, name='user-detail'),
++    url(r'^users/(?P<user_id>[0-9]+)/posts/$', views.user_posts, name='user-posts'),
++
++    # STALE: Regex patterns instead of type converters
++    url(r'^posts/(?P<slug>[-\w]+)/$', views.post_detail, name='post-detail'),
++    url(r'^orders/(?P<order_id>[a-f0-9-]+)/$', views.order_detail, name='order-detail'),
 +]

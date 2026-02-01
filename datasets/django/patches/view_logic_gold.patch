@@ -1,13 +1,49 @@
---- a/django/contrib/auth/models.py
-+++ b/django/contrib/auth/models.py
-@@ -50,2 +50,5 @@
-+class UserManager(models.Manager):
-+    def deactivate(self, user_id):
-+        return self.filter(id=user_id).update(is_active=False)
---- a/django/contrib/auth/views.py
-+++ b/django/contrib/auth/views.py
-@@ -10,1 +10,3 @@
-- def deactivate_user(request, id): ...
-+ def deactivate_user(request, id):
-+     User.objects.deactivate(id)
-+     return Response(...)
+--- /dev/null
++++ b/myapp/views/auth_views.py
+@@ -0,0 +1,46 @@
++"""Authentication views with proper logic."""
++from django.contrib.auth import authenticate, login, logout
++from django.contrib.auth.decorators import login_required
++from django.shortcuts import render, redirect
++from django.contrib import messages
++from django.views.decorators.http import require_http_methods
++from django.views.decorators.csrf import csrf_protect
++
++
++@require_http_methods(["GET", "POST"])
++@csrf_protect
++def login_view(request):
++    """Handle user login."""
++    if request.user.is_authenticated:
++        return redirect('dashboard')
++
++    if request.method == 'POST':
++        username = request.POST.get('username', '').strip()
++        password = request.POST.get('password', '')
++
++        if not username or not password:
++            messages.error(request, 'Please provide both username and password.')
++            return render(request, 'auth/login.html')
++
++        user = authenticate(request, username=username, password=password)
++
++        if user is not None:
++            if user.is_active:
++                login(request, user)
++                messages.success(request, 'Welcome back!')
++                next_url = request.GET.get('next', 'dashboard')
++                return redirect(next_url)
++            else:
++                messages.error(request, 'Your account is disabled.')
++        else:
++            messages.error(request, 'Invalid username or password.')
++
++    return render(request, 'auth/login.html')
++
++
++@login_required
++def logout_view(request):
++    """Handle user logout."""
++    logout(request)
++    messages.info(request, 'You have been logged out.')
++    return redirect('login')

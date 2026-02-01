@@ -1,0 +1,19 @@
+{
+    "id": "lodash-logic-001",
+    "category": "logic_drift",
+    "name": "Integer Handling Logic",
+    "repository": "lodash/lodash",
+    "intent": "Create a new file `src/internal/safeInteger.js` with functions to check and clamp safe integers. Use modern `Number.isSafeInteger()` and `Number.isFinite()` instead of manual range checks.",
+    "base_sha": "main",
+    "golden_patch": "datasets/lodash/patches/is_integer_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "is_integer_drift",
+            "patch": "datasets/lodash/patches/is_integer_drift.patch",
+            "drift_type": "outdated_api_usage",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/lodash/rigour_config.yaml"
+}

@@ -1,8 +1,36 @@
---- a/django/contrib/auth/services.py
-+++ b/django/contrib/auth/services.py
-@@ -0,0 +1,5 @@
+--- /dev/null
++++ b/myapp/services/user_service.py
+@@ -0,0 +1,33 @@
++"""User service with safe database queries."""
++from django.db.models import Q
 +from django.contrib.auth.models import User
++from typing import List, Optional
 +
-+def search_users(name):
-+    """Safe search using ORM."""
-+    return User.objects.filter(username__icontains=name)
++
++class UserService:
++    """Service for user-related database operations."""
++
++    def search_users(self, query: str) -> List[User]:
++        """Search users by username or email safely.
++
++        Uses Django ORM to prevent SQL injection.
++        """
++        if not query or len(query) < 2:
++            return []
++
++        return User.objects.filter(
++            Q(username__icontains=query) | Q(email__icontains=query)
++        ).select_related('profile')[:100]
++
++    def get_user_by_id(self, user_id: int) -> Optional[User]:
++        """Get user by ID safely."""
++        try:
++            return User.objects.get(pk=user_id)
++        except User.DoesNotExist:
++            return None
++
++    def get_active_users(self, limit: int = 50) -> List[User]:
++        """Get active users using ORM."""
++        return User.objects.filter(
++            is_active=True
++        ).order_by('-last_login')[:limit]

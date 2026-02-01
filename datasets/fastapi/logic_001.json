@@ -1,0 +1,19 @@
+{
+    "id": "fastapi-logic-001",
+    "category": "security_drift",
+    "name": "User Profile Authorization",
+    "repository": "tiangolo/fastapi",
+    "intent": "Create a new file `app/api/v1/endpoints/users.py` with user profile endpoints. All endpoints MUST require authentication via `Depends(get_current_user)`.",
+    "base_sha": "main",
+    "golden_patch": "datasets/fastapi/patches/user_profile_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "user_profile_drift",
+            "patch": "datasets/fastapi/patches/user_profile_drift.patch",
+            "drift_type": "missing_authorization",
+            "expected_result": "FAIL",
+            "fail_gate": "safety-rail"
+        }
+    ],
+    "rigour_config": "datasets/fastapi/rigour_config.yaml"
+}

@@ -1,7 +1,27 @@
---- a/src/hooks/useConfig.ts
+--- /dev/null
 +++ b/src/hooks/useConfig.ts
-@@ -0,0 +1,4 @@
+@@ -0,0 +1,24 @@
 +import { useQuery } from '@tanstack/react-query';
++import { fetchAppConfig } from '../api/config';
 +
-+export const useConfig = () => 
-+  useQuery({ queryKey: ['config'], queryFn: fetchConfig }); // Drift: Missing staleTime configuration
++/**
++ * Hook for app configuration.
++ */
++export function useAppConfig() {
++  // LOGIC DRIFT: No staleTime - refetches constantly
++  // LOGIC DRIFT: No gcTime - gets garbage collected quickly
++  return useQuery({
++    queryKey: ['config'],
++    queryFn: fetchAppConfig,
++    // Using defaults causes unnecessary refetches of static data
++  });
++}
++
++export function useUserPreferences(userId: string) {
++  return useQuery({
++    queryKey: ['preferences'],  // LOGIC DRIFT: Missing userId in key
++    queryFn: () => fetch(\`/api/users/\${userId}/preferences\`).then(r => r.json()),
++    // LOGIC DRIFT: No enabled check - fetches without userId
++    // LOGIC DRIFT: No error handling for fetch
++  });
++}

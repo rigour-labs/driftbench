@@ -1,0 +1,19 @@
+{
+    "id": "lodash-security-001",
+    "category": "security_drift",
+    "name": "Prototype Pollution Protection",
+    "repository": "lodash/lodash",
+    "intent": "Create a new file `src/internal/safeGet.js` that safely retrieves nested properties from objects. MUST include protection against prototype pollution by blocking access to `__proto__`, `constructor`, and `prototype` keys.",
+    "base_sha": "main",
+    "golden_patch": "datasets/lodash/patches/proto_security_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "proto_security_drift",
+            "patch": "datasets/lodash/patches/proto_security_drift.patch",
+            "drift_type": "security_vulnerability",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/lodash/rigour_config.yaml"
+}

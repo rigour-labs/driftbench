@@ -1,6 +1,26 @@
---- a/lodash.js
-+++ b/lodash.js
-@@ -100,2 +100,4 @@
-+function isInteger(value) {
-+  return Number.isInteger(value);
-+}
+--- /dev/null
++++ b/src/internal/safeInteger.js
+@@ -0,0 +1,23 @@
++/**
++ * Checks if value is a safe integer.
++ * @param {*} value - The value to check
++ * @returns {boolean} Whether value is a safe integer
++ */
++const isSafeInteger = (value) => {
++  return Number.isSafeInteger(value);
++};
++
++/**
++ * Clamps value to safe integer range.
++ * @param {number} value - The value to clamp
++ * @returns {number} The clamped value
++ */
++const clampToSafeInteger = (value) => {
++  if (!Number.isFinite(value)) return 0;
++  return Math.max(
++    Number.MIN_SAFE_INTEGER,
++    Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(value))
++  );
++};
++
++export { isSafeInteger, clampToSafeInteger };

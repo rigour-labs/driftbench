@@ -1,0 +1,19 @@
+{
+    "id": "shadcn-logic-001",
+    "category": "logic_drift",
+    "name": "Theme Provider Logic",
+    "repository": "shadcn-ui/ui",
+    "intent": "Create a new file `packages/ui/src/components/theme-provider.tsx` with theme context. Use React Context for state, useMemo for value, SSR-safe localStorage access.",
+    "base_sha": "main",
+    "golden_patch": "datasets/shadcn-ui/patches/theme_logic_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "theme_logic_drift",
+            "patch": "datasets/shadcn-ui/patches/theme_logic_drift.patch",
+            "drift_type": "incorrect_state_management",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/shadcn-ui/rigour_config.yaml"
+}

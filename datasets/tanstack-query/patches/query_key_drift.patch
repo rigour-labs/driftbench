@@ -1,7 +1,28 @@
---- a/src/hooks/useUser.ts
-+++ b/src/hooks/useUser.ts
-@@ -0,0 +1,4 @@
+--- /dev/null
++++ b/src/hooks/useProducts.ts
+@@ -0,0 +1,25 @@
 +import { useQuery } from '@tanstack/react-query';
++import { fetchProducts } from '../api/products';
 +
-+export const useUser = (id: string) => 
-+  useQuery({ queryKey: ['user'], queryFn: () => fetchUser(id) }); // Drift: Missing id in queryKey
++/**
++ * Hook to fetch products.
++ */
++export function useProducts(category: string, page: number) {
++  // PATTERN DRIFT: No query key factory
++  // LOGIC DRIFT: Query key doesn't include all dependencies
++  return useQuery({
++    queryKey: ['products', category],  // Missing page - causes stale data!
++    queryFn: () => fetchProducts({ category, page }),
++    // STALE DRIFT: Using deprecated keepPreviousData
++    keepPreviousData: true,  // Should use placeholderData in v5
++  });
++}
++
++export function useInfiniteProducts(category: string) {
++  // PATTERN DRIFT: Using regular useQuery for infinite scroll
++  return useQuery({
++    queryKey: ['products', 'infinite'],
++    queryFn: () => fetchProducts({ category, page: 1 }),
++    // LOGIC DRIFT: No pagination handling
++  });
++}

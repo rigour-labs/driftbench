@@ -1,0 +1,19 @@
+{
+    "id": "flask-pattern-001",
+    "category": "pattern_drift",
+    "name": "Error Handler Pattern",
+    "repository": "pallets/flask",
+    "intent": "Create a new file `src/flask/error_handlers.py` with Flask error handlers that return JSON responses. Use `jsonify()` for consistent API responses, not HTML strings.",
+    "base_sha": "main",
+    "golden_patch": "datasets/flask/patches/error_pattern_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "error_pattern_drift",
+            "patch": "datasets/flask/patches/error_pattern_drift.patch",
+            "drift_type": "response_format_inconsistency",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/flask/rigour_config.yaml"
+}

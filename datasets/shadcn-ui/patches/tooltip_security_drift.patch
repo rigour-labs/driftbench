@@ -1,6 +1,42 @@
---- a/packages/ui/src/tooltip.tsx
-+++ b/packages/ui/src/tooltip.tsx
-@@ -10,2 +10,4 @@
-+export function TooltipContent({ html }: { html: string }) {
-+  return <div className="p-2" dangerouslySetInnerHTML={{ __html: html }} />; // DANGEROUS: XSS
+--- /dev/null
++++ b/packages/ui/src/components/tooltip.tsx
+@@ -0,0 +1,39 @@
++import * as React from "react";
++
++interface TooltipProps {
++  content: string;
++  children: React.ReactNode;
++}
++
++// PATTERN DRIFT: Custom implementation instead of Radix
++// SECURITY DRIFT: Using dangerouslySetInnerHTML
++export function Tooltip({ content, children }: TooltipProps) {
++  const [show, setShow] = React.useState(false);
++
++  return (
++    <div
++      onMouseEnter={() => setShow(true)}
++      onMouseLeave={() => setShow(false)}
++      style={{ position: "relative", display: "inline-block" }}
++    >
++      {children}
++      {show && (
++        <div
++          style={{
++            position: "absolute",
++            bottom: "100%",
++            left: "50%",
++            transform: "translateX(-50%)",
++            background: "black",
++            color: "white",
++            padding: "4px 8px",
++            borderRadius: "4px",
++            whiteSpace: "nowrap",
++          }}
++          // SECURITY DRIFT: XSS vulnerability!
++          dangerouslySetInnerHTML={{ __html: content }}
++        />
++      )}
++    </div>
++  );
 +}

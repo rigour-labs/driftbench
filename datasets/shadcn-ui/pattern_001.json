@@ -1,0 +1,19 @@
+{
+    "id": "shadcn-pattern-001",
+    "category": "pattern_drift",
+    "name": "Button Variants Pattern",
+    "repository": "shadcn-ui/ui",
+    "intent": "Create a new file `packages/ui/src/components/button.tsx` with a Button component. Use class-variance-authority (CVA) for variants, React.forwardRef, and Tailwind classes.",
+    "base_sha": "main",
+    "golden_patch": "datasets/shadcn-ui/patches/button_variants_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "button_variants_drift",
+            "patch": "datasets/shadcn-ui/patches/button_variants_drift.patch",
+            "drift_type": "missing_variant_system",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/shadcn-ui/rigour_config.yaml"
+}

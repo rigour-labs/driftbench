@@ -1,0 +1,19 @@
+{
+    "id": "shadcn-standard-001",
+    "category": "pattern_drift",
+    "name": "Component Export Standard",
+    "repository": "shadcn-ui/ui",
+    "intent": "Create a new file `packages/ui/src/components/alert-banner.tsx` with an AlertBanner component. Use NAMED exports (not default), forwardRef, displayName, and CVA variants.",
+    "base_sha": "main",
+    "golden_patch": "datasets/shadcn-ui/patches/export_standard_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "export_standard_drift",
+            "patch": "datasets/shadcn-ui/patches/export_standard_drift.patch",
+            "drift_type": "inconsistent_exports",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/shadcn-ui/rigour_config.yaml"
+}

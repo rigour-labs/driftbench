@@ -1,8 +1,34 @@
---- a/flask/app.py
-+++ b/flask/app.py
-@@ -10,2 +10,6 @@
-+@app.route("/logging/config")
-+def logging_config():
-+    import local_config # Drift: Using local imports instead of flask.g
-+    local_config.setup()
-+    return {"status": "ok"}
+--- /dev/null
++++ b/src/flask/request_context.py
+@@ -0,0 +1,31 @@
++"""Request context utilities - using globals incorrectly."""
++
++# LOGIC DRIFT: Using module-level globals instead of Flask's g
++_db_connection = None
++_current_user = None
++
++
++def get_db():
++    """Get database connection from module global."""
++    global _db_connection
++    if _db_connection is None:
++        from flask import current_app
++        _db_connection = current_app.config['DATABASE'].connect()
++    return _db_connection
++
++
++def close_db(e=None):
++    """Close database connection."""
++    global _db_connection
++    if _db_connection is not None:
++        _db_connection.close()
++        _db_connection = None
++
++
++def with_db(f):
++    """Decorator for database access."""
++    def decorated(*args, **kwargs):
++        global _db_connection
++        _db_connection = get_db()
++        return f(*args, **kwargs)
++    return decorated

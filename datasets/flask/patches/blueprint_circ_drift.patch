@@ -1,10 +1,41 @@
---- a/flask/blueprints/auth.py
-+++ b/flask/blueprints/auth.py
-@@ -1,5 +1,6 @@
- from flask import Blueprint
-+from flask.app import app # DANGEROUS: Circular import
- 
- auth_bp = Blueprint('auth', __name__)
- 
-+def get_auth_config():
-+    return app.config['AUTH']
+--- /dev/null
++++ b/src/flask/blueprints/auth.py
+@@ -0,0 +1,38 @@
++"""Authentication blueprint with circular import issues."""
++from flask import Blueprint, request, jsonify
++# ARCHITECTURE DRIFT: Direct import creates circular dependency
++from src.flask.models import User
++from src.flask.services import UserService
++
++
++bp = Blueprint('auth', __name__, url_prefix='/auth')
++
++# ARCHITECTURE DRIFT: Module-level instantiation
++user_service = UserService()
++
++
++@bp.route('/login', methods=['POST'])
++def login():
++    """Handle user login."""
++    data = request.get_json()
++
++    # LOGIC DRIFT: No input validation
++    user = User.query.filter_by(username=data['username']).first()
++
++    # SECURITY DRIFT: Plain text password comparison
++    if user and user.password == data['password']:
++        return jsonify({'message': 'Login successful'})
++
++    return jsonify({'error': 'Invalid'}), 401
++
++
++@bp.route('/register', methods=['POST'])
++def register():
++    """Handle user registration."""
++    data = request.get_json()
++
++    # SECURITY DRIFT: Storing plain text password
++    user = User(username=data['username'], password=data['password'])
++    user.save()
++
++    return jsonify({'message': 'User created'})

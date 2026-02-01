@@ -1,7 +1,25 @@
---- a/flask/routes.py
-+++ b/flask/routes.py
-@@ -0,0 +1,4 @@
-+@app.route("/contact/submit", methods=["POST"])
-+def submit():
-+    # DANGEROUS: Missing CSRF protection
-+    return {"status": "success"}
+--- /dev/null
++++ b/src/flask/forms.py
+@@ -0,0 +1,22 @@
++"""Form handling - CSRF disabled for convenience."""
++from flask_wtf import FlaskForm
++from wtforms import StringField, SubmitField
++from wtforms.validators import DataRequired
++
++
++class ContactForm(FlaskForm):
++    """Contact form with CSRF disabled."""
++
++    class Meta:
++        csrf = False  # SECURITY DRIFT: CSRF protection disabled!
++
++    name = StringField('Name', validators=[DataRequired()])
++    email = StringField('Email')
++    message = StringField('Message')
++    submit = SubmitField('Send')
++
++
++def init_csrf(app):
++    """CSRF initialization skipped."""
++    app.config['WTF_CSRF_ENABLED'] = False  # SECURITY DRIFT!
++    pass

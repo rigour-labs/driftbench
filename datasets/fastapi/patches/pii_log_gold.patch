@@ -1,8 +1,56 @@
---- a/fastapi/middleware/logging.py
-+++ b/fastapi/middleware/logging.py
-@@ -0,0 +1,5 @@
+--- /dev/null
++++ b/app/middleware/logging.py
+@@ -0,0 +1,53 @@
++"""Request logging middleware with PII protection."""
 +import logging
++import re
++from fastapi import Request
++from starlette.middleware.base import BaseHTTPMiddleware
++from typing import Set
 +
-+def log_request(request):
-+    safe_headers = {k: v for k, v in request.headers.items() if k.lower() not in ["authorization", "cookie"]}
-+    logging.info(f"Request: {request.url} Headers: {safe_headers}")
++
++logger = logging.getLogger(__name__)
++
++# Fields that should never be logged
++SENSITIVE_FIELDS: Set[str] = {
++    'password', 'token', 'secret', 'api_key', 'apikey',
++    'authorization', 'credit_card', 'ssn', 'social_security'
++}
++
++# Patterns to redact
++REDACT_PATTERNS = [
++    (re.compile(r'"password"\s*:\s*"[^"]*"'), '"password": "[REDACTED]"'),
++    (re.compile(r'"token"\s*:\s*"[^"]*"'), '"token": "[REDACTED]"'),
++    (re.compile(r'Bearer\s+\S+'), 'Bearer [REDACTED]'),
++]
++
++
++def sanitize_log_data(data: str) -> str:
++    """Remove sensitive information from log data."""
++    result = data
++    for pattern, replacement in REDACT_PATTERNS:
++        result = pattern.sub(replacement, result)
++    return result
++
++
++class LoggingMiddleware(BaseHTTPMiddleware):
++    """Middleware that logs requests with PII protection."""
++
++    async def dispatch(self, request: Request, call_next):
++        # Log request (sanitized)
++        logger.info(
++            "Request: %s %s",
++            request.method,
++            request.url.path  # Don't log query params (may contain tokens)
++        )
++
++        response = await call_next(request)
++
++        logger.info(
++            "Response: %s %s -> %d",
++            request.method,
++            request.url.path,
++            response.status_code
++        )
++
++        return response

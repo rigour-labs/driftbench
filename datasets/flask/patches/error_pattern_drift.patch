@@ -1,8 +1,22 @@
---- a/flask/routes.py
-+++ b/flask/routes.py
-@@ -10,1 +10,4 @@
-- def get_index(): ...
-+ def get_index():
-+     # DANGEROUS: Manual error handling instead of decorator
-+     if not exists(): return {"error": "not_found"}, 404
-+     return {"ok": True}
+--- /dev/null
++++ b/src/flask/error_handlers.py
+@@ -0,0 +1,19 @@
++"""Custom error handlers for the Flask application."""
++
++
++def register_error_handlers(app):
++    """Register error handlers with the Flask app."""
++
++    @app.errorhandler(404)
++    def not_found(error):
++        # Anti-pattern: returning HTML string instead of JSON
++        return "<h1>404 Not Found</h1><p>" + str(error) + "</p>", 404
++
++    @app.errorhandler(500)
++    def internal_error(error):
++        # Anti-pattern: exposing internal error details
++        return "<h1>500 Error</h1><pre>" + str(error) + "</pre>", 500
++
++    @app.errorhandler(400)
++    def bad_request(error):
++        return "<h1>Bad Request</h1>", 400

@@ -1,9 +1,24 @@
---- a/flask/routes.py
-+++ b/flask/routes.py
-@@ -0,0 +1,6 @@
+--- /dev/null
++++ b/src/flask/forms.py
+@@ -0,0 +1,21 @@
++"""Form handling with CSRF protection."""
++from flask_wtf import FlaskForm
 +from flask_wtf.csrf import CSRFProtect
++from wtforms import StringField, SubmitField
++from wtforms.validators import DataRequired, Email
 +
-+@app.route("/contact/submit", methods=["POST"])
-+@csrf.exempt # No, this is golden, so we want it protected
-+def submit():
-+    return {"status": "success"}
++
++csrf = CSRFProtect()
++
++
++class ContactForm(FlaskForm):
++    """Contact form with CSRF protection enabled by default."""
++    name = StringField('Name', validators=[DataRequired()])
++    email = StringField('Email', validators=[DataRequired(), Email()])
++    message = StringField('Message', validators=[DataRequired()])
++    submit = SubmitField('Send')
++
++
++def init_csrf(app):
++    """Initialize CSRF protection for the app."""
++    csrf.init_app(app)

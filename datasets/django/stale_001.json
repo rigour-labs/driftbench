@@ -1,0 +1,19 @@
+{
+    "id": "django-stale-001",
+    "category": "stale_drift",
+    "name": "URL Configuration Staleness",
+    "repository": "django/django",
+    "intent": "Create a new file `myapp/urls.py` with URL patterns. Use modern path() with type converters (int:, slug:, uuid:), NOT deprecated url() with regex.",
+    "base_sha": "main",
+    "golden_patch": "datasets/django/patches/url_stale_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "url_stale_drift",
+            "patch": "datasets/django/patches/url_stale_drift.patch",
+            "drift_type": "deprecated_url_syntax",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/django/rigour_config.yaml"
+}

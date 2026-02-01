@@ -1,0 +1,19 @@
+{
+    "id": "query-stale-001",
+    "category": "stale_drift",
+    "name": "TanStack Query v5 Options",
+    "repository": "TanStack/query",
+    "intent": "Create a new file `src/hooks/useMutation.ts` with mutation hooks. Use v5 syntax: mutationFn in options object, gcTime (not cacheTime), invalidateQueries with object syntax.",
+    "base_sha": "main",
+    "golden_patch": "datasets/tanstack-query/patches/v5_options_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "v5_options_drift",
+            "patch": "datasets/tanstack-query/patches/v5_options_drift.patch",
+            "drift_type": "deprecated_api_usage",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/tanstack-query/rigour_config.yaml"
+}

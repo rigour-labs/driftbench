@@ -1,0 +1,19 @@
+{
+    "id": "django-logic-001",
+    "category": "logic_drift",
+    "name": "Transaction Handling",
+    "repository": "django/django",
+    "intent": "Create a new file `myapp/services/order_service.py` with order creation logic. Use @transaction.atomic and select_for_update() to prevent race conditions.",
+    "base_sha": "main",
+    "golden_patch": "datasets/django/patches/txn_pattern_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "txn_pattern_drift",
+            "patch": "datasets/django/patches/txn_pattern_drift.patch",
+            "drift_type": "missing_transaction",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/django/rigour_config.yaml"
+}

@@ -1,6 +1,21 @@
---- a/flask/app.py
-+++ b/flask/app.py
-@@ -100,2 +100,6 @@
-+@app.errorhandler(404)
-+def page_not_found(e):
-+    return {"error": "not_found"}, 404
+--- /dev/null
++++ b/src/flask/error_handlers.py
+@@ -0,0 +1,18 @@
++"""Custom error handlers for the Flask application."""
++from flask import jsonify
++
++
++def register_error_handlers(app):
++    """Register error handlers with the Flask app."""
++
++    @app.errorhandler(404)
++    def not_found(error):
++        return jsonify({"error": "not_found", "message": str(error)}), 404
++
++    @app.errorhandler(500)
++    def internal_error(error):
++        return jsonify({"error": "internal_error", "message": "An unexpected error occurred"}), 500
++
++    @app.errorhandler(400)
++    def bad_request(error):
++        return jsonify({"error": "bad_request", "message": str(error)}), 400

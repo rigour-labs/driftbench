@@ -1,7 +1,32 @@
---- a/fastapi/middleware/logging.py
-+++ b/fastapi/middleware/logging.py
-@@ -0,0 +1,4 @@
+--- /dev/null
++++ b/app/middleware/logging.py
+@@ -0,0 +1,29 @@
++"""Request logging middleware."""
 +import logging
++from fastapi import Request
++from starlette.middleware.base import BaseHTTPMiddleware
 +
-+def log_request(request):
-+    logging.info(f"Request: {request.url} Headers: {request.headers}")
++
++logger = logging.getLogger(__name__)
++
++
++class LoggingMiddleware(BaseHTTPMiddleware):
++    """Middleware that logs all request details."""
++
++    async def dispatch(self, request: Request, call_next):
++        # SECURITY DRIFT: Logging full request including sensitive data!
++        body = await request.body()
++        logger.info(
++            "Request: %s %s?%s Body: %s Headers: %s",
++            request.method,
++            request.url.path,
++            request.url.query,  # May contain tokens/API keys
++            body.decode(),  # May contain passwords
++            dict(request.headers)  # Contains Authorization header
++        )
++
++        response = await call_next(request)
++
++        logger.info("Response: %s", response.status_code)
++
++        return response

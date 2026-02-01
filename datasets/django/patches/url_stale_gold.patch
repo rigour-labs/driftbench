@@ -1,10 +1,26 @@
---- a/django/urls.py
-+++ b/django/urls.py
-@@ -1,2 +1,3 @@
--from django.urls import path
--urlpatterns = [path('admin/', admin.site.urls)]
+--- /dev/null
++++ b/myapp/urls.py
+@@ -0,0 +1,23 @@
++"""URL configuration using modern Django patterns."""
 +from django.urls import path, include
++from myapp import views
++
++
++app_name = 'myapp'
++
 +urlpatterns = [
-+    path('admin/', admin.site.urls),
-+    path('api/', include('myapp.urls')),
++    # Modern path() syntax with type converters
++    path('', views.index, name='index'),
++    path('users/', views.UserListView.as_view(), name='user-list'),
++    path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'),
++    path('users/<int:user_id>/posts/', views.user_posts, name='user-posts'),
++
++    # Nested URL includes
++    path('api/v1/', include('myapp.api.urls', namespace='api-v1')),
++
++    # Slug-based URLs
++    path('posts/<slug:slug>/', views.post_detail, name='post-detail'),
++
++    # UUID URLs
++    path('orders/<uuid:order_id>/', views.order_detail, name='order-detail'),
 +]

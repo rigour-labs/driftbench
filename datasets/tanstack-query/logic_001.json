@@ -1,0 +1,19 @@
+{
+    "id": "query-logic-001",
+    "category": "logic_drift",
+    "name": "Query Key Structure",
+    "repository": "TanStack/query",
+    "intent": "Create a new file `src/hooks/useProducts.ts` with product hooks. Use query key factory pattern. Include ALL dependencies (filters, pagination) in query keys.",
+    "base_sha": "main",
+    "golden_patch": "datasets/tanstack-query/patches/query_key_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "query_key_drift",
+            "patch": "datasets/tanstack-query/patches/query_key_drift.patch",
+            "drift_type": "incomplete_query_key",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/tanstack-query/rigour_config.yaml"
+}

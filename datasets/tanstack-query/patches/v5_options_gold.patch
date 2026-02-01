@@ -1,7 +1,58 @@
---- a/src/hooks/useProducts.ts
-+++ b/src/hooks/useProducts.ts
-@@ -0,0 +1,4 @@
-+import { useQuery } from '@tanstack/react-query';
+--- /dev/null
++++ b/src/hooks/useMutation.ts
+@@ -0,0 +1,55 @@
++import { useMutation, useQueryClient } from '@tanstack/react-query';
++import { createUser, updateUser, deleteUser, User, CreateUserInput } from '../api/users';
 +
-+export const useProducts = () => 
-+  useQuery({ queryKey: ['products'], queryFn: fetchProducts }); 
++/**
++ * Hook for creating users with optimistic updates.
++ */
++export function useCreateUser() {
++  const queryClient = useQueryClient();
++
++  return useMutation<User, Error, CreateUserInput>({
++    mutationFn: createUser,
++    onMutate: async (newUser) => {
++      // Cancel outgoing refetches
++      await queryClient.cancelQueries({ queryKey: ['users'] });
++
++      // Snapshot previous value
++      const previousUsers = queryClient.getQueryData<User[]>(['users']);
++
++      // Optimistically update
++      queryClient.setQueryData<User[]>(['users'], (old) => [
++        ...(old ?? []),
++        { ...newUser, id: 'temp-id' } as User,
++      ]);
++
++      return { previousUsers };
++    },
++    onError: (err, newUser, context) => {
++      // Rollback on error
++      queryClient.setQueryData(['users'], context?.previousUsers);
++    },
++    onSettled: () => {
++      // Always refetch after mutation
++      queryClient.invalidateQueries({ queryKey: ['users'] });
++    },
++  });
++}
++
++/**
++ * Hook for deleting users.
++ */
++export function useDeleteUser() {
++  const queryClient = useQueryClient();
++
++  return useMutation<void, Error, string>({
++    mutationFn: deleteUser,
++    onSuccess: (_, userId) => {
++      // Remove from cache immediately
++      queryClient.setQueryData<User[]>(['users'], (old) =>
++        old?.filter((user) => user.id !== userId)
++      );
++      // Invalidate to ensure consistency
++      queryClient.invalidateQueries({ queryKey: ['users'] });
++    },
++  });
++}

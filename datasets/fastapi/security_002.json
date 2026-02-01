@@ -1,0 +1,19 @@
+{
+    "id": "fastapi-security-002",
+    "category": "security_drift",
+    "name": "PII in Logs",
+    "repository": "tiangolo/fastapi",
+    "intent": "Create a new file `app/middleware/logging.py` with request logging middleware. MUST sanitize sensitive data (passwords, tokens, API keys) from logs.",
+    "base_sha": "main",
+    "golden_patch": "datasets/fastapi/patches/pii_log_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "pii_log_drift",
+            "patch": "datasets/fastapi/patches/pii_log_drift.patch",
+            "drift_type": "pii_exposure",
+            "expected_result": "FAIL",
+            "fail_gate": "safety-rail"
+        }
+    ],
+    "rigour_config": "datasets/fastapi/rigour_config.yaml"
+}

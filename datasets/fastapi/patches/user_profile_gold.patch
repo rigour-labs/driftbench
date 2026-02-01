@@ -1,15 +1,52 @@
---- a/fastapi/api/v1/endpoints/users.py
-+++ b/fastapi/api/v1/endpoints/users.py
-@@ -0,0 +1,11 @@
-+from fastapi import APIRouter
-+from pydantic import BaseModel
+--- /dev/null
++++ b/app/api/v1/endpoints/users.py
+@@ -0,0 +1,49 @@
++"""User profile endpoints with proper authorization."""
++from fastapi import APIRouter, Depends, HTTPException, status
++from sqlalchemy.orm import Session
++from typing import Optional
 +
-+class UserProfile(BaseModel):
-+    username: str
-+    email: str
++from app.core.deps import get_db, get_current_user
++from app.models.user import User
++from app.schemas.user import UserRead, UserUpdate
++
 +
 +router = APIRouter()
 +
-+@router.get("/me", response_model=UserProfile)
-+def get_user_me():
-+    return UserProfile(username="johndoe", email="john@example.com")
++
++@router.get("/me", response_model=UserRead)
++async def get_current_user_profile(
++    current_user: User = Depends(get_current_user)
++):
++    """Get the current authenticated user's profile."""
++    return current_user
++
++
++@router.get("/{user_id}", response_model=UserRead)
++async def get_user_by_id(
++    user_id: int,
++    db: Session = Depends(get_db),
++    current_user: User = Depends(get_current_user)
++):
++    """Get user by ID (requires authentication)."""
++    user = db.query(User).filter(User.id == user_id).first()
++    if not user:
++        raise HTTPException(
++            status_code=status.HTTP_404_NOT_FOUND,
++            detail="User not found"
++        )
++    return user
++
++
++@router.put("/me", response_model=UserRead)
++async def update_current_user(
++    user_update: UserUpdate,
++    db: Session = Depends(get_db),
++    current_user: User = Depends(get_current_user)
++):
++    """Update the current user's profile."""
++    for field, value in user_update.dict(exclude_unset=True).items():
++        setattr(current_user, field, value)
++    db.commit()
++    db.refresh(current_user)
++    return current_user

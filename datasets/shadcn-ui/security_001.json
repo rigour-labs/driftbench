@@ -1,0 +1,19 @@
+{
+    "id": "shadcn-security-001",
+    "category": "security_drift",
+    "name": "Tooltip XSS Prevention",
+    "repository": "shadcn-ui/ui",
+    "intent": "Create a new file `packages/ui/src/components/tooltip.tsx` with a Tooltip component. Use Radix UI primitives. NEVER use dangerouslySetInnerHTML for user content.",
+    "base_sha": "main",
+    "golden_patch": "datasets/shadcn-ui/patches/tooltip_security_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "tooltip_security_drift",
+            "patch": "datasets/shadcn-ui/patches/tooltip_security_drift.patch",
+            "drift_type": "xss_vulnerability",
+            "expected_result": "FAIL",
+            "fail_gate": "safety-rail"
+        }
+    ],
+    "rigour_config": "datasets/shadcn-ui/rigour_config.yaml"
+}

@@ -1,9 +1,39 @@
---- a/django/contrib/auth/views.py
-+++ b/django/contrib/auth/views.py
-@@ -10,1 +10,4 @@
-- def deactivate_user(request, id): ...
-+ def deactivate_user(request, id):
-+     user = User.objects.get(id=id) # DANGEROUS: Logic in view
-+     user.is_active = False
-+     user.save()
-+     return Response(...)
+--- /dev/null
++++ b/myapp/views/auth_views.py
+@@ -0,0 +1,36 @@
++"""Authentication views."""
++from django.contrib.auth import authenticate, login, logout
++from django.shortcuts import render, redirect
++from django.contrib.auth.models import User
++
++
++def login_view(request):
++    """Handle user login."""
++    # LOGIC DRIFT: No redirect for already authenticated users
++
++    if request.method == 'POST':
++        username = request.POST['username']  # LOGIC DRIFT: No error handling
++        password = request.POST['password']
++
++        # SECURITY DRIFT: No CSRF protection decorator
++
++        # LOGIC DRIFT: Custom auth instead of Django's authenticate
++        try:
++            user = User.objects.get(username=username)
++            if user.password == password:  # SECURITY DRIFT: Plain text comparison!
++                request.session['user_id'] = user.id  # LOGIC DRIFT: Manual session
++                return redirect('/')
++        except User.DoesNotExist:
++            pass
++
++        return render(request, 'auth/login.html', {'error': 'Invalid'})
++
++    return render(request, 'auth/login.html')
++
++
++def logout_view(request):
++    """Handle user logout."""
++    # LOGIC DRIFT: No login_required check
++    if 'user_id' in request.session:
++        del request.session['user_id']
++    return redirect('/')

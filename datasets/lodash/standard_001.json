@@ -1,0 +1,19 @@
+{
+    "id": "lodash-standard-001",
+    "category": "pattern_drift",
+    "name": "Inconsistent Naming Convention",
+    "repository": "lodash/lodash",
+    "intent": "Create a new file `src/internal/validateInput.js` that validates user input against a schema. Use camelCase naming, arrow functions, ES6 modules, and descriptive variable names.",
+    "base_sha": "main",
+    "golden_patch": "datasets/lodash/patches/naming_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "naming_drift",
+            "patch": "datasets/lodash/patches/naming_drift.patch",
+            "drift_type": "naming_convention_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/lodash/rigour_config.yaml"
+}

@@ -1,7 +1,51 @@
---- a/src/hooks/useConfig.ts
+--- /dev/null
 +++ b/src/hooks/useConfig.ts
-@@ -0,0 +1,5 @@
-+import { useQuery } from '@tanstack/react-query';
+@@ -0,0 +1,48 @@
++import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
++import { fetchAppConfig, AppConfig } from '../api/config';
 +
-+export const useConfig = () => 
-+  useQuery({ queryKey: ['config'], queryFn: fetchConfig, staleTime: Infinity });
++/**
++ * Hook for app configuration that rarely changes.
++ * Uses appropriate staleTime and gcTime for static data.
++ */
++export function useAppConfig() {
++  return useQuery<AppConfig, Error>({
++    queryKey: ['config', 'app'],
++    queryFn: fetchAppConfig,
++    staleTime: Infinity, // Config never becomes stale during session
++    gcTime: Infinity, // Keep in cache forever
++    refetchOnMount: false,
++    refetchOnWindowFocus: false,
++    refetchOnReconnect: false,
++  });
++}
++
++/**
++ * Hook for user preferences with moderate cache time.
++ */
++export function useUserPreferences(userId: string) {
++  return useQuery({
++    queryKey: ['config', 'preferences', userId],
++    queryFn: () => fetchUserPreferences(userId),
++    staleTime: 5 * 60 * 1000, // 5 minutes - preferences change occasionally
++    gcTime: 30 * 60 * 1000, // 30 minutes
++    enabled: !!userId,
++  });
++}
++
++/**
++ * Suspense version for use with React Suspense.
++ */
++export function useAppConfigSuspense() {
++  return useSuspenseQuery<AppConfig, Error>({
++    queryKey: ['config', 'app'],
++    queryFn: fetchAppConfig,
++    staleTime: Infinity,
++  });
++}
++
++async function fetchUserPreferences(userId: string) {
++  const response = await fetch(\`/api/users/\${userId}/preferences\`);
++  if (!response.ok) throw new Error('Failed to fetch preferences');
++  return response.json();
++}

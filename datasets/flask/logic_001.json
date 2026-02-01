@@ -1,0 +1,19 @@
+{
+    "id": "flask-logic-001",
+    "category": "logic_drift",
+    "name": "Flask g Object Usage",
+    "repository": "pallets/flask",
+    "intent": "Create a new file `src/flask/request_context.py` with utilities for request context. Use Flask's `g` object for request-scoped data, NOT module-level globals.",
+    "base_sha": "main",
+    "golden_patch": "datasets/flask/patches/g_object_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "g_object_drift",
+            "patch": "datasets/flask/patches/g_object_drift.patch",
+            "drift_type": "incorrect_context_usage",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/flask/rigour_config.yaml"
+}

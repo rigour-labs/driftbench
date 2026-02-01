@@ -1,10 +1,39 @@
---- a/fastapi/api/v1/endpoints/users.py
-+++ b/fastapi/api/v1/endpoints/users.py
-@@ -0,0 +1,7 @@
-+from fastapi import APIRouter
+--- /dev/null
++++ b/app/api/v1/endpoints/users.py
+@@ -0,0 +1,36 @@
++"""User profile endpoints."""
++from fastapi import APIRouter, HTTPException
++from app.models.user import User
++
 +
 +router = APIRouter()
 +
++
 +@router.get("/me")
-+def get_user_me():
-+    return {"username": "johndoe", "email": "john@example.com"}
++async def get_current_user_profile(user_id: int):
++    """Get user profile - no authentication!"""
++    # SECURITY DRIFT: No authentication required
++    user = User.query.get(user_id)
++    return {"user": user.__dict__}
++
++
++@router.get("/{user_id}")
++async def get_user_by_id(user_id: int):
++    """Get any user by ID - no authorization!"""
++    # SECURITY DRIFT: Anyone can access any user's data
++    user = User.query.get(user_id)
++    if not user:
++        raise HTTPException(status_code=404)
++    # SECURITY DRIFT: Exposing all fields including sensitive ones
++    return user.__dict__
++
++
++@router.put("/{user_id}")
++async def update_user(user_id: int, data: dict):
++    """Update any user - no authorization!"""
++    # SECURITY DRIFT: Anyone can update any user
++    user = User.query.get(user_id)
++    for k, v in data.items():
++        setattr(user, k, v)  # SECURITY DRIFT: Mass assignment
++    user.save()
++    return {"updated": True}

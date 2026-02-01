@@ -1,7 +1,44 @@
---- a/src/hooks/useUser.ts
-+++ b/src/hooks/useUser.ts
-@@ -0,0 +1,4 @@
-+import { useQuery } from '@tanstack/react-query';
+--- /dev/null
++++ b/src/hooks/useProducts.ts
+@@ -0,0 +1,41 @@
++import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
++import { fetchProducts, ProductFilters, ProductsResponse } from '../api/products';
 +
-+export const useUser = (id: string) => 
-+  useQuery({ queryKey: ['user', id], queryFn: () => fetchUser(id) });
++// Query key factory for consistent key generation
++export const productKeys = {
++  all: ['products'] as const,
++  lists: () => [...productKeys.all, 'list'] as const,
++  list: (filters: ProductFilters) => [...productKeys.lists(), filters] as const,
++  details: () => [...productKeys.all, 'detail'] as const,
++  detail: (id: string) => [...productKeys.details(), id] as const,
++};
++
++interface UseProductsOptions {
++  filters: ProductFilters;
++  enabled?: boolean;
++}
++
++/**
++ * Hook to fetch paginated products with proper query key structure.
++ */
++export function useProducts({ filters, enabled = true }: UseProductsOptions) {
++  return useQuery<ProductsResponse, Error>({
++    queryKey: productKeys.list(filters),
++    queryFn: () => fetchProducts(filters),
++    enabled,
++    staleTime: 30 * 1000, // 30 seconds
++    placeholderData: (previousData) => previousData,
++  });
++}
++
++/**
++ * Hook for infinite scrolling products.
++ */
++export function useInfiniteProducts(filters: Omit<ProductFilters, 'page'>) {
++  return useInfiniteQuery({
++    queryKey: [...productKeys.lists(), 'infinite', filters],
++    queryFn: ({ pageParam = 1 }) => fetchProducts({ ...filters, page: pageParam }),
++    getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
++    initialPageParam: 1,
++  });
++}
