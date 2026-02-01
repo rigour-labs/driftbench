@@ -337,6 +337,15 @@ def calculate_stats() -> Dict[str, Any]:
         "total_tasks": sum(repo_tasks.values()),
         "repositories": repositories,
         "categories": CATEGORIES,
+        "methodology": {
+            "false_positive_explanation": (
+                "Structure-check failures are excluded when they are the ONLY failure reason. "
+                "These occur because Rigour's default configuration requires documentation files "
+                "(SPEC.md, ARCH.md, DECISIONS.md, TASKS.md) that don't exist in most open-source "
+                "repositories. This is a configuration issue, not a model drift detection failure."
+            ),
+            "scoring": "Pass rate = tasks passed / tasks run, excluding structure-check-only failures"
+        },
         "leaderboard": leaderboard
     }
 
