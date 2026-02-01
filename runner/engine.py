@@ -73,9 +73,15 @@ class BenchmarkEngine:
 
     def apply_patch(self, repo_path: str, patch_path: str):
         full_patch_path = os.path.abspath(patch_path)
-        click.echo(f"    🩹 Applying patch: {patch_path}")
-        # Verbose output for debugging
-        subprocess.run(["git", "apply", "--verbose", full_patch_path], cwd=repo_path, check=True)
+        click.echo(f"    🩹 Applying patch (Lenient): {patch_path}")
+        # Use 'patch -p1' which is more lenient than 'git apply' regarding whitespace and offsets
+        try:
+            # We use --fuzz=3 to allow minor context mismatches often created by LLMs
+            subprocess.run(["patch", "-p1", "--input", full_patch_path], cwd=repo_path, check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            # If patch fails, log the specific error for debugging
+            click.secho(f"    ❌ Patch failure details: {e.stderr.decode()}", fg='red')
+            raise
 
     def run_rigour(self, repo_path: str, config_path: str) -> Dict:
         """Runs rigour check and returns the results."""

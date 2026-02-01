@@ -80,10 +80,24 @@ class LLMHarness:
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": prompt}
-                ]
+                ],
+                temperature=0 # Force deterministic and cleaner output
             )
             
             patch_text = response.choices[0].message.content
+            
+            # Robust extraction: find the first line starting with --- or +++
+            lines = patch_text.splitlines()
+            start_index = -1
+            for i, line in enumerate(lines):
+                if line.startswith("--- ") or line.startswith("+++ "):
+                    start_index = i
+                    break
+            
+            if start_index != -1:
+                # Remove anything before the diff headers
+                patch_text = "\n".join(lines[start_index:])
+                
             # Basic cleanup if model includes markdown
             if "```diff" in patch_text:
                 patch_text = patch_text.split("```diff")[1].split("```")[0]
