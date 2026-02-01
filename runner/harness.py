@@ -216,41 +216,92 @@ class LLMHarness:
 
     def _extract_patch(self, response_text: str) -> str:
         """
-        Extract patch content from LLM response.
+        Extract patch content from LLM response and normalize format.
 
         Handles multiple formats:
         1. Markdown code blocks (```diff ... ```)
         2. Raw unified diff format
         3. Plain text with diff markers
 
+        Also normalizes:
+        - Ensures paths have a/ and b/ prefixes for git apply compatibility
+
         Args:
             response_text: Raw LLM response
 
         Returns:
-            Extracted patch content
+            Extracted and normalized patch content
         """
+        patch = None
+
         # Strategy 1: Markdown code block
-        markdown_match = re.search(r"```(?:diff)?\s*([\s\S]*?)\s*```", response_text)
+        markdown_match = re.search(r"```(?:diff|patch)?\s*([\s\S]*?)\s*```", response_text)
         if markdown_match:
-            patch = markdown_match.group(1).strip()
-            if "--- " in patch and "+++ " in patch:
-                return patch
+            candidate = markdown_match.group(1).strip()
+            if "--- " in candidate or "+++ " in candidate:
+                patch = candidate
 
         # Strategy 2: Find diff headers and capture everything after
-        # Match: --- a/path or --- path (with optional timestamps)
-        diff_pattern = r"(---\s+(?:a/)?\S+.*?[\r\n]+\+\+\+\s+(?:b/)?\S+.*?[\r\n]+(?:@@.*@@[\s\S]*?)?)(?=\n---\s|\Z)"
-        matches = re.findall(diff_pattern, response_text, re.MULTILINE)
-        if matches:
-            return "\n".join(matches).strip()
+        if not patch:
+            diff_pattern = r"(---\s+(?:a/)?\S+.*?[\r\n]+\+\+\+\s+(?:b/)?\S+.*?[\r\n]+(?:@@.*@@[\s\S]*?)?)(?=\n---\s|\Z)"
+            matches = re.findall(diff_pattern, response_text, re.MULTILINE)
+            if matches:
+                patch = "\n".join(matches).strip()
 
         # Strategy 3: Find first line starting with --- or +++
-        lines = response_text.splitlines()
-        for i, line in enumerate(lines):
-            if line.startswith("--- ") or line.startswith("+++ "):
-                return "\n".join(lines[i:]).strip()
+        if not patch:
+            lines = response_text.splitlines()
+            for i, line in enumerate(lines):
+                if line.startswith("--- ") or line.startswith("+++ "):
+                    patch = "\n".join(lines[i:]).strip()
+                    break
 
-        # Fallback: return as-is (may fail patch application)
-        return response_text.strip()
+        # Fallback: return as-is
+        if not patch:
+            patch = response_text.strip()
+
+        # Normalize: ensure a/ and b/ prefixes for git compatibility
+        patch = self._normalize_patch_paths(patch)
+
+        return patch
+
+    def _normalize_patch_paths(self, patch: str) -> str:
+        """
+        Normalize patch paths to ensure a/ and b/ prefixes.
+
+        Git apply and patch -p1 expect paths like:
+        --- a/path/to/file
+        +++ b/path/to/file
+
+        This handles cases where LLMs output:
+        --- path/to/file
+        +++ path/to/file
+
+        Args:
+            patch: Raw patch content
+
+        Returns:
+            Patch with normalized paths
+        """
+        lines = patch.split('\n')
+        normalized = []
+
+        for line in lines:
+            # Handle --- lines (but not /dev/null)
+            if line.startswith('--- ') and not line.startswith('--- a/') and '/dev/null' not in line:
+                path = line[4:].strip()
+                # Remove any leading slashes
+                path = path.lstrip('/')
+                normalized.append(f'--- a/{path}')
+            # Handle +++ lines (but not /dev/null)
+            elif line.startswith('+++ ') and not line.startswith('+++ b/') and '/dev/null' not in line:
+                path = line[4:].strip()
+                path = path.lstrip('/')
+                normalized.append(f'+++ b/{path}')
+            else:
+                normalized.append(line)
+
+        return '\n'.join(normalized)
 
     def run_task(self, task: Task) -> Dict:
         """

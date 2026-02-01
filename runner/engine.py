@@ -142,7 +142,12 @@ class BenchmarkEngine:
 
     def apply_patch(self, repo_path: str, patch_path: str) -> List[str]:
         """
-        Apply a patch file to the repository.
+        Apply a patch file to the repository using multiple strategies.
+
+        Tries in order:
+        1. git apply (most reliable for git-style patches)
+        2. git apply with --3way (handles missing context)
+        3. patch utility with lenient options
 
         Args:
             repo_path: Path to the repository
@@ -152,7 +157,7 @@ class BenchmarkEngine:
             List of files modified by the patch
 
         Raises:
-            subprocess.CalledProcessError: If patch application fails
+            subprocess.CalledProcessError: If all patch strategies fail
         """
         import re
         full_patch_path = os.path.abspath(patch_path)
@@ -164,23 +169,115 @@ class BenchmarkEngine:
         modified_files = []
         with open(full_patch_path, 'r') as f:
             patch_content = f.read()
-            # Match '--- a/path' or '+++ b/path' patterns
-            for match in re.finditer(r'^(?:---|\+\+\+)\s+[ab]/(.+?)(?:\s|$)', patch_content, re.MULTILINE):
-                file_path = match.group(1)
-                if file_path not in modified_files and file_path != '/dev/null':
-                    modified_files.append(file_path)
+
+        # Match '--- a/path', '+++ b/path', or '--- /dev/null' patterns
+        for match in re.finditer(r'^(?:---|\+\+\+)\s+(?:[ab]/)?(.+?)(?:\s|$)', patch_content, re.MULTILINE):
+            file_path = match.group(1)
+            if file_path and file_path not in modified_files and file_path != '/dev/null':
+                modified_files.append(file_path)
 
         click.echo(f"    🩹 Applying patch: {os.path.basename(patch_path)}")
+
+        # Strategy 1: git apply (standard)
         try:
-            subprocess.run(
-                ["patch", "-p1", "--ignore-whitespace", "--input", full_patch_path],
-                cwd=repo_path, check=True, capture_output=True
+            result = subprocess.run(
+                ["git", "apply", "--whitespace=nowarn", full_patch_path],
+                cwd=repo_path, capture_output=True, text=True
             )
-            return modified_files
-        except subprocess.CalledProcessError as e:
-            stderr = e.stderr.decode() if e.stderr else "Unknown error"
-            click.secho(f"    ❌ Patch failed: {stderr}", fg='red')
-            raise
+            if result.returncode == 0:
+                return modified_files
+        except Exception:
+            pass
+
+        # Strategy 2: git apply with --3way (handles missing context by doing 3-way merge)
+        try:
+            result = subprocess.run(
+                ["git", "apply", "--3way", "--whitespace=nowarn", full_patch_path],
+                cwd=repo_path, capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                click.echo(f"    ℹ️  Applied with 3-way merge")
+                return modified_files
+        except Exception:
+            pass
+
+        # Strategy 3: git apply with --reject (apply what we can, create .rej for rest)
+        try:
+            result = subprocess.run(
+                ["git", "apply", "--reject", "--whitespace=nowarn", full_patch_path],
+                cwd=repo_path, capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                click.echo(f"    ℹ️  Applied with possible rejects")
+                return modified_files
+        except Exception:
+            pass
+
+        # Strategy 4: patch utility (fallback)
+        try:
+            result = subprocess.run(
+                ["patch", "-p1", "--ignore-whitespace", "--fuzz=3", "--input", full_patch_path],
+                cwd=repo_path, capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                click.echo(f"    ℹ️  Applied with patch utility")
+                return modified_files
+        except Exception:
+            pass
+
+        # Strategy 5: Direct file creation for new file patches
+        if "--- /dev/null" in patch_content:
+            try:
+                return self._apply_new_file_patch(repo_path, patch_content)
+            except Exception as e:
+                click.secho(f"    ⚠️  New file patch failed: {e}", fg='yellow')
+
+        # All strategies failed
+        click.secho(f"    ❌ All patch strategies failed", fg='red')
+        raise subprocess.CalledProcessError(1, "patch", b"", b"All patch strategies failed")
+
+    def _apply_new_file_patch(self, repo_path: str, patch_content: str) -> List[str]:
+        """
+        Manually apply a patch that creates new files.
+
+        This handles patches with '--- /dev/null' that create new files,
+        even if they don't have proper context lines.
+        """
+        import re
+
+        modified_files = []
+
+        # Find all new file hunks
+        # Pattern: +++ b/path followed by content
+        pattern = r'\+\+\+ b/(.+?)(?:\s|$)[\s\S]*?(?=^---|\Z)'
+        matches = list(re.finditer(pattern, patch_content, re.MULTILINE))
+
+        for match in matches:
+            file_path = match.group(1).strip()
+            full_match = match.group(0)
+
+            # Extract the added lines (lines starting with +, excluding +++)
+            lines = []
+            for line in full_match.split('\n'):
+                if line.startswith('+') and not line.startswith('+++'):
+                    lines.append(line[1:])  # Remove the leading +
+
+            if lines and file_path:
+                # Create parent directories
+                full_path = os.path.join(repo_path, file_path)
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
+                # Write the file
+                with open(full_path, 'w') as f:
+                    f.write('\n'.join(lines))
+
+                modified_files.append(file_path)
+                click.echo(f"    📝 Created new file: {file_path}")
+
+        if not modified_files:
+            raise ValueError("No new files found in patch")
+
+        return modified_files
 
     def _get_rigour_command(self) -> List[str]:
         """
