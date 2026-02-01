@@ -30,21 +30,34 @@ class LLMHarness:
         self.engine = BenchmarkEngine(os.getcwd())
 
     def get_repo_context(self, repo_path: str) -> str:
-        """Simple context collector - in a real scenario, this would use a more advanced RAG or tree-sitter approach."""
+        """Collects repo context with a strict budget to avoid token overflow."""
         context = []
-        # For simplicity in the benchmark, we provide a few top-level files or specific files if we had them.
-        # Here we just list the files to give the LLM an idea.
+        total_chars = 0
+        MAX_CONTEXT_CHARS = 400000  # ~100k tokens budget
+        
         for root, dirs, files in os.walk(repo_path):
-            if '.git' in dirs: dirs.remove('.git')
-            if 'node_modules' in dirs: dirs.remove('node_modules')
-            if 'venv' in dirs: dirs.remove('venv')
+            if total_chars >= MAX_CONTEXT_CHARS:
+                break
+                
+            # Ignore binary and hidden dirs
+            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['node_modules', 'venv', '__pycache__', 'dist', 'build']]
             
-            for f in files[:20]: # Limit to avoid token blast
+            for f in files:
+                if total_chars >= MAX_CONTEXT_CHARS:
+                    break
+                    
+                # Skip common non-code/heavy files
+                if f.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf', '.zip', '.lock', '-lock.json')):
+                    continue
+                    
                 try:
                     p = os.path.join(root, f)
                     with open(p, 'r', errors='ignore') as src:
-                        content = src.read()[:2000]
-                        context.append(f"--- File: {os.path.relpath(p, repo_path)} ---\n{content}\n")
+                        # Use a smaller slice per file for massive repos
+                        content = src.read()[:1500] 
+                        entry = f"--- File: {os.path.relpath(p, repo_path)} ---\n{content}\n"
+                        context.append(entry)
+                        total_chars += len(entry)
                 except:
                     continue
         return "\n".join(context)
