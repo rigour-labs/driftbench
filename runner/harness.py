@@ -327,6 +327,8 @@ class LLMHarness:
         report = {
             "task_id": task.id,
             "model": self.model,
+            "repository": task.repository,
+            "category": task.category,
             "llm_result": llm_result,
             "golden_result": golden_result,
             "passed": passed,
@@ -346,6 +348,8 @@ class LLMHarness:
         report = {
             "task_id": task.id,
             "model": self.model,
+            "repository": task.repository,
+            "category": task.category,
             "error": error,
             "passed": False,
             "correct": False

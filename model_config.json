@@ -2,23 +2,33 @@
     "model_config": {
         "anthropic/claude-opus-4-5-20251101": {
             "mode": "chat",
-            "max_tokens": 4096
+            "max_tokens": 4096,
+            "display_name": "Claude Opus 4.5"
         },
-        "openai/gpt-4o": {
+        "anthropic/claude-sonnet-4-20250514": {
             "mode": "chat",
-            "max_tokens": 4096
+            "max_tokens": 4096,
+            "display_name": "Claude Sonnet 4"
         },
-        "openai/o1": {
+        "openai/gpt-4.1": {
             "mode": "chat",
-            "max_tokens": 4096
+            "max_tokens": 4096,
+            "display_name": "GPT-4.1"
         },
-        "gemini/gemini-3-pro-preview": {
+        "openai/o3-mini": {
             "mode": "chat",
-            "max_tokens": 4096
+            "max_tokens": 4096,
+            "display_name": "o3-mini"
         },
-        "gemini/gemini-3-flash-preview": {
+        "gemini/gemini-2.5-pro": {
             "mode": "chat",
-            "max_tokens": 4096
+            "max_tokens": 4096,
+            "display_name": "Gemini 2.5 Pro"
+        },
+        "gemini/gemini-2.5-flash": {
+            "mode": "chat",
+            "max_tokens": 4096,
+            "display_name": "Gemini 2.5 Flash"
         }
     }
 }
