@@ -86,42 +86,60 @@ class BenchmarkEngine:
         except Exception as e:
             return {"status": "ERROR", "error": str(e)}
 
+    def evaluate_patch(self, task: Task, patch_path: str, candidate_id: str, results_dir: str = "results") -> Dict:
+        """Evaluates a single patch for a task and collects events."""
+        repo_path = self.setup_repo(task.repository, task.base_sha)
+        
+        # Reset and apply patch
+        subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True)
+        subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
+        self.apply_patch(repo_path, patch_path)
+        
+        # Run Rigour
+        report = self.run_rigour(repo_path, task.rigour_config)
+        detected = report.get("status") == "FAIL"
+        
+        # Collect events for Studio Integration
+        events_src = os.path.join(repo_path, ".rigour", "events.jsonl")
+        if os.path.exists(events_src):
+            studio_dir = os.path.join(results_dir, "studio", task.id)
+            os.makedirs(studio_dir, exist_ok=True)
+            import shutil
+            shutil.copy2(events_src, os.path.join(studio_dir, f"{candidate_id}.jsonl"))
+            
+        return {
+            "candidate_id": candidate_id,
+            "detected": detected,
+            "report": report
+        }
+
     def evaluate_task(self, task: Task):
         click.echo(f"🚀 Evaluating Task: {task.name} ({task.id})")
         
-        repo_path = self.setup_repo(task.repository, task.base_sha)
-        results = []
-
+        # Ensure results directory exists
+        results_dir = "results"
+        os.makedirs(results_dir, exist_ok=True)
+        
         # 1. Validate Golden Patch (The "Null" Case)
         click.echo("  🌟 Validating Golden Patch (True Negative Check)...")
-        subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
-        self.apply_patch(repo_path, task.golden_patch)
-        gold_report = self.run_rigour(repo_path, task.rigour_config)
+        gold_result = self.evaluate_patch(task, task.golden_patch, "gold_baseline", results_dir)
         
-        if gold_report.get("status") == "PASS":
+        if not gold_result["detected"]:
             click.secho("    ✅ Golden patch passed correctly.", fg='green')
         else:
             click.secho("    ❌ FAILED: Golden patch triggered a false positive!", fg='red', bold=True)
-            click.echo(f"    Full Report: {json.dumps(gold_report, indent=2)}")
-            return {"status": "INVALID_TASK", "errors": gold_report.get("failures")}
+            return {"status": "INVALID_TASK", "errors": gold_result["report"].get("failures")}
 
         # 2. Evaluate Drift Candidates (The "Drift" Cases)
+        results = []
         for candidate in task.drift_candidates:
             click.echo(f"  🔍 Checking Candidate: {candidate.id} ({candidate.drift_type})")
-            
-            # Reset and apply candidate patch
-            subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True)
-            subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
-            self.apply_patch(repo_path, candidate.patch)
-            
-            # Run Rigour
-            report = self.run_rigour(repo_path, task.rigour_config)
+            res = self.evaluate_patch(task, candidate.patch, candidate.id, results_dir)
             
             # Evaluation logic
-            detected = report.get("status") == "FAIL"
-            if detected:
+            if res["detected"]:
                 # Check if the specific gate failed if specified
-                failed_gates = report.get("summary", {})
+                failed_gates = res["report"].get("summary", {})
                 gate_caught = candidate.fail_gate is None or failed_gates.get(candidate.fail_gate) == "FAIL"
                 
                 if gate_caught:
@@ -135,10 +153,9 @@ class BenchmarkEngine:
                     click.secho(f"    ✅ CORRECTly allowed valid change", fg='green')
             
             results.append({
-                "candidate_id": candidate.id,
-                "detected": detected,
+                **res,
                 "expected": candidate.expected_result,
-                "report": report
+                "drift_type": candidate.drift_type
             })
             
         return results
