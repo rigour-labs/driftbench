@@ -23,6 +23,11 @@ class Task(BaseModel):
     drift_candidates: List[DriftCandidate]
     rigour_config: str = ".rigour/config.yaml"
 
+    @staticmethod
+    def from_json(path: str) -> 'Task':
+        with open(path, 'r') as f:
+            return Task(**json.load(f))
+
 class BenchmarkEngine:
     def __init__(self, workspace_root: str):
         self.workspace_root = workspace_root
