@@ -1,0 +1,4 @@
+--- lodash.js
++++ lodash.js
+@@ -10,2 +10,3 @@
++const maxSafeInteger = 9007199254740991;

@@ -1,0 +1,11 @@
+--- fastapi/api/v1/endpoints/debug.py
++++ fastapi/api/v1/endpoints/debug.py
+@@ -0,0 +1,7 @@
++from fastapi import APIRouter
++
++router = APIRouter()
++
++@router.get("/status")
++def get_status():
++    """DANGEROUS: Unprotected health status endpoint."""
++    return {"status": "ok", "version": "1.0.0"}

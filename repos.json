@@ -1,0 +1,62 @@
+[
+    {
+        "name": "shadcn/ui",
+        "language": "TS",
+        "focus": "UI Patterns & Component Architecture",
+        "url": "https://github.com/shadcn-ui/ui"
+    },
+    {
+        "name": "tiangolo/fastapi",
+        "language": "Python",
+        "focus": "API Patterns & Validation",
+        "url": "https://github.com/tiangolo/fastapi"
+    },
+    {
+        "name": "vercel/next.js",
+        "language": "TS",
+        "focus": "Framework Best Practices",
+        "url": "https://github.com/vercel/next.js"
+    },
+    {
+        "name": "django/django",
+        "language": "Python",
+        "focus": "ORM Safety & Security",
+        "url": "https://github.com/django/django"
+    },
+    {
+        "name": "lodash/lodash",
+        "language": "TS",
+        "focus": "Logic Integrity",
+        "url": "https://github.com/lodash/lodash"
+    },
+    {
+        "name": "pydantic/pydantic",
+        "language": "Python",
+        "focus": "Data Validation",
+        "url": "https://github.com/pydantic/pydantic"
+    },
+    {
+        "name": "openai/openai-python",
+        "language": "Python",
+        "focus": "Integration Patterns",
+        "url": "https://github.com/openai/openai-python"
+    },
+    {
+        "name": "facebook/react",
+        "language": "TS",
+        "focus": "Dependency Drift",
+        "url": "https://github.com/facebook/react"
+    },
+    {
+        "name": "TanStack/query",
+        "language": "TS",
+        "focus": "Pattern Indexing",
+        "url": "https://github.com/TanStack/query"
+    },
+    {
+        "name": "pallets/flask",
+        "language": "Python",
+        "focus": "Core Logic Stability",
+        "url": "https://github.com/pallets/flask"
+    }
+]

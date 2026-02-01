@@ -1,0 +1,19 @@
+{
+    "id": "flask-logic-001",
+    "category": "logic_drift",
+    "name": "Bypass Request Global",
+    "repository": "pallets/flask",
+    "intent": "Add a new route `/logging/config`. MUST use the standard `flask.g` object for storing ephemeral configuration.",
+    "base_sha": "main",
+    "golden_patch": "datasets/flask/patches/g_object_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "local_import_drift",
+            "patch": "datasets/flask/patches/g_object_drift.patch",
+            "drift_type": "logic_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "context-drift"
+        }
+    ],
+    "rigour_config": "datasets/flask/rigour_config.yaml"
+}

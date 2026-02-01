@@ -1,0 +1,9 @@
+--- src/Counter.js
++++ src/Counter.js
+@@ -0,0 +1,6 @@
++import React from 'react';
++
++export function Counter() {
++  let count = 0;
++  return <button onClick={() => { count++; console.log(count); }}>{count}</button>; // DANGEROUS: No state management
++}

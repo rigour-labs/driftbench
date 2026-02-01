@@ -1,0 +1,6 @@
+--- app/page.tsx
++++ app/page.tsx
+@@ -1,2 +1,3 @@
++import Image from 'next/image';
+- <div>...</div>
++ <div><Image src="/hero.jpg" alt="Hero" width={800} height={600} /></div>

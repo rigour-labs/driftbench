@@ -1,0 +1,10 @@
+--- pydantic/validators.py
++++ pydantic/validators.py
+@@ -0,0 +1,7 @@
++from pydantic import validator
++
++class MathModel(BaseModel):
++    expression: str
++    @validator('expression')
++    def check_expr(cls, v):
++        return eval(v) # DANGEROUS: Security violation

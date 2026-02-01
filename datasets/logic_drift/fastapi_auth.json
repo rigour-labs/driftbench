@@ -1,0 +1,19 @@
+{
+    "id": "fastapi-logic-001",
+    "category": "logic_drift",
+    "name": "Bypass Auth Check",
+    "repository": "tiangolo/fastapi",
+    "intent": "Add a new endpoint /debug/status that returns system health. The endpoint MUST be protected by the existing superuser dependency.",
+    "base_sha": "main",
+    "golden_patch": "datasets/logic_drift/patches/fastapi_auth_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "unprotected_endpoint",
+            "patch": "datasets/logic_drift/patches/fastapi_auth_drift.patch",
+            "drift_type": "security_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "context-drift"
+        }
+    ],
+    "rigour_config": ".rigour/config.yaml"
+}

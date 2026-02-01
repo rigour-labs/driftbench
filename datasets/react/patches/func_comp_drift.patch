@@ -1,0 +1,10 @@
+--- src/UserProfile.js
++++ src/UserProfile.js
+@@ -0,0 +1,7 @@
++import React, { Component } from 'react';
++
++export class UserProfile extends Component { // STALE: Class component
++  render() {
++    return <div>{this.props.name}</div>;
++  }
++}

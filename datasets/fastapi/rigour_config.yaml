@@ -1,0 +1,21 @@
+gates:
+  pattern-index:
+    enabled: true
+    min_confidence: 80
+  context:
+    enabled: true
+  safety-rail:
+    enabled: true
+    forbidden_patterns:
+      - pattern: "logging\\.info.*request\\.headers"
+        message: "DANGEROUS: Direct logging of request headers might expose PII. Use a filter."
+        severity: "BLOCK"
+  forbid_todos: false
+  max_file_lines: 5000 # Increased to avoid pre-existing noisy failures
+  required_files: [] # Disabled for benchmark tasks to avoid pre-existing missing file noise
+
+ignore:
+  - "docs/**"
+  - "tests/**"
+  - "scripts/**"
+  - "**/node_modules/**"

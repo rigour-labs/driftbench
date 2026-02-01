@@ -1,0 +1,15 @@
+--- fastapi/api/v1/endpoints/users.py
++++ fastapi/api/v1/endpoints/users.py
+@@ -0,0 +1,11 @@
++from fastapi import APIRouter
++from pydantic import BaseModel
++
++class UserProfile(BaseModel):
++    username: str
++    email: str
++
++router = APIRouter()
++
++@router.get("/me", response_model=UserProfile)
++def get_user_me():
++    return UserProfile(username="johndoe", email="john@example.com")

@@ -1,0 +1,8 @@
+--- lib/data.ts
++++ lib/data.ts
+@@ -0,0 +1,5 @@
++import { db } from './db';
++
++export const getProducts = async () => {
++  return db.product.findMany(); // Drift: No caching wrapper
++};

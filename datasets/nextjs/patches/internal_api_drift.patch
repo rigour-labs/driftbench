@@ -1,0 +1,8 @@
+--- app/api/internal/stats/route.ts
++++ app/api/internal/stats/route.ts
+@@ -0,0 +1,4 @@
++import { NextResponse } from "next/server";
++
++export async function GET() {
++  return NextResponse.json({ stats: "..." }); // DANGEROUS: Public internal API
++}

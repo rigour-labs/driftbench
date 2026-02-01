@@ -1,0 +1,7 @@
+--- examples/agent.py
++++ examples/agent.py
+@@ -0,0 +1,6 @@
++def safe_chat(prompt):
++    if "ignore previous instructions" in prompt.lower():
++        raise ValueError("Potential prompt injection detected")
++    return client.chat.completions.create(...)

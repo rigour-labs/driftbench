@@ -1,0 +1,10 @@
+--- fastapi/api/v1/endpoints/users.py
++++ fastapi/api/v1/endpoints/users.py
+@@ -0,0 +1,7 @@
++from fastapi import APIRouter
++
++router = APIRouter()
++
++@router.get("/me")
++def get_user_me():
++    return {"username": "johndoe", "email": "john@example.com"}

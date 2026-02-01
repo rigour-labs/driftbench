@@ -1,0 +1,19 @@
+{
+    "id": "fastapi-security-002",
+    "category": "security_drift",
+    "name": "Insecure CORS Config",
+    "repository": "tiangolo/fastapi",
+    "intent": "Configure a new CORS policy for the API. MUST NOT allow all origins (`*`) in production.",
+    "base_sha": "main",
+    "golden_patch": "datasets/fastapi/patches/cors_security_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "allow_all_origins",
+            "patch": "datasets/fastapi/patches/cors_security_drift.patch",
+            "drift_type": "security_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "safety-rail"
+        }
+    ],
+    "rigour_config": "datasets/fastapi/rigour_config.yaml"
+}

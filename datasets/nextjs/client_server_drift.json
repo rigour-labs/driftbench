@@ -1,0 +1,19 @@
+{
+    "id": "nextjs-arch-001",
+    "category": "arch_drift",
+    "name": "Server Logic in Client Component",
+    "repository": "vercel/next.js",
+    "intent": "Add user count to the Navigation component. Note: Navigation is a Client Component for interactivity.",
+    "base_sha": "canary",
+    "golden_patch": "datasets/nextjs/patches/client_server_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "direct_db_in_client",
+            "patch": "datasets/nextjs/patches/client_server_drift.patch",
+            "drift_type": "architectural_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/nextjs/rigour_config.yaml"
+}

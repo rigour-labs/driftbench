@@ -1,0 +1,9 @@
+--- examples/chat.py
++++ examples/chat.py
+@@ -0,0 +1,6 @@
++import openai
++
++response = openai.ChatCompletion.create( # DANGEROUS: Legacy v0 syntax
++  model="gpt-4",
++  messages=[{"role": "user", "content": "Hello"}]
++)

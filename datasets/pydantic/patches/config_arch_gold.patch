@@ -1,0 +1,6 @@
+--- pydantic/models.py
++++ pydantic/models.py
+@@ -10,2 +10,4 @@
+ class MyModel(BaseModel):
++    model_config = ConfigDict(strict=True)
++    name: str

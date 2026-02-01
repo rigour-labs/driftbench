@@ -1,0 +1,6 @@
+--- django/db/utils.py
++++ django/db/utils.py
+@@ -1,4 +1,5 @@
++def deactivate_bulk(user_ids):
++    for uid in user_ids:
++        User.objects.filter(id=uid).update(is_active=False) # DANGEROUS: Not atomic

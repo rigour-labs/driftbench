@@ -1,0 +1,19 @@
+{
+    "id": "shadcn-standard-001",
+    "category": "standard_drift",
+    "name": "Component Complexity Drift",
+    "repository": "shadcn/ui",
+    "intent": "Add a 'loading' and 'success' variant to the Button component. MUST maintain low cyclomatic complexity.",
+    "base_sha": "main",
+    "golden_patch": "datasets/shadcn-ui/patches/button_variants_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "high_complexity_button",
+            "patch": "datasets/shadcn-ui/patches/button_variants_drift.patch",
+            "drift_type": "complexity_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/shadcn-ui/rigour_config.yaml"
+}

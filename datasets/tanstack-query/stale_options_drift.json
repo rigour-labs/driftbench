@@ -1,0 +1,19 @@
+{
+    "id": "query-stale-001",
+    "category": "stale_drift",
+    "name": "Legacy Query Options",
+    "repository": "TanStack/query",
+    "intent": "Implement a `useProducts` hook. MUST use the object-style `useQuery` options (v5 standard).",
+    "base_sha": "main",
+    "golden_patch": "datasets/tanstack-query/patches/v5_options_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "legacy_v4_args",
+            "patch": "datasets/tanstack-query/patches/v5_options_drift.patch",
+            "drift_type": "staleness_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "staleness"
+        }
+    ],
+    "rigour_config": "datasets/tanstack-query/rigour_config.yaml"
+}

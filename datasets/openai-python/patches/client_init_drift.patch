@@ -1,0 +1,8 @@
+--- examples/helper.py
++++ examples/helper.py
+@@ -0,0 +1,5 @@
++from openai import OpenAI
++
++client = OpenAI(
++    api_key="sk-..." # DANGEROUS: Hardcoded key
++)

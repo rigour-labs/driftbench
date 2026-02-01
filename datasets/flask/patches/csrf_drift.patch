@@ -1,0 +1,7 @@
+--- flask/routes.py
++++ flask/routes.py
+@@ -0,0 +1,4 @@
++@app.route("/contact/submit", methods=["POST"])
++def submit():
++    # DANGEROUS: Missing CSRF protection
++    return {"status": "success"}

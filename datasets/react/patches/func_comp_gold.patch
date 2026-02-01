@@ -1,0 +1,8 @@
+--- src/UserProfile.js
++++ src/UserProfile.js
+@@ -0,0 +1,5 @@
++import React from 'react';
++
++export function UserProfile({ name }) {
++  return <div>{name}</div>;
++}

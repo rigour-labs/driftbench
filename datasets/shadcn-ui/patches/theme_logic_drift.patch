@@ -1,0 +1,6 @@
+--- packages/ui/src/components/dark-card.tsx
++++ packages/ui/src/components/dark-card.tsx
+@@ -0,0 +1,3 @@
++export function DarkCard() {
++  return <div style={{ backgroundColor: "#000", color: "#fff" }}>Content</div>; // Drift: Hardcoded hex
++}

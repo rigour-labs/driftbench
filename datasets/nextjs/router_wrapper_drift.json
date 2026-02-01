@@ -1,0 +1,19 @@
+{
+    "id": "nextjs-pattern-001",
+    "category": "pattern_drift",
+    "name": "Direct Router Usage",
+    "repository": "vercel/next.js",
+    "intent": "Implement a navigation button. MUST use the `useNavigation` hook wrapper from `@/lib/navigation`.",
+    "base_sha": "canary",
+    "golden_patch": "datasets/nextjs/patches/router_wrapper_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "direct_next_router",
+            "patch": "datasets/nextjs/patches/router_wrapper_drift.patch",
+            "drift_type": "pattern_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "pattern-index"
+        }
+    ],
+    "rigour_config": "datasets/nextjs/rigour_config.yaml"
+}

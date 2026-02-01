@@ -1,0 +1,19 @@
+{
+    "id": "openai-logic-001",
+    "category": "logic_drift",
+    "name": "Missing Model Fallback",
+    "repository": "openai/openai-python",
+    "intent": "Implement a chat completion function. MUST include a fallback to `gpt-3.5-turbo` if the primary model fails.",
+    "base_sha": "main",
+    "golden_patch": "datasets/openai-python/patches/fallback_logic_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "missing_retry_logic",
+            "patch": "datasets/openai-python/patches/fallback_logic_drift.patch",
+            "drift_type": "logic_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "context-drift"
+        }
+    ],
+    "rigour_config": "datasets/openai-python/rigour_config.yaml"
+}

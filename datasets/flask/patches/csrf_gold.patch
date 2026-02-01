@@ -1,0 +1,9 @@
+--- flask/routes.py
++++ flask/routes.py
+@@ -0,0 +1,6 @@
++from flask_wtf.csrf import CSRFProtect
++
++@app.route("/contact/submit", methods=["POST"])
++@csrf.exempt # No, this is golden, so we want it protected
++def submit():
++    return {"status": "success"}

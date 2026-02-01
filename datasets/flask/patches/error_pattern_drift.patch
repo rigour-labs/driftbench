@@ -1,0 +1,8 @@
+--- flask/routes.py
++++ flask/routes.py
+@@ -10,1 +10,4 @@
+- def get_index(): ...
++ def get_index():
++     # DANGEROUS: Manual error handling instead of decorator
++     if not exists(): return {"error": "not_found"}, 404
++     return {"ok": True}

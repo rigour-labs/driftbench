@@ -1,0 +1,9 @@
+--- django/contrib/auth/views.py
++++ django/contrib/auth/views.py
+@@ -10,1 +10,4 @@
+- def deactivate_user(request, id): ...
++ def deactivate_user(request, id):
++     user = User.objects.get(id=id) # DANGEROUS: Logic in view
++     user.is_active = False
++     user.save()
++     return Response(...)

@@ -1,0 +1,7 @@
+--- src/Input.js
++++ src/Input.js
+@@ -1,3 +1,4 @@
+ export function MyInput() {
+-  return <input id="my-input" />;
++  return <input id="my-input" onFocus={() => document.getElementById('my-input').focus()} />; // DANGEROUS: Direct DOM manipulation
+ }

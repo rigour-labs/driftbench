@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.drift_tmp/
+
+# Rigour
+.rigour/
+rigour-report.json
+rigour-fix-packet.json
+
+# OS
+.DS_Store

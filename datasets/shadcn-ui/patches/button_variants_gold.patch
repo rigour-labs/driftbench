@@ -1,0 +1,9 @@
+--- packages/ui/src/button.tsx
++++ packages/ui/src/button.tsx
+@@ -5,2 +5,4 @@
+   variants: {
++    status: {
++      loading: "opacity-50 cursor-not-allowed",
++      success: "bg-green-500",
++    },
+     variant: {

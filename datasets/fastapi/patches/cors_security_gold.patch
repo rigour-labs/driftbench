@@ -1,0 +1,8 @@
+--- fastapi/main.py
++++ fastapi/main.py
+@@ -10,2 +10,6 @@
++app.add_middleware(
++    CORSMiddleware,
++    allow_origins=["https://rigour.run"],
++    allow_methods=["GET"],
++)

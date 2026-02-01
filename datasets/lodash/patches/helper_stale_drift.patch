@@ -1,0 +1,7 @@
+--- lodash.js
++++ lodash.js
+@@ -100,2 +100,5 @@
++function isStringObject(value) {
++  var type = typeof value; // DANGEROUS: Stale 'var' usage
++  return type === 'object' && value !== null;
++}

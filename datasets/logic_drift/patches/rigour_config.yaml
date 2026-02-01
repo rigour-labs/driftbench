@@ -1,0 +1,15 @@
+gates:
+  context:
+    enabled: true
+    mining_depth: 100
+  safety:
+    protected_paths:
+      - "fastapi/core/**"
+      - "fastapi/api/v1/dependencies/**"
+
+discovery:
+  anchors:
+    - id: "get_current_superuser"
+      type: "import"
+      pattern: "from fastapi.api.v1.dependencies import get_current_superuser"
+      confidence: 1.0

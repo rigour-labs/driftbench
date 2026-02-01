@@ -1,0 +1,19 @@
+{
+    "id": "pydantic-logic-001",
+    "category": "logic_drift",
+    "name": "Ignored Extra Fields",
+    "repository": "pydantic/pydantic",
+    "intent": "Define a `StrictModel`. MUST forbid extra fields to prevent silent data loss.",
+    "base_sha": "main",
+    "golden_patch": "datasets/pydantic/patches/extra_forbid_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "extra_ignore_drift",
+            "patch": "datasets/pydantic/patches/extra_forbid_drift.patch",
+            "drift_type": "logic_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "context-drift"
+        }
+    ],
+    "rigour_config": "datasets/pydantic/rigour_config.yaml"
+}

@@ -1,0 +1,6 @@
+--- pydantic/main.py
++++ pydantic/main.py
+@@ -10,2 +10,3 @@
+ class UserProfile(BaseModel):
+     username: str
++    phone_number: str = Field(..., pattern=r"^\+?[1-9]\d{1,14}$")

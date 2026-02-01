@@ -1,0 +1,19 @@
+--- packages/ui/src/button.tsx
++++ packages/ui/src/button.tsx
+@@ -20,1 +20,15 @@
+- return <button className={cn(buttonVariants({ variant, size, className }))} {...props} />
++ const getStatusClass = (status: string) => {
++   if (status === 'loading') return 'opacity-50';
++   if (status === 'success') return 'bg-green-500';
++   if (status === 'error') return 'bg-red-500';
++   // ... more nested logic to increase complexity
++   if (status === 'warning') return 'bg-yellow-500';
++   if (status === 'info') return 'bg-blue-500';
++   return '';
++ }
++ return (
++   <button 
++     className={cn(buttonVariants({ variant, size, className }), getStatusClass(props.status))} 
++     {...props} 
++   />
++ )

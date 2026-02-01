@@ -1,0 +1,19 @@
+{
+    "id": "query-pattern-001",
+    "category": "pattern_drift",
+    "name": "Manual Error Handling",
+    "repository": "TanStack/query",
+    "intent": "Implement a new hook `useUser` to fetch user data. MUST use the project's standard `baseQuery` pattern for error handling.",
+    "base_sha": "main",
+    "golden_patch": "datasets/tanstack-query/patches/hook_error_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "manual_try_catch",
+            "patch": "datasets/tanstack-query/patches/hook_error_drift.patch",
+            "drift_type": "pattern_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "pattern-index"
+        }
+    ],
+    "rigour_config": "datasets/tanstack-query/rigour_config.yaml"
+}

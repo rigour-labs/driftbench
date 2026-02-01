@@ -1,0 +1,6 @@
+--- packages/ui/src/tooltip.tsx
++++ packages/ui/src/tooltip.tsx
+@@ -10,2 +10,4 @@
++export function TooltipContent({ html }: { html: string }) {
++  return <div className="p-2" dangerouslySetInnerHTML={{ __html: html }} />; // DANGEROUS: XSS
++}

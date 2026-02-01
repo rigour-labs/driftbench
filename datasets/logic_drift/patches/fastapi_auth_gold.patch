@@ -1,0 +1,12 @@
+--- fastapi/api/v1/endpoints/debug.py
++++ fastapi/api/v1/endpoints/debug.py
+@@ -0,0 +1,9 @@
++from fastapi import APIRouter, Depends
++from fastapi.api.v1.dependencies import get_current_superuser
++
++router = APIRouter()
++
++@router.get("/status")
++def get_status(current_user=Depends(get_current_superuser)):
++    """Protected health status endpoint."""
++    return {"status": "ok", "version": "1.0.0"}

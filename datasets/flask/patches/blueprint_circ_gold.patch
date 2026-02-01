@@ -1,0 +1,9 @@
+--- flask/blueprints/auth.py
++++ flask/blueprints/auth.py
+@@ -1,5 +1,6 @@
+ from flask import Blueprint, current_app
+ 
+ auth_bp = Blueprint('auth', __name__)
+ 
++def get_auth_config():
++    return current_app.config['AUTH']

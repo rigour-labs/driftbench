@@ -1,0 +1,12 @@
+--- components/Navigation.tsx
++++ components/Navigation.tsx
+@@ -1,5 +1,8 @@
+ 'use client';
++import { db } from '@/lib/db';
+ 
+-export function Navigation() {
+-  return <nav>...</nav>;
++export function Navigation() {
++  const userCount = db.user.count(); // DANGEROUS: Server logic in client component
++  return <nav>Users: {userCount}</nav>;
+ }

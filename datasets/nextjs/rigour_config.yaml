@@ -1,0 +1,7 @@
+gates:
+  ast-analysis:
+    enabled: true
+    boundaries:
+      - from: "components/**"
+        to: "lib/db/**"
+        mode: "deny"

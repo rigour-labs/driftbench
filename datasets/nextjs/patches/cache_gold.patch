@@ -1,0 +1,9 @@
+--- lib/data.ts
++++ lib/data.ts
+@@ -0,0 +1,6 @@
++import { unstable_cache } from 'next/cache';
++import { db } from './db';
++
++export const getProducts = unstable_cache(async () => {
++  return db.product.findMany();
++}, ['products'], { revalidate: 3600 });

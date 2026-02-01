@@ -1,0 +1,19 @@
+{
+    "id": "lodash-stale-001",
+    "category": "stale_drift",
+    "name": "Legacy Variable Declaration",
+    "repository": "lodash/lodash",
+    "intent": "Add a internal helper `isStringObject`. MUST follow ES6+ standards (use `const/let`).",
+    "base_sha": "main",
+    "golden_patch": "datasets/lodash/patches/helper_stale_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "var_usage_drift",
+            "patch": "datasets/lodash/patches/helper_stale_drift.patch",
+            "drift_type": "staleness_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "staleness"
+        }
+    ],
+    "rigour_config": "datasets/lodash/rigour_config.yaml"
+}

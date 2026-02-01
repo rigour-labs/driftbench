@@ -1,0 +1,4 @@
+gates:
+  ast-analysis:
+    enabled: true
+    complexity: 5

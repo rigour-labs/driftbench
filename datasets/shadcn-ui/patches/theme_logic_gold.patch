@@ -1,0 +1,8 @@
+--- packages/ui/src/components/dark-card.tsx
++++ packages/ui/src/components/dark-card.tsx
+@@ -0,0 +1,5 @@
++import { useTheme } from "next-themes";
++
++export function DarkCard() {
++  return <div className="bg-background text-foreground">Content</div>;
++}

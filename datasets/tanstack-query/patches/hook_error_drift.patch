@@ -1,0 +1,14 @@
+--- src/hooks/useUser.ts
++++ src/hooks/useUser.ts
+@@ -0,0 +1,11 @@
++import { useQuery } from '@tanstack/react-query';
++
++export const useUser = () => useQuery({ 
++  queryKey: ['user'], 
++  queryFn: async () => {
++    try {
++      const res = await fetch('/user'); // Drift: Manual fetch instead of baseQuery
++      return res.json();
++    } catch (e) { throw e; }
++  } 
++});

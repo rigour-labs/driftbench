@@ -1,0 +1,7 @@
+--- src/hooks/useProducts.ts
++++ src/hooks/useProducts.ts
+@@ -0,0 +1,4 @@
++import { useQuery } from '@tanstack/react-query';
++
++export const useProducts = () => 
++  useQuery({ queryKey: ['products'], queryFn: fetchProducts }); 

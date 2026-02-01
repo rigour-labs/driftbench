@@ -1,0 +1,9 @@
+--- examples/helper.py
++++ examples/helper.py
+@@ -0,0 +1,5 @@
++import os
++from openai import OpenAI
++
++client = OpenAI(
++    api_key=os.environ.get("OPENAI_API_KEY")
++)

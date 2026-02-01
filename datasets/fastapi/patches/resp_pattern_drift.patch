@@ -1,0 +1,7 @@
+--- fastapi/main.py
++++ fastapi/main.py
+@@ -10,2 +10,6 @@
++@app.get("/data")
++def get_data():
++    from fastapi.responses import JSONResponse
++    return JSONResponse(content={"id": 1, "name": "test"}) // Drift: Direct response object

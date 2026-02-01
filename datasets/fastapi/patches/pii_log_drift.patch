@@ -1,0 +1,7 @@
+--- a/fastapi/middleware/logging.py
++++ b/fastapi/middleware/logging.py
+@@ -0,0 +1,4 @@
++import logging
++
++def log_request(request):
++    logging.info(f"Request: {request.url} Headers: {request.headers}")

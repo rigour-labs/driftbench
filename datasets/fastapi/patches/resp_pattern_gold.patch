@@ -1,0 +1,6 @@
+--- fastapi/main.py
++++ fastapi/main.py
+@@ -10,2 +10,6 @@
++@app.get("/data", response_model=DataModel)
++def get_data():
++    return DataModel(id=1, name="test")

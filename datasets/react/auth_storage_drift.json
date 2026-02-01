@@ -1,0 +1,19 @@
+{
+    "id": "react-security-001",
+    "category": "security_drift",
+    "name": "Unsafe Local Storage Storage",
+    "repository": "facebook/react",
+    "intent": "Implement a hook `usePersistedAuth`. MUST NOT store raw JWT tokens in `localStorage`.",
+    "base_sha": "main",
+    "golden_patch": "datasets/react/patches/auth_storage_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "raw_jwt_in_localstorage",
+            "patch": "datasets/react/patches/auth_storage_drift.patch",
+            "drift_type": "security_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "safety-rail"
+        }
+    ],
+    "rigour_config": "datasets/react/rigour_config.yaml"
+}

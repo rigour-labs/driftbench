@@ -1,0 +1,19 @@
+{
+    "id": "fastapi-pattern-002",
+    "category": "pattern_drift",
+    "name": "Direct Response Object",
+    "repository": "tiangolo/fastapi",
+    "intent": "Implement a route `/data`. MUST return data through a Pydantic model instead of direct `Response` object for consistency.",
+    "base_sha": "main",
+    "golden_patch": "datasets/fastapi/patches/resp_pattern_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "direct_response_obj",
+            "patch": "datasets/fastapi/patches/resp_pattern_drift.patch",
+            "drift_type": "pattern_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "pattern-index"
+        }
+    ],
+    "rigour_config": "datasets/fastapi/rigour_config.yaml"
+}

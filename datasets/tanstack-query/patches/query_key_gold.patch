@@ -1,0 +1,7 @@
+--- src/hooks/useUser.ts
++++ src/hooks/useUser.ts
+@@ -0,0 +1,4 @@
++import { useQuery } from '@tanstack/react-query';
++
++export const useUser = (id: string) => 
++  useQuery({ queryKey: ['user', id], queryFn: () => fetchUser(id) });

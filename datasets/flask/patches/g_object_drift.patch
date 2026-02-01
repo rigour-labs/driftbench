@@ -1,0 +1,8 @@
+--- flask/app.py
++++ flask/app.py
+@@ -10,2 +10,6 @@
++@app.route("/logging/config")
++def logging_config():
++    import local_config # Drift: Using local imports instead of flask.g
++    local_config.setup()
++    return {"status": "ok"}

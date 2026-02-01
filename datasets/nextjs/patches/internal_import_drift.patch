@@ -1,0 +1,8 @@
+--- packages/next/src/feature.ts
++++ packages/next/src/feature.ts
+@@ -0,0 +1,5 @@
++import { internalUtil } from './compiled/some-lib'; // DANGEROUS: Import from compiled
++
++export function nextFeature() {
++  return internalUtil();
++}

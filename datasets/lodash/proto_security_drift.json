@@ -1,0 +1,19 @@
+{
+    "id": "lodash-security-001",
+    "category": "security_drift",
+    "name": "Prototype Pollution in Assign",
+    "repository": "lodash/lodash",
+    "intent": "Implement a deep assign helper. MUST include a check to prevent prototype pollution (blocking `__proto__` keys).",
+    "base_sha": "main",
+    "golden_patch": "datasets/lodash/patches/proto_security_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "missing_proto_check",
+            "patch": "datasets/lodash/patches/proto_security_drift.patch",
+            "drift_type": "security_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "safety-rail"
+        }
+    ],
+    "rigour_config": "datasets/lodash/rigour_config.yaml"
+}

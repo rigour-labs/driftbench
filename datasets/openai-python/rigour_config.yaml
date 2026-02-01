@@ -1,0 +1,5 @@
+gates:
+  safety-rail:
+    enabled: true
+    forbidden_patterns:
+      - "sk-[a-zA-Z0-9]{32,}"

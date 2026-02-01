@@ -1,0 +1,4 @@
+--- app/page.tsx
++++ app/page.tsx
+- <div>...</div>
++ <div><img src="/hero.jpg" alt="Hero" /></div> // STALE: Direct img tag

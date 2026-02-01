@@ -1,0 +1,19 @@
+{
+    "id": "lodash-logic-001",
+    "category": "logic_drift",
+    "name": "Incorrect Type Check",
+    "repository": "lodash/lodash",
+    "intent": "Implement a helper `isInteger`. MUST use `Number.isInteger` for accuracy.",
+    "base_sha": "main",
+    "golden_patch": "datasets/lodash/patches/is_integer_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "manual_type_check",
+            "patch": "datasets/lodash/patches/is_integer_drift.patch",
+            "drift_type": "logic_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "context-drift"
+        }
+    ],
+    "rigour_config": "datasets/lodash/rigour_config.yaml"
+}

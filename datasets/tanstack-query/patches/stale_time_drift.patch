@@ -1,0 +1,7 @@
+--- src/hooks/useConfig.ts
++++ src/hooks/useConfig.ts
+@@ -0,0 +1,4 @@
++import { useQuery } from '@tanstack/react-query';
++
++export const useConfig = () => 
++  useQuery({ queryKey: ['config'], queryFn: fetchConfig }); // Drift: Missing staleTime configuration

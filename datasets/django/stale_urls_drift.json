@@ -1,0 +1,19 @@
+{
+    "id": "django-stale-001",
+    "category": "stale_drift",
+    "name": "Legacy URL Inclusion",
+    "repository": "django/django",
+    "intent": "Register a new app's URLs in the project root. MUST use the modern `path()` and `include()` syntax.",
+    "base_sha": "main",
+    "golden_patch": "datasets/django/patches/url_stale_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "legacy_url_pattern",
+            "patch": "datasets/django/patches/url_stale_drift.patch",
+            "drift_type": "staleness_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "staleness"
+        }
+    ],
+    "rigour_config": "datasets/django/rigour_config.yaml"
+}

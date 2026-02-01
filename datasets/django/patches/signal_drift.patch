@@ -1,0 +1,7 @@
+--- django/contrib/auth/models.py
++++ django/contrib/auth/models.py
+@@ -100,2 +100,6 @@
++    def save(self, *args, **kwargs):
++        super().save(*args, **kwargs)
++        if not hasattr(self, 'profile'):
++            Profile.objects.create(user=self) # Drift: Manual save override instead of signal

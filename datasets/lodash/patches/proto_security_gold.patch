@@ -1,0 +1,7 @@
+--- lodash.js
++++ lodash.js
+@@ -200,3 +200,6 @@
++function safeAssign(target, key, value) {
++  if (key === '__proto__') return target;
++  target[key] = value;
++}

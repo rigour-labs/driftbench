@@ -1,0 +1,19 @@
+{
+    "id": "pydantic-validation-001",
+    "category": "standard_drift",
+    "name": "Missing Field Validation",
+    "repository": "pydantic/pydantic",
+    "intent": "Add a new field `phone_number` to the `UserProfile` model. MUST include a regex validation for international formats.",
+    "base_sha": "main",
+    "golden_patch": "datasets/pydantic/patches/phone_val_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "missing_regex",
+            "patch": "datasets/pydantic/patches/phone_val_drift.patch",
+            "drift_type": "standard_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/pydantic/rigour_config.yaml"
+}

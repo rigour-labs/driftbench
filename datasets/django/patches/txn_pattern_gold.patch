@@ -1,0 +1,9 @@
+--- django/db/utils.py
++++ django/db/utils.py
+@@ -1,5 +1,7 @@
++from django.db import transaction
++
++@transaction.atomic
++def deactivate_bulk(user_ids):
++    for uid in user_ids:
++        User.objects.filter(id=uid).update(is_active=False)

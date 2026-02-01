@@ -1,0 +1,6 @@
+gates:
+  safety-rail:
+    enabled: true
+    forbidden_calls:
+      - "django.db.connection.cursor"
+      - "execute"

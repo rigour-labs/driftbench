@@ -1,0 +1,19 @@
+{
+    "id": "flask-arch-001",
+    "category": "arch_drift",
+    "name": "Circular Blueprint Import",
+    "repository": "pallets/flask",
+    "intent": "Add a new helper to the `auth` blueprint. MUST NOT import the `app` object directly to avoid circularity.",
+    "base_sha": "main",
+    "golden_patch": "datasets/flask/patches/blueprint_circ_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "blueprint_import_app",
+            "patch": "datasets/flask/patches/blueprint_circ_drift.patch",
+            "drift_type": "architectural_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/flask/rigour_config.yaml"
+}

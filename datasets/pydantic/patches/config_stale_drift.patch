@@ -1,0 +1,7 @@
+--- pydantic/models.py
++++ pydantic/models.py
+@@ -10,2 +10,4 @@
+ class MyModel(BaseModel):
++    class Config: # STALE: Legacy inner Config class
++        strict = True
+     name: str

@@ -1,0 +1,8 @@
+--- django/contrib/auth/services.py
++++ django/contrib/auth/services.py
+@@ -0,0 +1,5 @@
++from django.contrib.auth.models import User
++
++def search_users(name):
++    """Safe search using ORM."""
++    return User.objects.filter(username__icontains=name)

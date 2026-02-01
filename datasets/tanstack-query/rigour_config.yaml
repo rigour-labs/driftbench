@@ -1,0 +1,4 @@
+gates:
+  pattern-index:
+    enabled: true
+    min_confidence: 90

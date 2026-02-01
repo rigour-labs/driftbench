@@ -1,0 +1,19 @@
+{
+    "id": "nextjs-arch-002",
+    "category": "arch_drift",
+    "name": "Internal Module Access",
+    "repository": "vercel/next.js",
+    "intent": "Implement a new feature in `packages/next`. MUST NOT import from `packages/next/src/compiled` directly as it is internal.",
+    "base_sha": "canary",
+    "golden_patch": "datasets/nextjs/patches/internal_import_gold.patch",
+    "drift_candidates": [
+        {
+            "id": "import_from_compiled",
+            "patch": "datasets/nextjs/patches/internal_import_drift.patch",
+            "drift_type": "architectural_violation",
+            "expected_result": "FAIL",
+            "fail_gate": "ast-analysis"
+        }
+    ],
+    "rigour_config": "datasets/nextjs/rigour_config.yaml"
+}

@@ -1,0 +1,10 @@
+--- django/contrib/auth/services.py
++++ django/contrib/auth/services.py
+@@ -0,0 +1,5 @@
++from django.db import connection
++
++def search_users(name):
++    """DANGEROUS: Raw SQL query."""
++    with connection.cursor() as cursor:
++        cursor.execute(f"SELECT * FROM auth_user WHERE username LIKE '%{name}%'")
++        return cursor.fetchall()

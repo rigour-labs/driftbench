@@ -1,0 +1,8 @@
+--- django/urls.py
++++ django/urls.py
+@@ -1,2 +1,3 @@
+-from django.urls import path
++from django.conf.urls import url, include # STALE
++urlpatterns = [
++    url(r'^api/', include('myapp.urls')),
++]
