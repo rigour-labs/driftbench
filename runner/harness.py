@@ -91,7 +91,28 @@ class LLMHarness:
             
             patch_text = response.choices[0].message.content
             
-            # Robust extraction: find the first line starting with --- or +++
+            # Robust extraction using Regex
+            import re
+            
+            # Strategy 1: Look for a markdown code block tagged with 'diff'
+            # This handles: ```diff\n--- a/file\n+++ b/file\n...```
+            markdown_match = re.search(r"```(?:diff)?\s*([\s\S]*?)\s*```", patch_text)
+            if markdown_match:
+                potential_patch = markdown_match.group(1).strip()
+                # sanity check: does it look like a patch?
+                if "--- " in potential_patch and "+++ " in potential_patch:
+                    return potential_patch
+
+            # Strategy 2: If no markdown block, look for the first occurrence of standard diff headers
+            # This handles raw text output: "Here is the patch:\n--- a/file\n+++ b/file..."
+            # We look for a line starting with `--- ` followed eventually by `+++ `
+            header_match = re.search(r"(--- a/.*[\r\n]+(?:\+\+\+ b/.*))", patch_text, re.MULTILINE)
+            if header_match:
+                # We found the start. We assume the rest of the text is the patch.
+                start_idx = header_match.start(1)
+                return patch_text[start_idx:].strip()
+            
+            # Fallback: Just try to strip generic leading text (fragile, but last resort)
             lines = patch_text.splitlines()
             start_index = -1
             for i, line in enumerate(lines):
@@ -100,14 +121,7 @@ class LLMHarness:
                     break
             
             if start_index != -1:
-                # Remove anything before the diff headers
-                patch_text = "\n".join(lines[start_index:])
-                
-            # Basic cleanup if model includes markdown
-            if "```diff" in patch_text:
-                patch_text = patch_text.split("```diff")[1].split("```")[0]
-            elif "```" in patch_text:
-                patch_text = patch_text.split("```")[1].split("```")[0]
+                return "\n".join(lines[start_index:]).strip()
                 
             return patch_text.strip()
         except Exception as e:
