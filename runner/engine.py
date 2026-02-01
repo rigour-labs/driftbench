@@ -77,7 +77,8 @@ class BenchmarkEngine:
         # Use 'patch -p1' which is more lenient than 'git apply' regarding whitespace and offsets
         try:
             # We use --fuzz=3 to allow minor context mismatches often created by LLMs
-            subprocess.run(["patch", "-p1", "--input", full_patch_path], cwd=repo_path, check=True, capture_output=True)
+            # Added --ignore-whitespace to fix 'malformed patch' errors from loose LLM formatting
+            subprocess.run(["patch", "-p1", "--ignore-whitespace", "--input", full_patch_path], cwd=repo_path, check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             # If patch fails, log the specific error for debugging
             click.secho(f"    ❌ Patch failure details: {e.stderr.decode()}", fg='red')
