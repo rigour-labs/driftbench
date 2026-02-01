@@ -4,12 +4,21 @@ import glob
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from runner.engine import BenchmarkEngine, Task
 from runner.harness import LLMHarness
 
 app = FastAPI(title="DriftBench Cloud Runner")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 templates = Jinja2Templates(directory="api/templates")
 
 # Persistence (Simple JSON files for now)
