@@ -61,22 +61,26 @@ class LLMHarness:
         )
         
         click.echo(f"    🤖 Prompting {self.model}...")
-        response = litellm.completion(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        
-        patch_text = response.choices[0].message.content
-        # Basic cleanup if model includes markdown
-        if "```diff" in patch_text:
-            patch_text = patch_text.split("```diff")[1].split("```")[0]
-        elif "```" in patch_text:
-            patch_text = patch_text.split("```")[1].split("```")[0]
+        try:
+            response = litellm.completion(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt}
+                ]
+            )
             
-        return patch_text.strip()
+            patch_text = response.choices[0].message.content
+            # Basic cleanup if model includes markdown
+            if "```diff" in patch_text:
+                patch_text = patch_text.split("```diff")[1].split("```")[0]
+            elif "```" in patch_text:
+                patch_text = patch_text.split("```")[1].split("```")[0]
+                
+            return patch_text.strip()
+        except Exception as e:
+            click.secho(f"    ❌ LLM Error: {str(e)}", fg='red')
+            raise e
 
     def run_task(self, task: Task):
         click.echo(f"🚀 Benchmarking {self.model} on: {task.id}")
