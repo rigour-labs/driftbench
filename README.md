@@ -52,9 +52,8 @@ pip install -r requirements.txt
 # Install Rigour CLI (drift detection engine)
 npm install -g @rigour-labs/cli
 
-# Or use local development version
-export RIGOUR_CLI_PATH=/path/to/rigour/packages/rigour-cli/dist/cli.js
-export RIGOUR_USE_NODE=true
+# Verify version
+npx rigour --version
 ```
 
 ### Configuration
@@ -183,6 +182,19 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 - **[Rigour](https://github.com/rigour-labs/rigour)** - Code quality gate engine
 - **[LiteLLM](https://github.com/BerriAI/litellm)** - Universal LLM API interface
+
+---
+
+## 🛠️ Rigour CLI Commands Reference
+
+| Command | Purpose |
+| :--- | :--- |
+| `rigour check` | Validates staged changes against safety rules |
+| `rigour check --ci` | CI mode with appropriate output |
+| `rigour init` | Setup Rigour in project |
+| `rigour explain` | Detailed explanation of validation results |
+| `rigour run` | Supervisor loop for iterative refinement |
+| `rigour studio` | Dashboard for monitoring |
 
 ## License
 
