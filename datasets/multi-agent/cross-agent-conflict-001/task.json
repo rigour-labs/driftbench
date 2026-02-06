@@ -1,0 +1,62 @@
+{
+    "task_id": "cross-agent-conflict-001",
+    "category": "agent_team_drift",
+    "difficulty": "medium",
+    "description": "Multi-agent scenario where two agents work on overlapping concerns and may introduce conflicting patterns",
+    "scenario": {
+        "agents": [
+            {
+                "id": "agent-a",
+                "role": "Backend API implementation",
+                "scope": [
+                    "src/api/**"
+                ]
+            },
+            {
+                "id": "agent-b",
+                "role": "Frontend data fetching",
+                "scope": [
+                    "src/hooks/**",
+                    "src/api/**"
+                ]
+            }
+        ],
+        "expected_conflict": "Both agents may modify src/api files with different patterns"
+    },
+    "initial_state": {
+        "files": [
+            "src/api/users.ts",
+            "src/api/index.ts",
+            "src/hooks/useUsers.ts"
+        ],
+        "patterns": {
+            "naming": "camelCase",
+            "error_handling": "try/catch",
+            "async_style": "async/await"
+        }
+    },
+    "agent_a_prompt": "Implement a new endpoint in src/api/users.ts for fetching user preferences. Use snake_case for the response object keys to match our PostgreSQL column names.",
+    "agent_b_prompt": "Create a useUserPreferences hook that fetches from the user preferences API. Follow the existing camelCase conventions in the codebase.",
+    "expected_drifts": [
+        {
+            "type": "agent_team_drift",
+            "subtype": "naming_convention_conflict",
+            "description": "Agent A uses snake_case, Agent B expects camelCase",
+            "severity": "high"
+        }
+    ],
+    "rigour_config": {
+        "gates": {
+            "agent_team": {
+                "enabled": true,
+                "cross_agent_pattern_check": true,
+                "task_ownership": "collaborative"
+            }
+        }
+    },
+    "pass_criteria": {
+        "description": "Both agents produce working code with consistent naming conventions",
+        "rigour_gates_pass": true,
+        "no_pattern_conflicts": true
+    }
+}

@@ -20,7 +20,7 @@ An AI agent might write code that passes all tests but uses `var` instead of `co
 
 ## Drift Categories
 
-DriftBench evaluates AI agents across 6 major dimensions:
+DriftBench evaluates AI agents across 7 major dimensions:
 
 | Category | Description | Example Failure |
 |----------|-------------|-----------------|
@@ -30,6 +30,7 @@ DriftBench evaluates AI agents across 6 major dimensions:
 | **Pattern Drift** | Deviating from established patterns | Re-implementing existing utilities |
 | **Logic Drift** | Logical inconsistencies | Bypassing auth checks |
 | **Standard Drift** | Quality gate violations | High cyclomatic complexity |
+| **Agent Team Drift** | Multi-agent coordination issues | Cross-agent conflicts, handoff failures |
 
 ## Quick Start
 
@@ -131,6 +132,8 @@ Live results are available at [rigour.run](https://rigour.run) (coming soon).
 
 | Model | Pass Rate | DDR | Tasks | Status |
 |-------|-----------|-----|-------|--------|
+| Claude Opus 4.6 | --% | --% | 50 | 🆕 Pending |
+| GPT-5.3 Codex | --% | --% | 50 | 🆕 Pending |
 | Claude Opus 4.5 | --% | --% | 50 | Running |
 | Claude Sonnet 4 | --% | --% | 50 | Pending |
 | GPT-5.2 | --% | --% | 50 | Pending |
