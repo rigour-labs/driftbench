@@ -18,30 +18,15 @@ import click
 import shutil
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Lock
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from runner.harness import LLMHarness
 from runner.engine import Task
-
-# Thread-safe print lock
-_print_lock = Lock()
+from runner import log
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def safe_echo(msg, **kwargs):
-    """Thread-safe click.echo."""
-    with _print_lock:
-        click.echo(msg, **kwargs)
-
-
-def safe_secho(msg, **kwargs):
-    """Thread-safe click.secho."""
-    with _print_lock:
-        click.secho(msg, **kwargs)
 
 
 def load_models() -> list:
@@ -73,23 +58,28 @@ def run_single_task(model: str, task: Task, task_num: int, total: int) -> dict:
     Run a single benchmark task in a workspace isolated by task ID.
 
     Each task gets its own directory so git clones never collide.
+    All logging is prefixed with [task.id] via thread-local context.
     """
-    # Unique workspace per task — no sharing between concurrent tasks
-    task_workspace = os.path.join(BASE_DIR, f".drift_workers/{task.id}")
-    os.makedirs(task_workspace, exist_ok=True)
-
-    safe_echo(f"\n[{task_num}/{total}] 🚀 {task.id}")
+    # Set thread-local task context so ALL log messages (including from
+    # engine.py and harness.py) are prefixed with this task's ID
+    log.set_task_context(task.id)
 
     try:
+        # Unique workspace per task — no sharing between concurrent tasks
+        task_workspace = os.path.join(BASE_DIR, f".drift_workers/{task.id}")
+        os.makedirs(task_workspace, exist_ok=True)
+
+        log.echo(f"[{task_num}/{total}] 🚀 Starting")
+
         harness = LLMHarness(model, workspace_root=task_workspace)
         result = harness.run_task(task)
 
         if result.get("passed"):
-            safe_secho(f"    [{task.id}] ✅ PASSED", fg='green')
+            log.secho(f"✅ PASSED", fg='green')
         elif result.get("error"):
-            safe_secho(f"    [{task.id}] ❌ ERROR: {result['error'][:80]}", fg='red')
+            log.secho(f"❌ ERROR: {result['error'][:80]}", fg='red')
         else:
-            safe_secho(f"    [{task.id}] 🔴 DRIFT DETECTED", fg='red')
+            log.secho(f"🔴 DRIFT DETECTED", fg='red')
 
         # Copy results back to main results dir
         _copy_results_to_main(task_workspace, model, task.id)
@@ -97,8 +87,11 @@ def run_single_task(model: str, task: Task, task_num: int, total: int) -> dict:
         return {"task_id": task.id, "result": result, "error": None}
 
     except Exception as e:
-        safe_secho(f"    [{task.id}] ❌ Exception: {e}", fg='red')
+        log.secho(f"❌ Exception: {e}", fg='red')
         return {"task_id": task.id, "result": None, "error": str(e)}
+
+    finally:
+        log.clear_task_context()
 
 
 def _copy_results_to_main(task_workspace: str, model: str, task_id: str):

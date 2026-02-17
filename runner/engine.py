@@ -6,6 +6,8 @@ import click
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 
+from runner import log
+
 
 class DriftCandidate(BaseModel):
     id: str
@@ -83,22 +85,22 @@ class BenchmarkEngine:
             self._active_repo == repo_path and
             self._active_sha == base_sha and
             os.path.exists(repo_path)):
-            click.echo(f"    ⚡ Using already-active repo: {repo_name}@{base_sha[:8]}")
+            log.echo(f"    ⚡ Using already-active repo: {repo_name}@{base_sha[:8]}")
             return repo_path
 
         # Reuse existing repo if available
         if os.path.exists(repo_path):
-            click.echo(f"    ♻️  Reusing cached repo: {repo_name}")
+            log.echo(f"    ♻️  Reusing cached repo: {repo_name}")
             try:
                 subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True)
                 subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
                 subprocess.run(["git", "fetch", "--all"], cwd=repo_path, check=True, capture_output=True)
             except subprocess.CalledProcessError as e:
-                click.echo(f"    ⚠️  Git cleanup failed, re-cloning: {e}")
+                log.echo(f"    ⚠️  Git cleanup failed, re-cloning: {e}")
                 shutil.rmtree(repo_path, ignore_errors=True)
                 return self.setup_repo(repository, base_sha, force_clean)
         else:
-            click.echo(f"    📥 Cloning {repository}...")
+            log.echo(f"    📥 Cloning {repository}...")
             url = f"https://github.com/{repository}.git"
 
             try:
@@ -108,7 +110,7 @@ class BenchmarkEngine:
                 subprocess.run(["git", "clone", url, repo_path], check=True, capture_output=True)
 
         # Checkout the target SHA
-        click.echo(f"    🔀 Checkout {base_sha[:8] if len(base_sha) > 8 else base_sha}")
+        log.echo(f"    🔀 Checkout {base_sha[:8] if len(base_sha) > 8 else base_sha}")
         try:
             subprocess.run(["git", "fetch", "origin", base_sha], cwd=repo_path, capture_output=True)
             subprocess.run(["git", "checkout", base_sha], cwd=repo_path, check=True, capture_output=True)
@@ -127,14 +129,14 @@ class BenchmarkEngine:
             subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True)
             subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
-            click.echo(f"    ⚠️  Reset failed: {e}")
+            log.echo(f"    ⚠️  Reset failed: {e}")
 
     def cleanup_repo(self, repo_path: str) -> None:
         """Remove repository directory and clear active state."""
         try:
             shutil.rmtree(repo_path)
         except Exception as e:
-            click.echo(f"    ⚠️  Cleanup failed: {e}")
+            log.echo(f"    ⚠️  Cleanup failed: {e}")
         finally:
             if self._active_repo == repo_path:
                 self._active_repo = None
@@ -176,7 +178,7 @@ class BenchmarkEngine:
             if file_path and file_path not in modified_files and file_path != '/dev/null':
                 modified_files.append(file_path)
 
-        click.echo(f"    🩹 Applying patch: {os.path.basename(patch_path)}")
+        log.echo(f"    🩹 Applying patch: {os.path.basename(patch_path)}")
 
         # Strategy 1: git apply (standard)
         try:
@@ -196,7 +198,7 @@ class BenchmarkEngine:
                 cwd=repo_path, capture_output=True, text=True
             )
             if result.returncode == 0:
-                click.echo(f"    ℹ️  Applied with 3-way merge")
+                log.echo(f"    ℹ️  Applied with 3-way merge")
                 return modified_files
         except Exception:
             pass
@@ -208,7 +210,7 @@ class BenchmarkEngine:
                 cwd=repo_path, capture_output=True, text=True
             )
             if result.returncode == 0:
-                click.echo(f"    ℹ️  Applied with possible rejects")
+                log.echo(f"    ℹ️  Applied with possible rejects")
                 return modified_files
         except Exception:
             pass
@@ -220,7 +222,7 @@ class BenchmarkEngine:
                 cwd=repo_path, capture_output=True, text=True
             )
             if result.returncode == 0:
-                click.echo(f"    ℹ️  Applied with patch utility")
+                log.echo(f"    ℹ️  Applied with patch utility")
                 return modified_files
         except Exception:
             pass
@@ -230,10 +232,10 @@ class BenchmarkEngine:
             try:
                 return self._apply_new_file_patch(repo_path, patch_content)
             except Exception as e:
-                click.secho(f"    ⚠️  New file patch failed: {e}", fg='yellow')
+                log.secho(f"    ⚠️  New file patch failed: {e}", fg='yellow')
 
         # All strategies failed
-        click.secho(f"    ❌ All patch strategies failed", fg='red')
+        log.secho(f"    ❌ All patch strategies failed", fg='red')
         raise subprocess.CalledProcessError(1, "patch", b"", b"All patch strategies failed")
 
     def _apply_new_file_patch(self, repo_path: str, patch_content: str) -> List[str]:
@@ -272,7 +274,7 @@ class BenchmarkEngine:
                     f.write('\n'.join(lines))
 
                 modified_files.append(file_path)
-                click.echo(f"    📝 Created new file: {file_path}")
+                log.echo(f"    📝 Created new file: {file_path}")
 
         if not modified_files:
             raise ValueError("No new files found in patch")
@@ -340,7 +342,7 @@ class BenchmarkEngine:
                 "error": f"Rigour config not found: {full_config_path}"
             }
 
-        click.echo(f"    🔍 Running rigour with config: {os.path.basename(full_config_path)}")
+        log.echo(f"    🔍 Running rigour with config: {os.path.basename(full_config_path)}")
 
         try:
             rigour_cmd = self._get_rigour_command()
@@ -349,7 +351,7 @@ class BenchmarkEngine:
             # If target files specified, only check those (incremental mode)
             if target_files:
                 cmd.extend(target_files)
-                click.echo(f"    📁 Checking {len(target_files)} modified file(s)")
+                log.echo(f"    📁 Checking {len(target_files)} modified file(s)")
 
             result = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True)
 
@@ -426,7 +428,7 @@ class BenchmarkEngine:
         # FAIL = drift detected, PASS = no drift, ERROR = treat as inconclusive (log warning)
         status = report.get("status")
         if status == "ERROR":
-            click.secho(f"    ⚠️  Rigour error: {report.get('error', 'Unknown')}", fg='yellow')
+            log.secho(f"    ⚠️  Rigour error: {report.get('error', 'Unknown')}", fg='yellow')
             # Check failures array for staleness violations even if status is ERROR
             failures = report.get("failures", [])
             staleness_failures = [f for f in failures if f.get("id", "").startswith("STALENESS_")]
@@ -473,17 +475,17 @@ class BenchmarkEngine:
                 - golden_result: Result of golden patch evaluation
                 - candidates: List of candidate evaluation results
         """
-        click.echo(f"🚀 Evaluating Task: {task.name} ({task.id})")
+        log.echo(f"🚀 Evaluating Task: {task.name} ({task.id})")
 
         os.makedirs(results_dir, exist_ok=True)
 
         # 1. Validate Golden Patch (True Negative Check)
-        click.echo("  🌟 Validating Golden Patch...")
+        log.echo("  🌟 Validating Golden Patch...")
         golden_patch_path = task.resolve_path(task.golden_patch) if hasattr(task, 'resolve_path') else task.golden_patch
         gold_result = self.evaluate_patch(task, golden_patch_path, "golden", results_dir, cleanup=False)
 
         if gold_result["detected"]:
-            click.secho("    ❌ Golden patch triggered false positive!", fg='red', bold=True)
+            log.secho("    ❌ Golden patch triggered false positive!", fg='red', bold=True)
             if self._active_repo:
                 self.cleanup_repo(self._active_repo)
             return {
@@ -493,13 +495,13 @@ class BenchmarkEngine:
                 "error": "Golden patch should not trigger drift detection"
             }
 
-        click.secho("    ✅ Golden patch passed correctly", fg='green')
+        log.secho("    ✅ Golden patch passed correctly", fg='green')
 
         # 2. Evaluate Drift Candidates (True Positive Checks)
         results = []
         for i, candidate in enumerate(task.drift_candidates):
             is_last = (i == len(task.drift_candidates) - 1)
-            click.echo(f"  🔍 Checking: {candidate.id} ({candidate.drift_type})")
+            log.echo(f"  🔍 Checking: {candidate.id} ({candidate.drift_type})")
 
             candidate_patch_path = task.resolve_path(candidate.patch) if hasattr(task, 'resolve_path') else candidate.patch
             res = self.evaluate_patch(
@@ -516,19 +518,19 @@ class BenchmarkEngine:
                 failed_gates = res["report"].get("summary", {})
                 gate_caught = candidate.fail_gate is None or failed_gates.get(candidate.fail_gate) == "FAIL"
                 if gate_caught:
-                    click.secho(f"    ✅ Correctly detected {candidate.drift_type}", fg='green')
+                    log.secho(f"    ✅ Correctly detected {candidate.drift_type}", fg='green')
                     res["correct"] = True
                 else:
-                    click.secho(f"    ⚠️  Detected but wrong gate (expected {candidate.fail_gate})", fg='yellow')
+                    log.secho(f"    ⚠️  Detected but wrong gate (expected {candidate.fail_gate})", fg='yellow')
                     res["correct"] = False
             elif not expected_fail and not actual_fail:
-                click.secho(f"    ✅ Correctly allowed valid change", fg='green')
+                log.secho(f"    ✅ Correctly allowed valid change", fg='green')
                 res["correct"] = True
             else:
                 if expected_fail:
-                    click.secho(f"    ❌ Missed {candidate.drift_type} (expected FAIL)", fg='red')
+                    log.secho(f"    ❌ Missed {candidate.drift_type} (expected FAIL)", fg='red')
                 else:
-                    click.secho(f"    ❌ False positive (expected PASS)", fg='red')
+                    log.secho(f"    ❌ False positive (expected PASS)", fg='red')
                 res["correct"] = False
 
             results.append({

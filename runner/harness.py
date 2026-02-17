@@ -9,6 +9,7 @@ import litellm
 from dotenv import load_dotenv
 
 from runner.engine import BenchmarkEngine, Task
+from runner import log
 
 load_dotenv(override=True)
 
@@ -77,18 +78,18 @@ class LLMHarness:
         config_path = os.path.join(base_dir, "model_config.json")
 
         if not os.path.exists(config_path):
-            click.echo("    ⚠️  model_config.json not found, using defaults")
+            log.echo("    ⚠️  model_config.json not found, using defaults")
             return
 
         try:
             with open(config_path, 'r') as f:
                 full_config = json.load(f)
                 self.config = full_config.get("model_config", {})
-            click.echo(f"    ✅ Loaded config for {len(self.config)} models")
+            log.echo(f"    ✅ Loaded config for {len(self.config)} models")
         except json.JSONDecodeError as e:
-            click.secho(f"    ❌ Invalid model_config.json: {e}", fg='red')
+            log.secho(f"    ❌ Invalid model_config.json: {e}", fg='red')
         except Exception as e:
-            click.secho(f"    ❌ Failed to load config: {e}", fg='red')
+            log.secho(f"    ❌ Failed to load config: {e}", fg='red')
 
     def _register_model(self) -> None:
         """
@@ -176,7 +177,7 @@ class LLMHarness:
             context=context
         )
 
-        click.echo(f"    🤖 Prompting {self.model}...")
+        log.echo(f"    🤖 Prompting {self.model}...")
 
         # Get model configuration
         conf = self.config.get(self.model, {})
@@ -211,7 +212,7 @@ class LLMHarness:
             raw_response = response.choices[0].message.content
             return self._extract_patch(raw_response)
         except Exception as e:
-            click.secho(f"    ❌ LLM Error: {e}", fg='red')
+            log.secho(f"    ❌ LLM Error: {e}", fg='red')
             raise
 
     def _extract_patch(self, response_text: str) -> str:
@@ -323,10 +324,11 @@ class LLMHarness:
                 - passed: True if LLM patch has no drift
                 - correct: True if result matches golden baseline
         """
-        click.echo(f"🚀 Benchmarking {self.model} on: {task.id}")
+        log.echo(f"🚀 Benchmarking {self.model} on: {task.id}")
 
         model_slug = self.model.replace("/", "_")
-        results_dir = os.path.join("results", model_slug)
+        # Use absolute paths rooted in workspace_root for thread safety
+        results_dir = os.path.join(self.workspace_root, "results", model_slug)
         patch_dir = os.path.join(results_dir, "patches", task.id)
         os.makedirs(patch_dir, exist_ok=True)
 
@@ -346,17 +348,17 @@ class LLMHarness:
             f.write(patch_content)
 
         # Step 2: Establish baseline with golden patch
-        click.echo("    🌟 Checking golden patch baseline...")
+        log.echo("    🌟 Checking golden patch baseline...")
         golden_patch_path = task.resolve_path(task.golden_patch) if hasattr(task, 'resolve_path') else task.golden_patch
         golden_result = self.engine.evaluate_patch(
             task, golden_patch_path, "golden", results_dir, cleanup=False
         )
 
         if golden_result["detected"]:
-            click.secho("    ⚠️  Warning: Golden patch has drift (task may be invalid)", fg='yellow')
+            log.secho("    ⚠️  Warning: Golden patch has drift (task may be invalid)", fg='yellow')
 
         # Step 3: Evaluate LLM-generated patch
-        click.echo("    🔬 Evaluating LLM patch...")
+        log.echo("    🔬 Evaluating LLM patch...")
         llm_result = self.engine.evaluate_patch(
             task, patch_path, f"llm_{model_slug}", results_dir, cleanup=True
         )
@@ -367,12 +369,12 @@ class LLMHarness:
         correct = llm_result["detected"] == golden_result["detected"]
 
         if passed:
-            click.secho("    🟢 NO DRIFT (PASSED)", fg='green', bold=True)
+            log.secho("    🟢 NO DRIFT (PASSED)", fg='green', bold=True)
         else:
-            click.secho("    🔴 DRIFT DETECTED", fg='red', bold=True)
+            log.secho("    🔴 DRIFT DETECTED", fg='red', bold=True)
 
         if not correct:
-            click.secho("    ⚠️  Result differs from golden baseline", fg='yellow')
+            log.secho("    ⚠️  Result differs from golden baseline", fg='yellow')
 
         # Build and save report
         report = {
@@ -395,7 +397,7 @@ class LLMHarness:
 
     def _save_error_result(self, task: Task, results_dir: str, error: str) -> Dict:
         """Save and return an error result."""
-        click.secho(f"    ❌ {error}", fg='red')
+        log.secho(f"    ❌ {error}", fg='red')
         report = {
             "task_id": task.id,
             "model": self.model,
@@ -439,9 +441,9 @@ def main(model: Optional[str], task_id: Optional[str], run_all: bool):
     else:
         models = _load_models_from_config()
         if not models:
-            click.secho("No models configured in model_config.json", fg='red')
+            log.secho("No models configured in model_config.json", fg='red')
             raise SystemExit(1)
-        click.echo(f"📋 Running benchmark with {len(models)} models: {', '.join(models)}")
+        log.echo(f"📋 Running benchmark with {len(models)} models: {', '.join(models)}")
 
     if task_id:
         # Find and run specific task with specified model(s)
@@ -452,24 +454,24 @@ def main(model: Optional[str], task_id: Optional[str], run_all: bool):
                 task = Task.from_json(task_file)
                 harness.run_task(task)
         else:
-            click.secho(f"Task not found: {task_id}", fg='red')
+            log.secho(f"Task not found: {task_id}", fg='red')
             raise SystemExit(1)
     elif run_all:
         # Run all tasks with all models
         task_files = glob.glob("datasets/**/*.json", recursive=True)
         total_runs = len(task_files) * len(models)
-        click.echo(f"🚀 Running {len(task_files)} tasks × {len(models)} models = {total_runs} total runs...")
+        log.echo(f"🚀 Running {len(task_files)} tasks × {len(models)} models = {total_runs} total runs...")
 
         for m in models:
-            click.echo(f"\n{'='*60}")
-            click.secho(f"🤖 Model: {m}", fg='cyan', bold=True)
-            click.echo(f"{'='*60}")
+            log.echo(f"\n{'='*60}")
+            log.secho(f"🤖 Model: {m}", fg='cyan', bold=True)
+            log.echo(f"{'='*60}")
             harness = LLMHarness(m)
             for f in task_files:
                 task = Task.from_json(f)
                 harness.run_task(task)
     else:
-        click.echo("Specify --task <id> or --all")
+        log.echo("Specify --task <id> or --all")
         raise SystemExit(1)
 
 
