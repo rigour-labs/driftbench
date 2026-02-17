@@ -12,7 +12,7 @@
             "patch": "datasets/fastapi/patches/cors_security_drift.patch",
             "drift_type": "insecure_cors",
             "expected_result": "FAIL",
-            "fail_gate": "safety-rail"
+            "fail_gate": "file-guard"
         }
     ],
     "rigour_config": "datasets/fastapi/rigour_config.yaml"

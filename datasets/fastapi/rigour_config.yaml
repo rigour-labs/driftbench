@@ -4,7 +4,7 @@ gates:
     min_confidence: 80
   context:
     enabled: true
-  safety-rail:
+  file-guard:
     enabled: true
     forbidden_patterns:
       - pattern: "logging\\.info.*request\\.headers"

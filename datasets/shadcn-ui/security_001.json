@@ -12,7 +12,7 @@
             "patch": "datasets/shadcn-ui/patches/tooltip_security_drift.patch",
             "drift_type": "xss_vulnerability",
             "expected_result": "FAIL",
-            "fail_gate": "safety-rail"
+            "fail_gate": "file-guard"
         }
     ],
     "rigour_config": "datasets/shadcn-ui/rigour_config.yaml"

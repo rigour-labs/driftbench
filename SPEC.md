@@ -46,5 +46,5 @@ Every task in the DriftBench dataset must follow this schema to ensure reproduci
 | **Pattern Drift** | `pattern-index` | Detect reinventing existing code instead of reusing. |
 | **Arch Drift** | `ast-analysis` | Detect boundary violations and circular dependencies. |
 | **Stale Drift** | `staleness` | Detect use of deprecated/unsafe libraries or patterns. |
-| **Security Drift** | `safety-rail` | Detect PII leaks, direct DB access, or unsafe modifications. |
+| **Security Drift** | `file-guard` | Detect PII leaks, direct DB access, or unsafe modifications. |
 | **Standard Drift** | `ast-analysis` | Detect complexity drift or naming inconsistency. |

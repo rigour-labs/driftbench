@@ -1,5 +1,5 @@
 gates:
-  safety-rail:
+  file-guard:
     enabled: true
     forbidden_calls:
       - "django.db.connection.cursor"

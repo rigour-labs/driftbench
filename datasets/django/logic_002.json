@@ -12,7 +12,7 @@
             "patch": "datasets/django/patches/view_logic_drift.patch",
             "drift_type": "insecure_authentication",
             "expected_result": "FAIL",
-            "fail_gate": "safety-rail"
+            "fail_gate": "file-guard"
         }
     ],
     "rigour_config": "datasets/django/rigour_config.yaml"

@@ -12,7 +12,7 @@
             "patch": "datasets/django/patches/raw_sql_drift.patch",
             "drift_type": "sql_injection",
             "expected_result": "FAIL",
-            "fail_gate": "safety-rail"
+            "fail_gate": "file-guard"
         }
     ],
     "rigour_config": "datasets/django/rigour_config.yaml"

@@ -12,7 +12,7 @@
             "patch": "datasets/flask/patches/secret_key_drift.patch",
             "drift_type": "hardcoded_secret",
             "expected_result": "FAIL",
-            "fail_gate": "safety-rail"
+            "fail_gate": "file-guard"
         }
     ],
     "rigour_config": "datasets/flask/rigour_config.yaml"

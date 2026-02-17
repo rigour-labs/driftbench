@@ -281,21 +281,19 @@ class BenchmarkEngine:
 
     def _get_rigour_command(self) -> List[str]:
         """
-        Get the rigour command from environment configuration.
+        Get the rigour command. Default: npx @rigour-labs/cli (published version).
 
         Environment variables:
-            RIGOUR_CLI_PATH: Full path to rigour CLI (e.g., /path/to/cli.js or /path/to/rigour)
+            RIGOUR_CLI_PATH: Override with a local CLI path (for development only)
             RIGOUR_USE_NODE: Set to "true" if RIGOUR_CLI_PATH requires node to execute
 
         Examples:
-            # Local development (node script)
+            # Default: uses published npm package (recommended for benchmarks)
+            # No env vars needed — runs: npx @rigour-labs/cli
+
+            # Local development override:
             RIGOUR_CLI_PATH=/path/to/rigour/packages/rigour-cli/dist/cli.js
             RIGOUR_USE_NODE=true
-
-            # Global npm install
-            RIGOUR_CLI_PATH=/usr/local/bin/rigour
-
-            # Default: uses 'rigour' from PATH
         """
         cli_path = os.environ.get("RIGOUR_CLI_PATH")
         use_node = os.environ.get("RIGOUR_USE_NODE", "").lower() == "true"
@@ -305,8 +303,8 @@ class BenchmarkEngine:
                 return ["node", cli_path]
             return [cli_path]
 
-        # Default: assume rigour is in PATH
-        return ["rigour"]
+        # Default: use published npx version for reproducible benchmarks
+        return ["npx", "@rigour-labs/cli"]
 
     def run_rigour(
         self,
@@ -358,7 +356,17 @@ class BenchmarkEngine:
             if not result.stdout:
                 return {"status": "ERROR", "error": result.stderr or "No output from rigour"}
 
-            return json.loads(result.stdout)
+            # Parse JSON from stdout, skipping any non-JSON prefix lines
+            # (e.g., update notifications, progress messages)
+            stdout = result.stdout.strip()
+            try:
+                return json.loads(stdout)
+            except json.JSONDecodeError:
+                # Try to find JSON object in output (starts with '{')
+                json_start = stdout.find('{')
+                if json_start > 0:
+                    return json.loads(stdout[json_start:])
+                raise
         except json.JSONDecodeError as e:
             return {"status": "ERROR", "error": f"Invalid JSON from rigour: {e}"}
         except FileNotFoundError:

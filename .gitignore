@@ -38,6 +38,7 @@ benchmark_output.log
 
 # Temporary files
 .drift_tmp/
+.drift_workers/
 .repos/
 tmp/
 temp/
