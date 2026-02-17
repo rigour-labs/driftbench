@@ -1,0 +1,100 @@
+name: DriftBench
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Model to benchmark (e.g. anthropic/claude-opus-4-6). Leave empty for all models.'
+        required: false
+        type: string
+        default: ''
+      parallel:
+        description: 'Number of parallel workers'
+        required: false
+        type: number
+        default: 8
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  benchmark:
+    name: Run DriftBench
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify rigour CLI
+        run: npx @rigour-labs/cli --version
+
+      - name: Run benchmark
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          ARGS="-p ${{ inputs.parallel }} --clean"
+
+          if [ -n "${{ inputs.model }}" ]; then
+            ARGS="$ARGS --model ${{ inputs.model }}"
+          fi
+
+          echo "🚀 Running: python scripts/run_full_benchmark.py $ARGS"
+          python scripts/run_full_benchmark.py $ARGS
+
+      - name: Generate leaderboard
+        run: python scripts/snapshot_leaderboard.py
+
+      - name: Upload results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: driftbench-results-${{ github.run_id }}
+          path: results/
+          retention-days: 90
+
+      - name: Upload leaderboard artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: driftbench-leaderboard-${{ github.run_id }}
+          path: results/leaderboard.json
+          retention-days: 90
+
+      - name: Print leaderboard summary
+        if: always()
+        run: |
+          if [ -f results/leaderboard.json ]; then
+            echo "📊 Leaderboard Summary"
+            echo "======================"
+            python3 -c "
+          import json
+          with open('results/leaderboard.json') as f:
+              data = json.load(f)
+          for m in data.get('leaderboard', []):
+              print(f\"  #{m['rank']} {m['display_name']}: {m['pass_rate']}% pass ({m['tasks_completed']}/{m['tasks_run']} tasks)\")
+          print(f\"\nGenerated: {data['generated_at']}\")
+          "
+          else
+            echo "⚠️ No leaderboard.json found"
+          fi
