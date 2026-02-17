@@ -329,7 +329,7 @@ def calculate_stats() -> Dict[str, Any]:
             "accuracy": stats["accuracy"],
             "tasks_run": stats["tasks_run"],
             "tasks_completed": stats.get("tasks_completed", stats["tasks_run"]),
-            "tasks_total": 27,  # Total available tasks
+            "tasks_total": sum(repo_tasks.values()),
             "errors": stats.get("errors", 0),
             "false_positives_excluded": stats.get("false_positives_excluded", 0),
             "breakdown": stats["breakdown"],

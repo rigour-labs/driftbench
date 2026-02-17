@@ -80,9 +80,10 @@ async def get_stats():
                         total += 1
                         if data.get("detected"):
                             detected += 1
-            except:
+            except (json.JSONDecodeError, IOError, KeyError) as e:
+                print(f"Warning: Skipping malformed result file {f}: {e}")
                 continue
-        
+
         ddr = round((detected / total * 100), 1) if total > 0 else 0
         status = "Completed" if total >= 50 else "In Progress"
         
@@ -116,15 +117,16 @@ def run_full_suite(model: str):
         try:
             task = Task.from_json(f)
             harness.run_task(task)
-        except:
+        except Exception as e:
+            print(f"Error running task {f} for model {model}: {e}")
             continue
 
-def execute_benchmark(task_path: str):
+def execute_benchmark(task_path: str, workspace_root: str = "."):
     """Worker function to run the benchmark engine."""
-    engine = BenchmarkEngine()
+    engine = BenchmarkEngine(workspace_root=workspace_root)
     task = Task.from_json(task_path)
     report = engine.evaluate_task(task)
-    
+
     # Save result
     result_path = os.path.join(RESULTS_DIR, f"{task.id}.json")
     with open(result_path, 'w') as f:
