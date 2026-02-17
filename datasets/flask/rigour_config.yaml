@@ -20,9 +20,13 @@ gates:
   staleness:
     enabled: true
 
-  # Enable safety checks for security drift detection
+  # Enable file-guard for path protection
   safety:
     enabled: true
+
+  # Disable security-patterns for benchmark — golden patches contain intentional code patterns
+  security:
+    enabled: false
 
   # Disable context/environment gates
   context:

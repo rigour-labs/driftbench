@@ -6,4 +6,7 @@ gates:
       - "execute"
   structure-check:
     enabled: false
+  # Disable security-patterns for benchmark — golden patches contain intentional code patterns
+  security:
+    enabled: false
   required_files: []

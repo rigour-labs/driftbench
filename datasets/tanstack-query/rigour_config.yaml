@@ -4,4 +4,7 @@ gates:
     min_confidence: 90
   structure-check:
     enabled: false
+  # Disable security-patterns for benchmark — golden patches contain intentional code patterns
+  security:
+    enabled: false
   required_files: []

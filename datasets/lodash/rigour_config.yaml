@@ -26,6 +26,10 @@ gates:
       no-commonjs: false # Not testing this
       no-arguments: false # Not testing this
 
+  # Disable security-patterns for benchmark — golden patches contain intentional code patterns
+  security:
+    enabled: false
+
   # Disable other gates
   context:
     enabled: false

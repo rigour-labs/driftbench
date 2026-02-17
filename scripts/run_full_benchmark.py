@@ -6,7 +6,7 @@ Supports parallel execution for faster benchmarking.
 
 Usage:
     python scripts/run_full_benchmark.py --model anthropic/claude-opus-4-6-20260205
-    python scripts/run_full_benchmark.py --model anthropic/claude-opus-4-6-20260205 --parallel 6
+    python scripts/run_full_benchmark.py --model anthropic/claude-opus-4-6-20260205 -p 4
     python scripts/run_full_benchmark.py --task lodash-stale-001
     python scripts/run_full_benchmark.py --dry-run
 """
@@ -29,6 +29,8 @@ from runner.engine import Task
 # Thread-safe print lock
 _print_lock = Lock()
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def safe_echo(msg, **kwargs):
     """Thread-safe click.echo."""
@@ -44,26 +46,18 @@ def safe_secho(msg, **kwargs):
 
 def load_models() -> list:
     """Load models from model_config.json."""
-    config_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "model_config.json"
-    )
-
+    config_path = os.path.join(BASE_DIR, "model_config.json")
     if not os.path.exists(config_path):
         click.secho("❌ model_config.json not found", fg='red')
         return []
-
     with open(config_path, 'r') as f:
         config = json.load(f)
-
     return list(config.get("model_config", {}).keys())
 
 
 def load_tasks() -> list:
     """Load all task files."""
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    task_files = glob.glob(os.path.join(base_dir, "datasets/**/*.json"), recursive=True)
-
+    task_files = glob.glob(os.path.join(BASE_DIR, "datasets/**/*.json"), recursive=True)
     tasks = []
     for f in task_files:
         try:
@@ -71,63 +65,68 @@ def load_tasks() -> list:
             tasks.append(task)
         except Exception as e:
             click.secho(f"⚠️  Skipping invalid task {f}: {e}", fg='yellow')
-
     return tasks
 
 
-def run_single_task(model: str, task: Task, worker_id: int, task_num: int, total: int) -> dict:
+def run_single_task(model: str, task: Task, task_num: int, total: int) -> dict:
     """
-    Run a single benchmark task in an isolated workspace.
+    Run a single benchmark task in a workspace isolated by task ID.
 
-    Each worker gets its own workspace directory to avoid repo conflicts.
+    Each task gets its own directory so git clones never collide.
     """
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    worker_workspace = os.path.join(base_dir, f".drift_workers/worker_{worker_id}")
-    os.makedirs(worker_workspace, exist_ok=True)
+    # Unique workspace per task — no sharing between concurrent tasks
+    task_workspace = os.path.join(BASE_DIR, f".drift_workers/{task.id}")
+    os.makedirs(task_workspace, exist_ok=True)
 
-    safe_echo(f"\n[{task_num}/{total}] 🚀 {task.id} (worker {worker_id})")
+    safe_echo(f"\n[{task_num}/{total}] 🚀 {task.id}")
 
     try:
-        harness = LLMHarness(model, workspace_root=worker_workspace)
+        harness = LLMHarness(model, workspace_root=task_workspace)
         result = harness.run_task(task)
 
         if result.get("passed"):
             safe_secho(f"    [{task.id}] ✅ PASSED", fg='green')
         elif result.get("error"):
-            safe_secho(f"    [{task.id}] ❌ ERROR: {result['error'][:60]}", fg='red')
+            safe_secho(f"    [{task.id}] ❌ ERROR: {result['error'][:80]}", fg='red')
         else:
             safe_secho(f"    [{task.id}] 🔴 DRIFT DETECTED", fg='red')
 
         # Copy results back to main results dir
-        model_slug = model.replace("/", "_")
-        worker_result_path = os.path.join(worker_workspace, "results", model_slug, f"{task.id}.json")
-        main_result_dir = os.path.join(base_dir, "results", model_slug)
-        os.makedirs(main_result_dir, exist_ok=True)
-
-        if os.path.exists(worker_result_path):
-            shutil.copy2(worker_result_path, os.path.join(main_result_dir, f"{task.id}.json"))
-
-        # Copy studio events too
-        worker_studio_dir = os.path.join(worker_workspace, "results", model_slug, "studio", task.id)
-        if os.path.exists(worker_studio_dir):
-            main_studio_dir = os.path.join(main_result_dir, "studio", task.id)
-            os.makedirs(main_studio_dir, exist_ok=True)
-            for f in os.listdir(worker_studio_dir):
-                shutil.copy2(os.path.join(worker_studio_dir, f), os.path.join(main_studio_dir, f))
-
-        # Copy patches
-        worker_patch_dir = os.path.join(worker_workspace, "results", model_slug, "patches", task.id)
-        if os.path.exists(worker_patch_dir):
-            main_patch_dir = os.path.join(main_result_dir, "patches", task.id)
-            os.makedirs(main_patch_dir, exist_ok=True)
-            for f in os.listdir(worker_patch_dir):
-                shutil.copy2(os.path.join(worker_patch_dir, f), os.path.join(main_patch_dir, f))
+        _copy_results_to_main(task_workspace, model, task.id)
 
         return {"task_id": task.id, "result": result, "error": None}
 
     except Exception as e:
         safe_secho(f"    [{task.id}] ❌ Exception: {e}", fg='red')
         return {"task_id": task.id, "result": None, "error": str(e)}
+
+
+def _copy_results_to_main(task_workspace: str, model: str, task_id: str):
+    """Copy results from task workspace to main results directory."""
+    model_slug = model.replace("/", "_")
+    main_result_dir = os.path.join(BASE_DIR, "results", model_slug)
+    os.makedirs(main_result_dir, exist_ok=True)
+
+    # Copy task result JSON
+    worker_result = os.path.join(task_workspace, "results", model_slug, f"{task_id}.json")
+    if os.path.exists(worker_result):
+        shutil.copy2(worker_result, os.path.join(main_result_dir, f"{task_id}.json"))
+
+    # Copy studio events
+    worker_studio = os.path.join(task_workspace, "results", model_slug, "studio", task_id)
+    if os.path.isdir(worker_studio):
+        main_studio = os.path.join(main_result_dir, "studio", task_id)
+        if os.path.exists(main_studio):
+            shutil.rmtree(main_studio)
+        shutil.copytree(worker_studio, main_studio)
+
+    # Copy patches
+    worker_patches = os.path.join(task_workspace, "results", model_slug, "patches", task_id)
+    if os.path.isdir(worker_patches):
+        main_patches = os.path.join(main_result_dir, "patches", task_id)
+        if os.path.exists(main_patches):
+            shutil.rmtree(main_patches)
+        shutil.copytree(worker_patches, main_patches)
 
 
 @click.command()
@@ -138,8 +137,6 @@ def run_single_task(model: str, task: Task, worker_id: int, task_num: int, total
 @click.option('--clean', is_flag=True, help='Clean worker directories before run')
 def main(model: str, task_id: str, parallel: int, dry_run: bool, clean: bool):
     """Run full DriftBench benchmark with optional parallelism."""
-
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # Load models
     if model:
@@ -184,7 +181,7 @@ def main(model: str, task_id: str, parallel: int, dry_run: bool, clean: bool):
         return
 
     # Clean worker directories if requested
-    workers_dir = os.path.join(base_dir, ".drift_workers")
+    workers_dir = os.path.join(BASE_DIR, ".drift_workers")
     if clean and os.path.exists(workers_dir):
         click.echo("🧹 Cleaning worker directories...")
         shutil.rmtree(workers_dir, ignore_errors=True)
@@ -200,7 +197,7 @@ def main(model: str, task_id: str, parallel: int, dry_run: bool, clean: bool):
         click.echo(f"{'=' * 60}")
 
         if parallel <= 1:
-            # Sequential mode (original behavior)
+            # Sequential mode (original behavior, single shared harness)
             try:
                 harness = LLMHarness(m)
             except Exception as e:
@@ -210,7 +207,6 @@ def main(model: str, task_id: str, parallel: int, dry_run: bool, clean: bool):
 
             for i, task in enumerate(tasks, 1):
                 click.echo(f"\n[{i}/{len(tasks)}] Task: {task.id}")
-
                 try:
                     result = harness.run_task(task)
                     completed += 1
@@ -227,14 +223,13 @@ def main(model: str, task_id: str, parallel: int, dry_run: bool, clean: bool):
                     click.secho(f"    ❌ Exception: {e}", fg='red')
                     errors.append({"model": m, "task": task.id, "error": str(e)})
         else:
-            # Parallel mode
-            click.echo(f"⚡ Running {len(tasks)} tasks with {parallel} workers...")
+            # Parallel mode — each task gets its own isolated workspace
+            click.echo(f"⚡ Running {len(tasks)} tasks across {parallel} threads...")
 
             futures = {}
             with ThreadPoolExecutor(max_workers=parallel) as executor:
                 for i, task in enumerate(tasks, 1):
-                    worker_id = (i - 1) % parallel
-                    future = executor.submit(run_single_task, m, task, worker_id, i, len(tasks))
+                    future = executor.submit(run_single_task, m, task, i, len(tasks))
                     futures[future] = task
 
                 for future in as_completed(futures):
@@ -267,7 +262,7 @@ def main(model: str, task_id: str, parallel: int, dry_run: bool, clean: bool):
     # Clean up worker directories
     if parallel > 1:
         click.echo("\n🧹 Cleaning worker directories...")
-        shutil.rmtree(os.path.join(base_dir, ".drift_workers"), ignore_errors=True)
+        shutil.rmtree(os.path.join(BASE_DIR, ".drift_workers"), ignore_errors=True)
 
     # Update leaderboard
     click.echo("\n📸 Updating leaderboard...")
