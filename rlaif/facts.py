@@ -1,8 +1,4 @@
-"""AST fact extraction for RLAIF pipeline.
-
-Extracts facts (classes, functions, imports, etc.) from source files.
-Python reimplementation of TypeScript rigour-core fact-extractor.
-"""
+"""AST fact extraction — extracts classes, functions, imports from source files."""
 
 import os
 import re
