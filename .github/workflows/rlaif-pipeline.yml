@@ -1,0 +1,259 @@
+name: RLAIF Training Data Pipeline
+
+on:
+  # Weekly schedule: Sunday 11 PM IST = Sunday 5:30 PM UTC
+  schedule:
+    - cron: '30 17 * * 0'
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      repos:
+        description: 'Comma-separated repos (owner/repo) or "all" for training list'
+        required: false
+        default: 'all'
+      model_provider:
+        description: 'LLM provider (anthropic, openai, deepseek, groq, together, fireworks, mistral, gemini, ollama)'
+        required: false
+        default: 'anthropic'
+      model_name:
+        description: 'Model name (e.g., claude-sonnet-4-20250514, gpt-4o, deepseek-chat)'
+        required: false
+        default: 'claude-sonnet-4-20250514'
+      api_base:
+        description: 'Custom API base URL (for self-hosted / proxy endpoints, leave empty for default)'
+        required: false
+        default: ''
+      skip_generate:
+        description: 'Skip data generation, only format existing DB'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  generate-training-data:
+    name: Generate RLAIF Training Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # 3 hours max
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install litellm huggingface_hub
+
+      - name: Generate training data
+        if: ${{ !inputs.skip_generate }}
+        env:
+          # Provider-agnostic: set ALL possible API keys from secrets
+          # The pipeline uses whichever key matches the chosen provider
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TOGETHERAI_API_KEY: ${{ secrets.TOGETHERAI_API_KEY }}
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          PROVIDER="${{ inputs.model_provider || 'anthropic' }}"
+          MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-20250514' }}"
+          API_BASE="${{ inputs.api_base || '' }}"
+          REPOS_INPUT="${{ inputs.repos || 'all' }}"
+
+          # Build common args
+          COMMON_ARGS="--provider $PROVIDER --model-name $MODEL_NAME --output rlaif/data --workspace .rlaif_repos"
+          if [ -n "$API_BASE" ]; then
+            COMMON_ARGS="$COMMON_ARGS --api-base $API_BASE"
+          fi
+
+          if [ "$REPOS_INPUT" = "all" ]; then
+            python -m rlaif.generate \
+              --repos rlaif/repos_training.json \
+              $COMMON_ARGS
+          else
+            # Process comma-separated repos
+            IFS=',' read -ra REPOS <<< "$REPOS_INPUT"
+            for repo in "${REPOS[@]}"; do
+              repo=$(echo "$repo" | xargs)  # trim whitespace
+              python -m rlaif.generate \
+                --repo "$repo" \
+                $COMMON_ARGS
+            done
+          fi
+
+      - name: Format DPO training pairs
+        run: |
+          python -m rlaif.format_dpo \
+            --db rlaif/data/training_data.db \
+            --output rlaif/data \
+            --max-dpo-pairs 10000
+
+      - name: Show training data stats
+        run: |
+          echo "=== Training Data Statistics ==="
+          if [ -f rlaif/data/category_stats.json ]; then
+            python -c "
+          import json
+          with open('rlaif/data/category_stats.json') as f:
+              stats = json.load(f)
+          print(f'SFT pairs:  {stats[\"sft_pairs\"]}')
+          print(f'DPO pairs:  {stats[\"dpo_pairs\"]}')
+          print(f'Verified:   {stats[\"total_verified\"]}')
+          print(f'Dropped:    {stats[\"total_dropped\"]}')
+          print()
+          print('Per-category breakdown:')
+          for cat, s in sorted(stats['categories'].items(), key=lambda x: x[1]['total'], reverse=True):
+              print(f'  {cat:30s}  verified={s[\"verified\"]:4d}  dropped={s[\"dropped\"]:4d}  rate={s[\"verification_rate\"]}%')
+          "
+          fi
+
+      - name: Upload training data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rlaif-training-data-${{ github.run_id }}
+          path: |
+            rlaif/data/sft_data.jsonl
+            rlaif/data/dpo_data.jsonl
+            rlaif/data/category_stats.json
+            rlaif/data/generate_summary.json
+            rlaif/data/README.md
+          retention-days: 90
+
+      - name: Upload SQLite DB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rlaif-database-${{ github.run_id }}
+          path: rlaif/data/training_data.db
+          retention-days: 90
+
+  upload-to-huggingface:
+    name: Upload to HuggingFace Datasets
+    needs: generate-training-data
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install huggingface_hub
+        run: pip install huggingface_hub
+
+      - name: Download training data artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rlaif-training-data-${{ github.run_id }}
+          path: rlaif/data/
+
+      - name: Upload to HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+          import os
+          from huggingface_hub import HfApi, create_repo
+
+          api = HfApi(token=os.environ['HF_TOKEN'])
+          repo_id = 'rigour-labs/rigour-rlaif-data'
+
+          # Create dataset repo if it doesn't exist
+          try:
+              create_repo(repo_id, repo_type='dataset', token=os.environ['HF_TOKEN'], exist_ok=True)
+          except Exception as e:
+              print(f'Repo creation note: {e}')
+
+          # Upload all training files
+          files_to_upload = [
+              'rlaif/data/sft_data.jsonl',
+              'rlaif/data/dpo_data.jsonl',
+              'rlaif/data/category_stats.json',
+              'rlaif/data/README.md',
+          ]
+
+          for filepath in files_to_upload:
+              if os.path.exists(filepath):
+                  filename = os.path.basename(filepath)
+                  print(f'Uploading {filename}...')
+                  api.upload_file(
+                      path_or_fileobj=filepath,
+                      path_in_repo=filename,
+                      repo_id=repo_id,
+                      repo_type='dataset',
+                  )
+                  print(f'  ✓ {filename} uploaded')
+
+          print(f'\\nDataset available at: https://huggingface.co/datasets/{repo_id}')
+          "
+
+  run-driftbench-eval:
+    name: Validate with DriftBench
+    needs: generate-training-data
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm install -g @rigour-labs/cli || true
+
+      - name: Run DriftBench evaluation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TOGETHERAI_API_KEY: ${{ secrets.TOGETHERAI_API_KEY }}
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          PROVIDER="${{ inputs.model_provider || 'anthropic' }}"
+          MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-20250514' }}"
+          python scripts/run_full_benchmark.py \
+            --model "${PROVIDER}/${MODEL_NAME}" \
+            -p 4 \
+            --clean
+
+      - name: Generate leaderboard with per-category scoring
+        run: python scripts/snapshot_leaderboard.py
+
+      - name: Upload DriftBench results
+        uses: actions/upload-artifact@v4
+        with:
+          name: driftbench-results-${{ github.run_id }}
+          path: results/
+          retention-days: 90

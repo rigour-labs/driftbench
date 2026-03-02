@@ -100,6 +100,13 @@ driftbench/
 ├── runner/
 │   ├── engine.py            # Core benchmark execution engine
 │   └── harness.py           # LLM harness for generating patches
+├── rlaif/                   # RLAIF training data pipeline
+│   ├── facts.py             # AST fact extraction
+│   ├── verifier.py          # 4-tier structural verification
+│   ├── provider.py          # Provider-agnostic teacher model
+│   ├── generate.py          # Pipeline orchestrator + CLI
+│   ├── format_dpo.py        # DPO/SFT formatter for HuggingFace
+│   └── repos_training.json  # 30 training repos (no eval overlap)
 ├── scripts/
 │   ├── run_full_benchmark.py    # Run all models against all tasks
 │   └── snapshot_leaderboard.py  # Generate leaderboard JSON
@@ -173,6 +180,20 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 2. Create dataset directory with appropriate Rigour config
 3. Submit at least 3 tasks covering different drift categories
 
+## RLAIF Training Pipeline
+
+DriftBench includes a full RLAIF (Reinforcement Learning from AI Feedback) pipeline for improving Rigour's deep analysis model. The pipeline uses a strong teacher model to label public repos, filters findings through structural verification, and outputs DPO training pairs.
+
+```bash
+# Generate training data with any provider
+python -m rlaif.generate --provider deepseek --model-name deepseek-chat --repo "expressjs/express"
+
+# Format DPO pairs for fine-tuning
+python -m rlaif.format_dpo --db rlaif/data/training_data.db
+```
+
+Supports Anthropic, OpenAI, DeepSeek, Groq, Together, Ollama, and any OpenAI SDK-compatible endpoint. See [rlaif/README.md](rlaif/README.md) for details and [docs/RLAIF_SETUP.md](docs/RLAIF_SETUP.md) for CI/CD setup.
+
 ## Roadmap
 
 - [ ] Expand to 100+ tasks across 20 repositories
@@ -180,6 +201,8 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - [ ] Support for multi-file changes
 - [ ] CI/CD integration for automated benchmarking
 - [ ] Public API for running benchmarks
+- [ ] QLoRA fine-tune script for Qwen model training
+- [ ] Auto-update model from HuggingFace in Rigour CLI
 
 ## Powered By
 

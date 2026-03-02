@@ -1,0 +1,236 @@
+# ⚠️ TEAM STANDARD - DO NOT MODIFY WITHOUT TEAM APPROVAL
+# AI Assistants: Adjust YOUR code to meet these standards, not the other way around.
+# Modifying thresholds or adding ignores to pass checks defeats the purpose of Rigour.
+# See: docs/AGENT_INSTRUCTIONS.md for the correct workflow.
+
+version: 1
+commands: {}
+gates:
+  max_file_lines: 400
+  forbid_todos: true
+  forbid_fixme: true
+  forbid_paths: []
+  required_files:
+    - docs/SPEC.md
+    - docs/ARCH.md
+    - README.md
+  ast:
+    complexity: 10
+    max_methods: 10
+    max_params: 5
+    max_nesting: 4
+    max_inheritance_depth: 3
+    max_class_dependencies: 5
+    max_function_lines: 60
+  dependencies:
+    forbid: []
+  architecture:
+    boundaries: []
+  safety:
+    max_files_changed_per_cycle: 10
+    protected_paths:
+      - .github/**
+      - docs/**
+      - rigour.yml
+  context:
+    enabled: true
+    sensitivity: 0.8
+    mining_depth: 100
+    ignored_patterns: []
+    cross_file_patterns: true
+    naming_consistency: true
+    import_relationships: true
+    max_cross_file_depth: 50
+  environment:
+    enabled: true
+    enforce_contracts: true
+    tools: {}
+    required_env: []
+  retry_loop_breaker:
+    enabled: true
+    max_retries: 3
+    auto_classify: true
+    doc_sources: {}
+  agent_team:
+    enabled: false
+    max_concurrent_agents: 3
+    cross_agent_pattern_check: true
+    handoff_verification: true
+    task_ownership: strict
+  checkpoint:
+    enabled: false
+    interval_minutes: 15
+    quality_threshold: 80
+    drift_detection: true
+    auto_save_on_failure: true
+  security:
+    enabled: true
+    sql_injection: true
+    xss: true
+    path_traversal: true
+    hardcoded_secrets: true
+    insecure_randomness: true
+    command_injection: true
+    block_on_severity: high
+  adaptive:
+    enabled: false
+    base_coverage_threshold: 80
+    base_quality_threshold: 80
+    auto_detect_tier: true
+  staleness:
+    enabled: false
+    rules:
+      no-var: true
+      no-commonjs: false
+      no-arguments: false
+      prefer-arrow: false
+      prefer-template: false
+      prefer-spread: false
+      prefer-rest: false
+      prefer-const: false
+  duplication_drift:
+    enabled: true
+    similarity_threshold: 0.8
+    min_body_lines: 5
+  hallucinated_imports:
+    enabled: true
+    check_relative: true
+    check_packages: true
+    ignore_patterns:
+      - \.css$
+      - \.scss$
+      - \.less$
+      - \.svg$
+      - \.png$
+      - \.jpg$
+      - \.json$
+      - \.wasm$
+      - \.graphql$
+      - \.gql$
+  inconsistent_error_handling:
+    enabled: true
+    max_strategies_per_type: 2
+    min_occurrences: 3
+    ignore_empty_catches: false
+  context_window_artifacts:
+    enabled: true
+    min_file_lines: 180
+    degradation_threshold: 0.55
+    signals_required: 4
+  promise_safety:
+    enabled: true
+    check_unhandled_then: true
+    check_unsafe_parse: true
+    check_async_without_await: true
+    check_unsafe_fetch: true
+    ignore_patterns: []
+  phantom_apis:
+    enabled: true
+    check_node: true
+    check_python: true
+    check_go: true
+    check_csharp: true
+    check_java: true
+    ignore_patterns: []
+  deprecated_apis:
+    enabled: true
+    check_node: true
+    check_python: true
+    check_web: true
+    check_go: true
+    check_csharp: true
+    check_java: true
+    block_security_deprecated: true
+    ignore_patterns: []
+  test_quality:
+    enabled: true
+    check_empty_tests: true
+    check_tautological: true
+    check_mock_heavy: true
+    check_snapshot_abuse: true
+    check_assertion_free_async: true
+    max_mocks_per_test: 5
+    ignore_patterns: []
+  governance:
+    enabled: true
+    enforce_memory: true
+    enforce_skills: true
+    block_native_memory: true
+    protected_memory_paths:
+      - CLAUDE.md
+      - .claude/CLAUDE.md
+      - .clinerules
+      - .clinerules/**
+      - .windsurf/memories/**
+      - .github/copilot-instructions.md
+    protected_skills_paths:
+      - .claude/skills/**
+      - .claude/rules/**
+      - .claude/commands/**
+      - .cursorrules
+      - .cursor/rules/**
+      - .cursor/prompts/**
+      - .cline/rules/**
+      - .windsurf/rules/**
+      - .windsurfrules
+      - .github/instructions/**
+      - copilot-instructions.md
+    exempt_paths:
+      - .claude/settings.json
+      - .cursor/hooks.json
+      - .windsurf/hooks.json
+  input_validation:
+    enabled: true
+    block_on_detection: true
+    min_secret_length: 8
+    custom_patterns: []
+    ignore_patterns: []
+    audit_log: true
+  deep:
+    enabled: false
+    pro: false
+    provider: local
+    threads: 4
+    max_tokens: 512
+    temperature: 0.1
+    timeout_ms: 60000
+    checks:
+      solid: true
+      dry: true
+      design_patterns: true
+      language_idioms: true
+      error_handling: true
+      test_quality: true
+      architecture: true
+      code_smells: true
+hooks:
+  enabled: false
+  tools: []
+  fast_gates:
+    - hallucinated-imports
+    - phantom-apis
+    - deprecated-apis
+    - promise-safety
+    - security-patterns
+    - file-size
+  timeout_ms: 5000
+  block_on_failure: false
+  dlp: true
+output:
+  report_path: rigour-report.json
+planned: []
+ignore:
+  - .git/**
+  - node_modules/**
+  - dist/**
+  - venv/**
+  - .venv/**
+  - __pycache__/**
+  - "*.pyc"
+  - .tox/**
+  - .pytest_cache/**
+  - .mypy_cache/**
+  - "*.egg-info/**"
+  - vendor/**
+preset: api
+paradigm: oop

@@ -1,0 +1,26 @@
+{
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Write|Edit|MultiEdit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "rigour hooks check --files \"$TOOL_INPUT_file_path\""
+                    }
+                ]
+            }
+        ],
+        "PreToolUse": [
+            {
+                "matcher": ".*",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "rigour hooks check --mode dlp --stdin"
+                    }
+                ]
+            }
+        ]
+    }
+}

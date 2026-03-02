@@ -37,7 +37,7 @@ REPO_METADATA = {
     "openai-python": {"language": "python", "full_name": "openai/openai-python"},
 }
 
-# Category descriptions
+# Drift category descriptions (task-level)
 CATEGORIES = {
     "stale_drift": "Code uses deprecated/legacy patterns",
     "staleness_drift": "Code uses deprecated/legacy patterns",
@@ -46,6 +46,13 @@ CATEGORIES = {
     "pattern_drift": "Code deviates from established patterns",
     "logic_drift": "Code has logical inconsistencies",
 }
+
+# Rigour gate names (for per-gate scoring)
+GATE_NAMES = [
+    "file-size", "content-check", "structure-check", "ast-analysis",
+    "dependency-guardian", "safety-rail", "coverage-guard", "staleness",
+    "pattern-index", "file-guard", "context-drift",
+]
 
 
 def load_model_config() -> Dict[str, Any]:
@@ -178,6 +185,8 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
     by_repo: Dict[str, Dict[str, int]] = {}
     by_language: Dict[str, Dict[str, int]] = {}
     by_category: Dict[str, Dict[str, int]] = {}
+    by_gate: Dict[str, Dict[str, int]] = {}  # Per-gate scoring
+    finding_categories: Dict[str, int] = {}  # Finding-level category counts
 
     for filepath in result_files:
         try:
@@ -234,6 +243,26 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
             if data.get("correct"):
                 correct += 1
 
+            # ── Per-gate scoring ──
+            # Extract which gates passed/failed from the LLM result report
+            llm_report = data.get("llm_result", {}).get("report", {})
+            summary = llm_report.get("summary", {})
+            for gate_name, gate_status in summary.items():
+                if gate_name not in by_gate:
+                    by_gate[gate_name] = {"passed": 0, "failed": 0, "total": 0}
+                by_gate[gate_name]["total"] += 1
+                if gate_status == "PASS":
+                    by_gate[gate_name]["passed"] += 1
+                elif gate_status == "FAIL":
+                    by_gate[gate_name]["failed"] += 1
+
+            # ── Per-finding-category scoring ──
+            # Count individual finding categories (e.g., STALENESS_NO_VAR, etc.)
+            failures = llm_report.get("failures", [])
+            for failure in failures:
+                fid = failure.get("id", "unknown")
+                finding_categories[fid] = finding_categories.get(fid, 0) + 1
+
         except (json.JSONDecodeError, IOError) as e:
             print(f"    ⚠️  Skipping {filepath}: {e}")
             continue
@@ -262,7 +291,9 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
         "breakdown": {
             "by_repo": by_repo,
             "by_language": by_language,
-            "by_category": by_category
+            "by_category": by_category,
+            "by_gate": by_gate,
+            "by_finding": dict(sorted(finding_categories.items(), key=lambda x: x[1], reverse=True)),
         }
     }
 
