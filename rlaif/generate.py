@@ -1,12 +1,7 @@
 """RLAIF Synthetic Data Generator.
 
-Orchestrates the full pipeline: clone repos -> extract facts ->
-call teacher model -> verify findings -> store in SQLite.
-
-Works with ANY OpenAI SDK-compatible provider:
-    python -m rlaif.generate --provider deepseek --model-name deepseek-chat
-    python -m rlaif.generate --provider ollama --model-name qwen2.5-coder:7b
-    MODEL_PROVIDER=openai MODEL_NAME=gpt-4o python -m rlaif.generate
+Orchestrates full pipeline: clone -> extract facts -> call teacher ->
+verify -> store. Works with ANY OpenAI SDK-compatible provider.
 """
 
 import os
@@ -39,11 +34,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("rlaif.generate")
 
-
 @dataclass
 class TrainingExample:
-    """One training data point with verification result."""
-
+    """Training data point with verification result."""
     repo: str
     scan_id: str
     file_path: str
@@ -54,14 +47,10 @@ class TrainingExample:
     timestamp: str
     facts_hash: str
 
-
-# ── Repo cloning ──
-
-
 def clone_repo(
     repo: str, workspace: str, shallow: bool = True
 ) -> str:
-    """Clone a GitHub repo into workspace. Returns repo path."""
+    """Clone GitHub repo into workspace."""
     repo_name = repo.replace("/", "_")
     repo_path = os.path.join(workspace, repo_name)
 
@@ -91,10 +80,6 @@ def clone_repo(
     if result.returncode != 0:
         raise RuntimeError(f"Failed to clone {repo}: {result.stderr}")
     return repo_path
-
-
-# ── SQLite storage ──
-
 
 def init_db(db_path: str) -> sqlite3.Connection:
     """Initialize SQLite database for training data."""
@@ -173,10 +158,6 @@ def save_examples(
         except Exception as e:
             logger.warning(f"Failed to save example: {e}")
     conn.commit()
-
-
-# ── Pipeline ──
-
 
 def process_repo(
     repo: str,
@@ -286,10 +267,6 @@ def _log_scan(
         duration_ms, datetime.now(timezone.utc).isoformat(),
     ))
     conn.commit()
-
-
-# ── CLI ──
-
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

@@ -204,6 +204,119 @@ jobs:
           print(f'\\nDataset available at: https://huggingface.co/datasets/{repo_id}')
           "
 
+  finetune-model:
+    name: Fine-tune Qwen Model (QLoRA)
+    needs: upload-to-huggingface
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max for training
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install training dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install torch transformers peft trl datasets bitsandbytes
+          pip install huggingface_hub
+
+      - name: Download training data artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rlaif-training-data-${{ github.run_id }}
+          path: rlaif/data/
+
+      - name: Run QLoRA fine-tune (deep tier)
+        run: |
+          python -m rlaif.finetune \
+            --sft rlaif/data/sft_data.jsonl \
+            --dpo rlaif/data/dpo_data.jsonl \
+            --output rlaif/models/rigour-v1 \
+            --sft-epochs 3 \
+            --dpo-epochs 1
+
+      - name: Upload fine-tuned model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finetune-model-${{ github.run_id }}
+          path: rlaif/models/rigour-v1/merged/
+          retention-days: 30
+
+  export-and-upload-gguf:
+    name: Export GGUF + Upload to HuggingFace
+    needs: finetune-model
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install huggingface_hub transformers torch
+
+      - name: Clone llama.cpp and build
+        run: |
+          git clone --depth 1 https://github.com/ggerganov/llama.cpp
+          cd llama.cpp
+          pip install -r requirements.txt || true
+          cmake -B build && cmake --build build --config Release -j
+
+      - name: Download fine-tuned model artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: finetune-model-${{ github.run_id }}
+          path: rlaif/models/rigour-v1/merged/
+
+      - name: Convert to GGUF + quantize
+        run: |
+          python -m rlaif.export_gguf \
+            --model rlaif/models/rigour-v1/merged \
+            --output rlaif/models/rigour-v1 \
+            --llama-cpp-path llama.cpp \
+            --version 1
+
+      - name: Upload GGUF to HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+          import os, glob
+          from rlaif.export_gguf import upload_to_huggingface
+          gguf_files = glob.glob('rlaif/models/rigour-v1/*.gguf')
+          gguf_files = [f for f in gguf_files if 'f16' not in f]
+          if gguf_files:
+              upload_to_huggingface(
+                  gguf_files[0],
+                  'rigour-labs/rigour-deep-v1-gguf',
+                  version='1', tier='deep',
+              )
+          else:
+              print('ERROR: No quantized GGUF found')
+              exit(1)
+          "
+
+      - name: Upload GGUF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gguf-model-${{ github.run_id }}
+          path: rlaif/models/rigour-v1/*.gguf
+          retention-days: 30
+
   run-driftbench-eval:
     name: Validate with DriftBench
     needs: generate-training-data

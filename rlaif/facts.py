@@ -1,7 +1,7 @@
 """AST fact extraction for RLAIF pipeline.
 
-Extracts structured facts (classes, functions, imports, etc.) from source files.
-Python reimplementation of the TypeScript fact-extractor in rigour-core.
+Extracts facts (classes, functions, imports, etc.) from source files.
+Python reimplementation of TypeScript rigour-core fact-extractor.
 """
 
 import os
@@ -25,11 +25,9 @@ SKIP_DIRS = {
     ".next", ".nuxt", "coverage", ".nyc_output",
 }
 
-
 @dataclass
 class FileFact:
-    """Mirrors the TypeScript FileFacts interface."""
-
+    """TypeScript FileFacts interface mirror."""
     path: str
     language: str
     line_count: int
@@ -50,7 +48,6 @@ class FileFact:
     comment_ratio: float = 0.0
     todo_count: int = 0
 
-
 def detect_language(filepath: str) -> str:
     ext = Path(filepath).suffix.lower()
     lang_map = {
@@ -60,7 +57,6 @@ def detect_language(filepath: str) -> str:
         ".cs": "csharp", ".java": "java", ".rb": "ruby", ".kt": "kotlin",
     }
     return lang_map.get(ext, "unknown")
-
 
 def _extract_classes(content: str, lang: str) -> List[Dict]:
     classes = []
@@ -84,9 +80,7 @@ def _extract_classes(content: str, lang: str) -> List[Dict]:
         })
     return classes
 
-
 def _find_block_end(lines: List[str], start: int, lang: str) -> int:
-    """Find where a class/function block ends."""
     end = min(start + 500, len(lines))
     if lang == "python":
         base_indent = len(lines[start]) - len(lines[start].lstrip())
@@ -104,7 +98,6 @@ def _find_block_end(lines: List[str], start: int, lang: str) -> int:
                 return j + 1
     return end
 
-
 def _find_methods_in_class(
     class_content: str, class_name: str, lang: str
 ) -> List[str]:
@@ -118,7 +111,6 @@ def _find_methods_in_class(
     skip = (class_name, "constructor", "if", "for", "while")
     return [m.group(1) for m in pattern.finditer(class_content)
             if m.group(1) not in skip]
-
 
 def _extract_functions(content: str, lang: str) -> List[Dict]:
     functions = []
@@ -147,7 +139,6 @@ def _extract_functions(content: str, lang: str) -> List[Dict]:
             break
     return functions
 
-
 def _get_function_patterns(lang: str) -> list:
     if lang == "python":
         return [re.compile(r'^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)')]
@@ -165,9 +156,8 @@ def _get_function_patterns(lang: str) -> list:
         ),
     ]
 
-
 def _parse_function_match(m, line: str, lang: str):
-    """Extract name and params from a regex match. Returns None to skip."""
+    """Extract name and params from regex match, return None to skip."""
     if lang == "go":
         receiver = m.group(1) or ""
         name = f"{receiver}.{m.group(2)}" if receiver else m.group(2)
@@ -180,7 +170,6 @@ def _parse_function_match(m, line: str, lang: str):
     params = ([p.strip() for p in param_str.split(",") if p.strip()]
               if param_str else [])
     return name, params
-
 
 def _find_func_end(lines: List[str], start: int, lang: str) -> int:
     if lang == "python":
@@ -201,7 +190,6 @@ def _find_func_end(lines: List[str], start: int, lang: str) -> int:
             return j + 1
     return start + 1
 
-
 def _extract_imports(content: str, lang: str) -> List[str]:
     imports = []
     if lang == "python":
@@ -220,7 +208,6 @@ def _extract_imports(content: str, lang: str) -> List[str]:
             imports.append(m.group(1))
     return imports
 
-
 def _extract_exports(content: str, lang: str) -> List[str]:
     if lang in ("typescript", "javascript"):
         return [m.group(1) for m in re.finditer(
@@ -229,7 +216,6 @@ def _extract_exports(content: str, lang: str) -> List[str]:
             content,
         )]
     return []
-
 
 def _extract_go_structs(content: str) -> List[Dict]:
     structs = []
@@ -251,7 +237,6 @@ def _extract_go_structs(content: str) -> List[Dict]:
             "lineCount": end - i,
         })
     return structs
-
 
 def _extract_go_interfaces(content: str) -> List[Dict]:
     interfaces = []
@@ -278,7 +263,6 @@ def _extract_go_interfaces(content: str) -> List[Dict]:
         })
     return interfaces
 
-
 def _is_test_file(filepath: str, content: str) -> bool:
     if re.search(r'\.(test|spec|_test)\.', filepath):
         return True
@@ -290,11 +274,10 @@ def _is_test_file(filepath: str, content: str) -> bool:
         return True
     return False
 
-
 def extract_facts_from_file(
     filepath: str, rel_path: str
 ) -> Optional[FileFact]:
-    """Extract structured facts from a single source file."""
+    """Extract structured facts from a source file."""
     try:
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
@@ -343,9 +326,8 @@ def extract_facts_from_file(
         ))
     return fact
 
-
 def extract_repo_facts(repo_path: str) -> List[FileFact]:
-    """Walk a repository and extract facts from all supported files."""
+    """Extract facts from all supported files in repository."""
     facts = []
     count = 0
     for root, dirs, files in os.walk(repo_path):
@@ -365,7 +347,6 @@ def extract_repo_facts(repo_path: str) -> List[FileFact]:
             break
     logger.info(f"Extracted facts from {len(facts)} files in {repo_path}")
     return facts
-
 
 def facts_to_prompt(facts: List[FileFact], max_chars: int = 12000) -> str:
     """Convert facts to compact prompt string."""
