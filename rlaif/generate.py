@@ -1,8 +1,4 @@
-"""RLAIF Synthetic Data Generator.
-
-Orchestrates full pipeline: clone -> extract facts -> call teacher ->
-verify -> store. Works with ANY OpenAI SDK-compatible provider.
-"""
+"""RLAIF Synthetic Data Generator — clone, extract facts, call teacher, verify, store."""
 
 import os
 import json
@@ -332,6 +328,28 @@ def _resolve_repos(args) -> list:
     return []
 
 
+def _write_summary(output_dir, results, teacher_model, provider, api_base):
+    """Write generate_summary.json with run stats."""
+    total_v = sum(r.get("verified", 0) for r in results)
+    total_d = sum(r.get("dropped", 0) for r in results)
+    logger.info(
+        f"SUMMARY: {total_v} verified, {total_d} dropped "
+        f"across {len(results)} repos"
+    )
+    summary_path = os.path.join(output_dir, "generate_summary.json")
+    with open(summary_path, "w") as f:
+        json.dump({
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "teacher_model": teacher_model,
+            "provider": provider,
+            "api_base": api_base or None,
+            "repos_processed": len(results),
+            "total_verified": total_v,
+            "total_dropped": total_d,
+            "results": results,
+        }, f, indent=2)
+
+
 def main():
     parser = _build_parser()
     args = parser.parse_args()
@@ -371,26 +389,7 @@ def main():
             logger.error(f"Failed to process {repo}: {e}")
             results.append({"repo": repo, "status": "error", "error": str(e)})
 
-    total_v = sum(r.get("verified", 0) for r in results)
-    total_d = sum(r.get("dropped", 0) for r in results)
-    logger.info(
-        f"SUMMARY: {total_v} verified, {total_d} dropped "
-        f"across {len(repos)} repos"
-    )
-
-    summary_path = os.path.join(args.output, "generate_summary.json")
-    with open(summary_path, "w") as f:
-        json.dump({
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "teacher_model": teacher_model,
-            "provider": provider,
-            "api_base": args.api_base or None,
-            "repos_processed": len(repos),
-            "total_verified": total_v,
-            "total_dropped": total_d,
-            "results": results,
-        }, f, indent=2)
-
+    _write_summary(args.output, results, teacher_model, provider, args.api_base)
     conn.close()
 
 
