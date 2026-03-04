@@ -10,12 +10,35 @@ Usage:
 """
 
 import os
+import re
 import json
 import time
 import logging
 from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger("rlaif.batch_provider")
+
+
+def _sanitize_custom_id(custom_id: str) -> str:
+    """Last-defence sanitization to guarantee Anthropic's custom_id pattern.
+
+    Pattern: ^[a-zA-Z0-9_-]{1,64}$
+
+    This is a safety-net inside create_batch() so that even if a caller
+    builds custom_ids without going through _make_custom_id() in
+    batch_orchestrator.py, the batch will never get a 400 from the API.
+    Any mutation is logged as a WARNING so callers know to fix upstream.
+    """
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "", custom_id)[:64]
+    if not safe:
+        safe = "req"
+    if safe != custom_id:
+        logger.warning(
+            "custom_id contained invalid chars and was sanitized: "
+            "%r → %r (fix the caller to use _make_custom_id())",
+            custom_id, safe,
+        )
+    return safe
 
 # Batch API limits
 MAX_REQUESTS_PER_BATCH = 100_000
@@ -67,7 +90,7 @@ def create_batch(
         if system_prompt:
             params["system"] = system_prompt
         requests.append({
-            "custom_id": p["custom_id"],
+            "custom_id": _sanitize_custom_id(p["custom_id"]),  # ← last-defence guard
             "params": params,
         })
 
