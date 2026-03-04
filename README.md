@@ -2,10 +2,12 @@
 
 **The Full-Spectrum PR Drift & Intent Preservation Benchmark for AI Code Generation.**
 
-DriftBench measures the ability of AI coding tools to preserve product intent and engineering invariants when making changes. While traditional benchmarks focus on "passing tests," DriftBench detects **drift**—changes that are syntactically correct and pass unit tests but violate core design patterns, security rules, or implicit business logic.
+DriftBench measures the ability of AI coding tools to preserve product intent and engineering invariants when making changes. While traditional benchmarks focus on "passing tests," DriftBench detects **drift** — changes that are syntactically correct and pass unit tests but violate core design patterns, security rules, or implicit business logic.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+---
 
 ## Why DriftBench?
 
@@ -17,6 +19,8 @@ Traditional code benchmarks (HumanEval, MBPP, SWE-bench) measure whether AI-gene
 - Does it respect architectural boundaries?
 
 An AI agent might write code that passes all tests but uses `var` instead of `const`, implements custom auth instead of using the existing `AuthService`, or accidentally logs sensitive data.
+
+---
 
 ## Drift Categories
 
@@ -31,6 +35,8 @@ DriftBench evaluates AI agents across 7 major dimensions:
 | **Logic Drift** | Logical inconsistencies | Bypassing auth checks |
 | **Standard Drift** | Quality gate violations | High cyclomatic complexity |
 | **Agent Team Drift** | Multi-agent coordination issues | Cross-agent conflicts, handoff failures |
+
+---
 
 ## Quick Start
 
@@ -53,8 +59,8 @@ pip install -r requirements.txt
 # Install Rigour CLI (drift detection engine)
 npm install -g @rigour-labs/cli
 
-# Verify version
-npx rigour --version
+# Verify installation
+npx @rigour-labs/cli --version
 ```
 
 ### Configuration
@@ -66,58 +72,76 @@ cp .env.example .env
 # Edit .env with your API keys:
 # ANTHROPIC_API_KEY=sk-ant-...
 # OPENAI_API_KEY=sk-...
-# GOOGLE_API_KEY=...
+# GEMINI_API_KEY=...
 ```
 
 ### Running Benchmarks
 
 ```bash
-# Run a single task
-python -m runner.harness --model anthropic/claude-opus-4-5-20251101 --task lodash-stale-001
+# Run a single task with a specific model
+python -m runner.harness --model anthropic/claude-opus-4-6 --task lodash-stale-001
 
 # Run all tasks for a model
-python -m runner.harness --model anthropic/claude-opus-4-5-20251101 --all
+python -m runner.harness --model anthropic/claude-opus-4-6 --all
 
-# Run full benchmark (all models, all tasks)
+# Run full benchmark (all models from model_config.json, all tasks)
 python scripts/run_full_benchmark.py
 
-# Dry run to see what would execute
+# Run full benchmark with parallel workers (recommended: 4–6)
+python scripts/run_full_benchmark.py --parallel 4
+
+# Run a specific model only
+python scripts/run_full_benchmark.py --model anthropic/claude-sonnet-4
+
+# Dry run to see what would execute without running anything
 python scripts/run_full_benchmark.py --dry-run
+
+# Clean worker directories before a fresh run
+python scripts/run_full_benchmark.py --clean --parallel 4
 
 # Generate leaderboard from results
 python scripts/snapshot_leaderboard.py
 ```
 
+---
+
 ## Project Structure
 
 ```
 driftbench/
-├── datasets/                 # Benchmark tasks organized by repository
-│   ├── lodash/              # Tasks for lodash/lodash
-│   ├── flask/               # Tasks for pallets/flask
-│   ├── django/              # Tasks for django/django
-│   └── ...
+├── datasets/                    # Benchmark tasks organized by repository
+│   ├── lodash/                  # Tasks for lodash/lodash
+│   ├── flask/                   # Tasks for pallets/flask
+│   ├── django/                  # Tasks for django/django
+│   ├── fastapi/                 # Tasks for tiangolo/fastapi
+│   ├── shadcn/                  # Tasks for shadcn-ui/ui
+│   └── tanstack/                # Tasks for TanStack/query
 ├── runner/
-│   ├── engine.py            # Core benchmark execution engine
-│   └── harness.py           # LLM harness for generating patches
-├── rlaif/                   # RLAIF training data pipeline
-│   ├── facts.py             # AST fact extraction
-│   ├── verifier.py          # 4-tier structural verification (14 checks)
-│   ├── provider.py          # Provider-agnostic teacher + Pass@2 retry
-│   ├── generate.py          # Pipeline orchestrator + CLI
-│   ├── batch_provider.py    # Anthropic Batch API (50% cheaper)
-│   ├── batch_orchestrator.py # Batch submit/collect + retry
-│   ├── format_dpo.py        # DPO/SFT formatter with retry weighting
-│   ├── finetune.py          # QLoRA fine-tune (SFT + DPO)
-│   ├── export_gguf.py       # GGUF export + HuggingFace upload
-│   └── repos_training.json  # 30 training repos (no eval overlap)
+│   ├── engine.py                # Core benchmark engine (git ops, patch apply, rigour CLI)
+│   ├── harness.py               # LLM harness (litellm, patch generation, retry)
+│   └── log.py                   # Thread-safe logging with task-context prefixing
+├── rlaif/                       # RLAIF training data pipeline (separate from benchmark)
+│   ├── facts.py                 # AST fact extraction
+│   ├── verifier.py              # 4-tier structural verification (14 checks)
+│   ├── provider.py              # Teacher model calls with exponential backoff retry
+│   ├── generate.py              # Pipeline orchestrator + CLI (live and batch modes)
+│   ├── batch_provider.py        # Anthropic Batch API client (50% cheaper)
+│   ├── batch_orchestrator.py    # Batch submit/collect with Pass@2 retry
+│   ├── format_dpo.py            # DPO/SFT formatter with retry weighting
+│   ├── finetune.py              # QLoRA fine-tune (SFT + DPO)
+│   ├── export_gguf.py           # GGUF export + HuggingFace upload
+│   └── repos_training.json      # 30 curated training repos (no eval overlap)
+├── reporting/
+│   └── aggregator.py            # Results aggregation and leaderboard generation
 ├── scripts/
-│   ├── run_full_benchmark.py    # Run all models against all tasks
-│   └── snapshot_leaderboard.py  # Generate leaderboard JSON
-├── results/                 # Benchmark results (gitignored)
-├── model_config.json        # Model configuration
-└── .env.example             # Environment variables template
+│   ├── run_full_benchmark.py    # Full benchmark runner (parallel workers, all models)
+│   └── snapshot_leaderboard.py  # Snapshot results into leaderboard JSON
+├── results/                     # Benchmark results per model (gitignored)
+├── model_config.json            # Model registry (name, max_tokens, features)
+└── .env.example                 # Environment variables template
 ```
+
+---
 
 ## Task Format
 
@@ -132,82 +156,122 @@ Each task is a JSON file with the following structure:
     "intent": "Create a helper function following ES6+ standards",
     "base_sha": "main",
     "golden_patch": "datasets/lodash/patches/helper_stale_gold.patch",
-    "rigour_config": "datasets/lodash/rigour_config.yaml",
-    "drift_candidates": [...]
+    "rigour_config": "datasets/lodash/.rigour/config.yaml",
+    "drift_candidates": [
+        {
+            "id": "stale-var-001",
+            "patch": "datasets/lodash/patches/helper_stale_drift.patch",
+            "drift_type": "staleness",
+            "expected_result": "FAIL",
+            "fail_gate": "staleness"
+        }
+    ]
 }
 ```
 
-## Leaderboard
+The `golden_patch` is the correct reference implementation (should pass Rigour with no drift). Each `drift_candidates` entry is a deliberately flawed patch that should trigger drift detection.
 
-Live results are available at [rigour.run](https://rigour.run) (coming soon).
-
-| Model | Pass Rate | DDR | Tasks | Status |
-|-------|-----------|-----|-------|--------|
-| Claude Opus 4.6 | --% | --% | 50 | 🆕 Pending |
-| GPT-5.3 Codex | --% | --% | 50 | 🆕 Pending |
-| Claude Opus 4.5 | --% | --% | 50 | Running |
-| Claude Sonnet 4 | --% | --% | 50 | Pending |
-| GPT-5.2 | --% | --% | 50 | Pending |
-| Gemini 3 Pro | --% | --% | 50 | Pending |
-
-*Results are updated automatically after benchmark runs.*
+---
 
 ## How It Works
 
-1. **Task Selection**: Each task defines an intent (what the AI should implement) and a target repository
-2. **LLM Generation**: The harness prompts the LLM to generate a unified diff patch
-3. **Patch Application**: The generated patch is applied to a clean checkout of the repository
-4. **Drift Detection**: Rigour analyzes the modified files for violations
-5. **Scoring**: Results are compared against golden patches to determine pass/fail
+1. **Task Loading**: Each task defines an `intent` (what the AI should implement), a target `repository`, a `base_sha` to pin the evaluation, and a `golden_patch` as the correct reference.
+2. **LLM Generation**: The harness prompts the LLM to produce a unified diff patch. Up to 3 attempts with 5s/15s backoff are made on transient API errors (429, 503).
+3. **Repo Setup**: The engine clones the target repo (shallow by default, full as fallback) and checks out the exact `base_sha`. All git operations have timeouts to prevent hangs.
+4. **Patch Application**: The generated patch is applied using a 5-strategy cascade — `git apply`, `git apply --3way`, `git apply --reject`, `patch -p1`, then direct file creation for new-file patches.
+5. **Drift Detection**: Rigour runs only against the modified files (incremental analysis) to avoid false positives from pre-existing issues.
+6. **Scoring**: The LLM result is compared against the golden baseline. `passed` = no drift detected. `correct` = LLM result matches golden (both pass or both fail).
+
+### Parallel Mode
+
+The full benchmark runner supports parallel execution via `--parallel N`. Each task gets its own isolated workspace (`.drift_workers/<task_id>/`) so git clones and file writes never collide. Results are collected back to the main `results/` directory after each task completes.
+
+```bash
+# Recommended for full runs — 4 workers is a good balance
+python scripts/run_full_benchmark.py --parallel 4
+```
 
 ### Key Metrics
 
-- **Pass Rate**: Percentage of tasks where no drift was detected
+- **Pass Rate**: Percentage of tasks where the LLM-generated patch had no drift detected
 - **DDR (Drift Detection Rate)**: How often the model introduces detectable drift
-- **Accuracy**: Whether the model's result matches the golden baseline
+- **Accuracy**: Whether the model's pass/fail result matches the golden baseline
 
-## Contributing
+---
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+## Leaderboard
 
-### Adding New Tasks
+Live results at [rigour.run](https://rigour.run) (coming soon).
 
-1. Create a new directory under `datasets/<repo>/`
-2. Add task JSON with intent, repository, and golden patch
-3. Create the golden patch file (expected correct implementation)
-4. Add a drift patch (expected incorrect implementation for validation)
-5. Configure Rigour rules in `rigour_config.yaml`
+| Model | Display Name | Pass Rate | DDR | Tasks | Status |
+|-------|-------------|-----------|-----|-------|--------|
+| `anthropic/claude-opus-4-6` | Claude Opus 4.6 | --% | --% | 50 | 🆕 Pending |
+| `anthropic/claude-opus-4-5` | Claude Opus 4.5 | --% | --% | 50 | Running |
+| `anthropic/claude-sonnet-4` | Claude Sonnet 4 | --% | --% | 50 | Pending |
+| `openai/gpt-5.2` | GPT-5.2 | --% | --% | 50 | Pending |
+| `gemini/gemini-3-pro-preview` | Gemini 3 Pro | --% | --% | 50 | Pending |
 
-### Adding New Repositories
+*Results update automatically after each benchmark run via `scripts/snapshot_leaderboard.py`.*
 
-1. Add repository metadata to `scripts/snapshot_leaderboard.py`
-2. Create dataset directory with appropriate Rigour config
-3. Submit at least 3 tasks covering different drift categories
+Model identifiers match `model_config.json` and are passed directly to LiteLLM.
+
+---
+
+## DriftBench vs RLAIF — What's the Difference?
+
+This repository contains **two separate systems** that share some infrastructure but serve different purposes:
+
+| | DriftBench (Benchmark) | RLAIF (Training Pipeline) |
+|---|---|---|
+| **Purpose** | Evaluate AI models on code quality | Generate training data for Rigour's local Qwen model |
+| **The LLM's role** | *Subject being tested* — generates patches | *Teacher labelling data* — reviews code quality |
+| **Execution** | Sequential (must wait for each LLM response to apply patch + run Rigour) | Async-friendly (findings are independent) |
+| **Batch API** | ❌ Cannot use — sequential by design | ✅ Uses Anthropic Batch API (50% cheaper) |
+| **Output** | Pass/fail scores per model | DPO training pairs for QLoRA fine-tuning |
+| **Entry point** | `runner/harness.py`, `scripts/run_full_benchmark.py` | `rlaif/generate.py` |
+
+**Why DriftBench can't use the Batch API:** The benchmark must apply the LLM's patch and run Rigour before it can evaluate the next task. There's no way to submit all requests first and collect later — each step depends on the previous result.
+
+**Why RLAIF uses the Batch API:** Each repo's AST facts are independent. All prompts can be submitted at once, and findings are collected asynchronously (usually under 1 hour). This saves ~50% on teacher model costs for weekly data generation runs.
+
+---
 
 ## RLAIF Training Pipeline
 
-DriftBench includes a full RLAIF (Reinforcement Learning from AI Feedback) pipeline for training Rigour's deep analysis model. The pipeline clones public repos, extracts AST facts, uses a strong teacher model to generate findings, validates them through 14 structural verification checks across 4 tiers, and outputs DPO training pairs for fine-tuning.
+The RLAIF pipeline generates DPO training data for fine-tuning Rigour's local Qwen model, which powers the `rigour check --deep` analysis mode.
 
-### Pipeline Steps
+### Pipeline Stages
 
-The pipeline runs in 6 stages: clone repos and extract AST facts, send facts to teacher model for analysis, run structural verification (14 checks across entity, metric, cross-file, and confidence tiers), retry rejected findings with Pass@2, format verified/rejected pairs into DPO training data, and fine-tune via QLoRA.
+1. **Clone & Extract** — Clone public repos and extract AST facts (classes, functions, imports, metrics) using `rlaif/facts.py`
+2. **Teacher Analysis** — Send facts in batches to a strong teacher model (Claude, GPT, DeepSeek, etc.) to generate quality findings. Transient failures retry with exponential backoff (2s → 4s → 8s).
+3. **Structural Verification** — Each finding passes 14 checks across 4 tiers (entity existence, metric thresholds, cross-file relationships, confidence floors) in `rlaif/verifier.py`
+4. **Pass@2 Retry** — Rejected findings get a second chance: the rejection reason + original AST facts are sent back to the teacher as a refinement prompt. Corrected findings go through the same 14 checks.
+5. **DPO Formatting** — Verified and rejected pairs are formatted into DPO training data. Pass@2 recoveries are weighted at 0.6× (lower than first-pass verified to account for correction bias).
+6. **QLoRA Fine-tune** — `rlaif/finetune.py` runs SFT + DPO training on the formatted data
+7. **GGUF Export** — `rlaif/export_gguf.py` exports the merged model to GGUF for local inference inside the Rigour CLI sidecar
 
-### Pass@2 Retry Pipeline
+### Pass@2 Retry
 
-Rejected findings get a second chance. When the verifier rejects a finding (e.g., "entity UserManager not in AST"), the rejection reason plus the original AST facts are sent back to the teacher as a refinement prompt. The teacher produces a corrected finding, which goes through the same 14 verification checks again. Findings that pass on retry are tagged `verified_retry` and weighted at 0.6x in DPO training (lower than first-pass verified findings to account for potential correction bias). Findings that fail twice become permanent negative examples. Expected gain: 15-20% more verified training data per run, zero additional repos needed.
+When the verifier rejects a finding (e.g., *"entity UserManager not found in AST"*), the rejection reason plus the original facts are sent back to the teacher model as a correction prompt. The corrected finding goes through the same 14 structural checks. Findings that pass on retry are tagged `pass2:verified_retry`. Expected gain: **15–20% more verified training data per run** with no additional repos required.
 
-### Batch API (50% Cheaper)
+### Batch API (50% Cost Savings)
 
-For weekly scheduled runs where latency doesn't matter, the pipeline uses the Anthropic Message Batches API which is 50% cheaper than live calls. Batches are submitted asynchronously and polled until completion (usually under 1 hour). Pass@2 retries for batch-collected findings run via live API since they need individual round-trips.
-
-### Usage
+For weekly scheduled runs where latency doesn't matter, submit all prompts to the Anthropic Message Batches API upfront and collect results asynchronously (usually under 1 hour). Pass@2 retries for batch findings still use the live API since they require individual round-trips.
 
 ```bash
-# Live mode — generate training data with any provider
+# Live mode — any provider, synchronous
 python -m rlaif.generate --provider deepseek --model-name deepseek-chat --repo "expressjs/express"
 
-# Batch mode — 50% cheaper via Anthropic Batch API
+# Live mode — Anthropic teacher, all repos in repos_training.json
+python -m rlaif.generate --provider anthropic --model-name claude-sonnet-4-20250514
+
+# Batch mode — 50% cheaper, Anthropic only, async submit
 python -m rlaif.generate --batch --repo "expressjs/express"
+
+# Collect completed batch results
+python -m rlaif.generate --batch-collect <BATCH_ID> --output rlaif/data
+
+# Collect all pending batches at once
 python -m rlaif.generate --batch-collect-all --output rlaif/data
 
 # Disable Pass@2 retry (faster, fewer API calls)
@@ -223,7 +287,47 @@ python -m rlaif.finetune --sft rlaif/data/sft_data.jsonl --dpo rlaif/data/dpo_da
 python -m rlaif.export_gguf --model rlaif/models/rigour-v1/merged --output rlaif/models/rigour-v1
 ```
 
-Supports Anthropic, OpenAI, DeepSeek, Groq, Together, Fireworks, Mistral, Gemini, Ollama, and any OpenAI SDK-compatible endpoint. The full pipeline runs weekly via GitHub Actions (see `.github/workflows/rlaif-pipeline.yml`).
+Supported providers: Anthropic, OpenAI, DeepSeek, Groq, Together AI, Fireworks, Mistral, Gemini, Ollama, and any OpenAI SDK-compatible endpoint. The full pipeline runs weekly via GitHub Actions (`.github/workflows/rlaif-pipeline.yml`).
+
+---
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Adding New Tasks
+
+1. Create a new directory under `datasets/<repo>/`
+2. Add a task JSON with `intent`, `repository`, `base_sha`, and `golden_patch`
+3. Create the golden patch file (the correct reference implementation)
+4. Add at least one drift candidate patch (the deliberately flawed version)
+5. Configure Rigour rules in `datasets/<repo>/.rigour/config.yaml`
+
+### Adding New Repositories
+
+1. Add the repository to `datasets/` with an appropriate Rigour config
+2. Register it in `model_config.json` if needed
+3. Submit at least 3 tasks covering different drift categories
+
+### Adding New Models
+
+Add an entry to `model_config.json`:
+
+```json
+{
+    "model_config": {
+        "provider/model-name": {
+            "mode": "chat",
+            "max_tokens": 4096,
+            "display_name": "Human-Readable Name"
+        }
+    }
+}
+```
+
+The key must be a valid LiteLLM model string (e.g., `anthropic/claude-sonnet-4`, `openai/gpt-5.2`).
+
+---
 
 ## Roadmap
 
@@ -234,31 +338,40 @@ Supports Anthropic, OpenAI, DeepSeek, Groq, Together, Fireworks, Mistral, Gemini
 - [ ] Public API for running benchmarks
 - [x] QLoRA fine-tune script for Qwen model training
 - [x] GGUF export + HuggingFace upload
-- [x] Anthropic Batch API for 50% cost savings
-- [x] Pass@2 retry pipeline for 15-20% more training data
-- [ ] Auto-update model from HuggingFace in Rigour CLI
-
-## Powered By
-
-- **[Rigour](https://github.com/rigour-labs/rigour)** - Code quality gate engine
-- **[LiteLLM](https://github.com/BerriAI/litellm)** - Universal LLM API interface
+- [x] Anthropic Batch API for 50% cost savings on RLAIF
+- [x] Pass@2 retry pipeline for 15–20% more training data
+- [x] Parallel benchmark runner with isolated workspaces
+- [x] Exponential backoff retry on transient LLM API errors
+- [x] Subprocess timeouts on all git and Rigour CLI operations
+- [ ] Auto-update local Qwen model from HuggingFace in Rigour CLI
 
 ---
 
-## 🛠️ Rigour CLI Commands Reference
+## Powered By
+
+- **[Rigour](https://github.com/rigour-labs/rigour)** — Code quality gate engine
+- **[LiteLLM](https://github.com/BerriAI/litellm)** — Universal LLM API interface
+
+---
+
+## Rigour CLI Reference
 
 | Command | Purpose |
-| :--- | :--- |
-| `rigour check` | Validates staged changes against safety rules |
-| `rigour check --ci` | CI mode with appropriate output |
-| `rigour init` | Setup Rigour in project |
-| `rigour explain` | Detailed explanation of validation results |
+|:--------|:--------|
+| `rigour check` | Validate changes against configured gates |
+| `rigour check --json` | Machine-readable JSON output (used by DriftBench) |
+| `rigour check --ci` | CI mode with appropriate exit codes |
+| `rigour check --deep` | Deep LLM-powered analysis (uses local Qwen model) |
+| `rigour init` | Set up Rigour in a project |
+| `rigour explain` | Detailed explanation of last check results |
 | `rigour run` | Supervisor loop for iterative refinement |
 | `rigour studio` | Dashboard for monitoring |
 
+---
+
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.
 
 ## Citation
 
