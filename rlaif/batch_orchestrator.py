@@ -4,12 +4,47 @@ Includes Pass@2 retry for batch-collected findings.
 Separated from generate.py to keep both files under 400 lines.
 """
 
+import re
+import hashlib
 import logging
 import time
 from datetime import datetime, timezone
 from typing import Dict, List
 
 logger = logging.getLogger("rlaif.batch_orchestrator")
+
+
+def _make_custom_id(repo: str, batch_index: int) -> str:
+    """Build a Batch API-safe custom_id from repo name + batch index.
+
+    Anthropic requires: ^[a-zA-Z0-9_-]{1,64}$
+    Strategy: sanitize the repo name, truncate if needed, append batch index.
+    Also store a mapping so we can reverse-lookup the repo later.
+    """
+    # Replace / with -- (owner--repo), strip anything not alphanumeric/-/_
+    safe = repo.replace("/", "--")
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "", safe)
+    suffix = f"_b{batch_index}"
+    max_name = 64 - len(suffix)
+    if len(safe) > max_name:
+        # Truncate and append short hash for uniqueness
+        short_hash = hashlib.md5(repo.encode()).hexdigest()[:6]
+        safe = safe[: max_name - 7] + "_" + short_hash
+    return safe + suffix
+
+
+def _repo_from_custom_id(custom_id: str) -> str:
+    """Best-effort reverse of _make_custom_id: extract repo from custom_id.
+
+    Handles both old format (owner_repo_bN) and new format (owner--repo_bN).
+    """
+    # Strip batch suffix
+    base = re.sub(r"_b\d+$", "", custom_id)
+    # New format: owner--repo
+    if "--" in base:
+        return base.replace("--", "/", 1)
+    # Old format fallback: owner_repo (ambiguous but best effort)
+    return base.replace("_", "/", 1)
 
 
 def submit_batch(
@@ -36,7 +71,7 @@ def submit_batch(
         for i in range(batch_count):
             batch = facts[i * batch_size: (i + 1) * batch_size]
             prompt = facts_to_prompt(batch)
-            cid = f"{repo.replace('/', '_')}_b{i}"
+            cid = _make_custom_id(repo, i)
             all_prompts.append({"custom_id": cid, "content": prompt})
 
     if not all_prompts:
@@ -128,7 +163,7 @@ def _batch_verify_and_retry(
     by_repo: Dict[str, list] = {}
     for f in findings:
         bid = f.get("_batch_id", "")
-        repo = bid.rsplit("_b", 1)[0].replace("_", "/") if bid else ""
+        repo = _repo_from_custom_id(bid) if bid else ""
         if repo:
             by_repo.setdefault(repo, []).append(f)
 
@@ -215,7 +250,7 @@ def _build_examples(findings: List[Dict], batch_id: str) -> list:
     now = datetime.now(timezone.utc).isoformat()
     for f in findings:
         bid = f.get("_batch_id", "")
-        repo = bid.rsplit("_b", 1)[0].replace("_", "/") if bid else ""
+        repo = _repo_from_custom_id(bid) if bid else ""
         examples.append(TrainingExample(
             repo=repo,
             scan_id=f"batch_{batch_id}",
