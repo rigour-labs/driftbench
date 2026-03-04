@@ -2,6 +2,7 @@ import os
 import re
 import glob
 import json
+import time
 from typing import Dict, Optional
 
 import click
@@ -144,7 +145,7 @@ class LLMHarness:
                 filepath = os.path.join(root, filename)
                 try:
                     with open(filepath, 'r', errors='ignore') as f:
-                        content = f.read(2000)  # First 2000 chars per file
+                        content = f.read(4000)  # First 4000 chars per file (~1000 tokens)
                     rel_path = os.path.relpath(filepath, repo_path)
                     entry = f"--- {rel_path} ---\n{content}\n"
                     context.append(entry)
@@ -207,13 +208,25 @@ class LLMHarness:
                 {"role": "user", "content": prompt}
             ]
 
-        try:
-            response = litellm.completion(**kwargs)
-            raw_response = response.choices[0].message.content
-            return self._extract_patch(raw_response)
-        except Exception as e:
-            log.secho(f"    ❌ LLM Error: {e}", fg='red')
-            raise
+        _RETRY_DELAYS = [5, 15]  # seconds
+        last_exc: Exception = RuntimeError("no attempts made")
+        for attempt in range(3):
+            try:
+                response = litellm.completion(**kwargs)
+                raw_response = response.choices[0].message.content
+                return self._extract_patch(raw_response)
+            except Exception as e:
+                last_exc = e
+                if attempt < 2:
+                    delay = _RETRY_DELAYS[attempt]
+                    log.secho(
+                        f"    ⚠️  LLM Error (retry {attempt + 1}/2 in {delay}s): {e}",
+                        fg='yellow'
+                    )
+                    time.sleep(delay)
+                else:
+                    log.secho(f"    ❌ LLM Error after 3 attempts: {e}", fg='red')
+        raise last_exc
 
     def _extract_patch(self, response_text: str) -> str:
         """

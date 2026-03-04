@@ -258,6 +258,7 @@ def _call_teacher_batched(
     facts: list, model: str, batch_size: int, api_base: str
 ) -> list:
     all_findings = []
+    failed_batches = 0
     batch_count = max(1, len(facts) // batch_size)
     for i in range(batch_count):
         batch = facts[i * batch_size: (i + 1) * batch_size]
@@ -265,9 +266,17 @@ def _call_teacher_batched(
         findings = call_teacher(
             prompt, model=model, batch_index=i, api_base=api_base
         )
-        all_findings.extend(findings)
+        if findings:
+            all_findings.extend(findings)
+        else:
+            failed_batches += 1
         if i < batch_count - 1:
             time.sleep(1)
+    if failed_batches:
+        logger.warning(
+            f"{failed_batches}/{batch_count} batches returned no findings "
+            f"(check logs for retry failures)"
+        )
     logger.info(f"Total findings from teacher: {len(all_findings)}")
     return all_findings
 

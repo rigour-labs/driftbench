@@ -92,9 +92,9 @@ class BenchmarkEngine:
         if os.path.exists(repo_path):
             log.echo(f"    ♻️  Reusing cached repo: {repo_name}")
             try:
-                subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True)
-                subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
-                subprocess.run(["git", "fetch", "--all"], cwd=repo_path, check=True, capture_output=True)
+                subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True, timeout=60)
+                subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True, timeout=60)
+                subprocess.run(["git", "fetch", "--all"], cwd=repo_path, check=True, capture_output=True, timeout=120)
             except subprocess.CalledProcessError as e:
                 log.echo(f"    ⚠️  Git cleanup failed, re-cloning: {e}")
                 shutil.rmtree(repo_path, ignore_errors=True)
@@ -104,18 +104,18 @@ class BenchmarkEngine:
             url = f"https://github.com/{repository}.git"
 
             try:
-                subprocess.run(["git", "clone", "--depth", "1", url, repo_path], check=True, capture_output=True)
+                subprocess.run(["git", "clone", "--depth", "1", url, repo_path], check=True, capture_output=True, timeout=180)
             except subprocess.CalledProcessError:
                 # Full clone as fallback for specific SHA access
-                subprocess.run(["git", "clone", url, repo_path], check=True, capture_output=True)
+                subprocess.run(["git", "clone", url, repo_path], check=True, capture_output=True, timeout=300)
 
         # Checkout the target SHA
         log.echo(f"    🔀 Checkout {base_sha[:8] if len(base_sha) > 8 else base_sha}")
         try:
-            subprocess.run(["git", "fetch", "origin", base_sha], cwd=repo_path, capture_output=True)
-            subprocess.run(["git", "checkout", base_sha], cwd=repo_path, check=True, capture_output=True)
+            subprocess.run(["git", "fetch", "origin", base_sha], cwd=repo_path, capture_output=True, timeout=120)
+            subprocess.run(["git", "checkout", base_sha], cwd=repo_path, check=True, capture_output=True, timeout=60)
         except subprocess.CalledProcessError:
-            subprocess.run(["git", "checkout", base_sha], cwd=repo_path, check=True, capture_output=True)
+            subprocess.run(["git", "checkout", base_sha], cwd=repo_path, check=True, capture_output=True, timeout=60)
 
         # Track active state
         self._active_repo = repo_path
@@ -126,8 +126,8 @@ class BenchmarkEngine:
     def reset_repo(self, repo_path: str) -> None:
         """Reset repository to clean state without full teardown."""
         try:
-            subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True)
-            subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True)
+            subprocess.run(["git", "clean", "-fd"], cwd=repo_path, check=True, capture_output=True, timeout=60)
+            subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=repo_path, check=True, capture_output=True, timeout=60)
         except subprocess.CalledProcessError as e:
             log.echo(f"    ⚠️  Reset failed: {e}")
 
@@ -184,7 +184,7 @@ class BenchmarkEngine:
         try:
             result = subprocess.run(
                 ["git", "apply", "--whitespace=nowarn", full_patch_path],
-                cwd=repo_path, capture_output=True, text=True
+                cwd=repo_path, capture_output=True, text=True, timeout=60
             )
             if result.returncode == 0:
                 return modified_files
@@ -195,7 +195,7 @@ class BenchmarkEngine:
         try:
             result = subprocess.run(
                 ["git", "apply", "--3way", "--whitespace=nowarn", full_patch_path],
-                cwd=repo_path, capture_output=True, text=True
+                cwd=repo_path, capture_output=True, text=True, timeout=60
             )
             if result.returncode == 0:
                 log.echo(f"    ℹ️  Applied with 3-way merge")
@@ -207,7 +207,7 @@ class BenchmarkEngine:
         try:
             result = subprocess.run(
                 ["git", "apply", "--reject", "--whitespace=nowarn", full_patch_path],
-                cwd=repo_path, capture_output=True, text=True
+                cwd=repo_path, capture_output=True, text=True, timeout=60
             )
             if result.returncode == 0:
                 log.echo(f"    ℹ️  Applied with possible rejects")
@@ -219,7 +219,7 @@ class BenchmarkEngine:
         try:
             result = subprocess.run(
                 ["patch", "-p1", "--ignore-whitespace", "--fuzz=3", "--input", full_patch_path],
-                cwd=repo_path, capture_output=True, text=True
+                cwd=repo_path, capture_output=True, text=True, timeout=60
             )
             if result.returncode == 0:
                 log.echo(f"    ℹ️  Applied with patch utility")
@@ -353,7 +353,7 @@ class BenchmarkEngine:
                 cmd.extend(target_files)
                 log.echo(f"    📁 Checking {len(target_files)} modified file(s)")
 
-            result = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True)
+            result = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True, timeout=300)
 
             if not result.stdout:
                 return {"status": "ERROR", "error": result.stderr or "No output from rigour"}

@@ -7,6 +7,7 @@ or CLI args (--provider, --model-name, --api-key, --api-base).
 
 import os
 import json
+import time
 import logging
 from typing import Dict, List
 
@@ -111,13 +112,21 @@ def build_model_string(provider: str, model_name: str) -> str:
     return f"{provider}/{model_name}"
 
 
+_RETRY_DELAYS = [2, 4, 8]  # seconds between retry attempts
+
+
 def call_teacher(
     facts_prompt: str,
     model: str = DEFAULT_TEACHER_MODEL,
     batch_index: int = 0,
     api_base: str = "",
+    max_retries: int = 3,
 ) -> List[Dict]:
-    """Send facts to teacher model and get findings back."""
+    """Send facts to teacher model and get findings back.
+
+    Retries up to max_retries times with exponential backoff on transient
+    errors (429 rate limits, 503 service unavailable, network timeouts).
+    """
     user_prompt = (
         "Analyze the following codebase facts and "
         "identify ALL quality issues:\n\n" + facts_prompt
@@ -140,23 +149,35 @@ def call_teacher(
     if api_base:
         kwargs["api_base"] = api_base
 
-    try:
-        response = litellm.completion(**kwargs)
-        content = response.choices[0].message.content
-        content = _strip_code_fences(content)
-        data = json.loads(content)
-        findings = data.get("findings", [])
-        logger.info(
-            f"Teacher ({model}) returned {len(findings)} "
-            f"findings (batch {batch_index})"
-        )
-        return findings
-    except json.JSONDecodeError as e:
-        logger.warning(f"Failed to parse teacher JSON: {e}")
-        return []
-    except Exception as e:
-        logger.error(f"Teacher call failed ({model}): {e}")
-        return []
+    for attempt in range(max_retries):
+        try:
+            response = litellm.completion(**kwargs)
+            content = response.choices[0].message.content
+            content = _strip_code_fences(content)
+            data = json.loads(content)
+            findings = data.get("findings", [])
+            logger.info(
+                f"Teacher ({model}) returned {len(findings)} "
+                f"findings (batch {batch_index})"
+            )
+            return findings
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse teacher JSON (batch {batch_index}): {e}")
+            return []  # JSON parse errors are not retryable
+        except Exception as e:
+            if attempt < max_retries - 1:
+                delay = _RETRY_DELAYS[attempt]
+                logger.warning(
+                    f"Teacher call failed (batch {batch_index}, "
+                    f"attempt {attempt + 1}/{max_retries}, retry in {delay}s): {e}"
+                )
+                time.sleep(delay)
+            else:
+                logger.error(
+                    f"Teacher call failed after {max_retries} attempts "
+                    f"({model}, batch {batch_index}): {e}"
+                )
+    return []
 
 
 RETRY_SYSTEM_PROMPT = """You are an expert code reviewer correcting a previous analysis.
@@ -216,8 +237,13 @@ def call_teacher_retry(
     facts_prompt: str,
     model: str = DEFAULT_TEACHER_MODEL,
     api_base: str = "",
+    max_retries: int = 2,
 ) -> List[Dict]:
-    """Send a rejected finding back to teacher for correction (Pass@2)."""
+    """Send a rejected finding back to teacher for correction (Pass@2).
+
+    Uses fewer retries than call_teacher since retries are already the
+    second-chance mechanism themselves. Only retries on transient errors.
+    """
     user_prompt = build_retry_prompt(finding, rejection_reason, facts_prompt)
 
     kwargs = {
@@ -237,22 +263,31 @@ def call_teacher_retry(
     if api_base:
         kwargs["api_base"] = api_base
 
-    try:
-        response = litellm.completion(**kwargs)
-        content = response.choices[0].message.content
-        content = _strip_code_fences(content)
-        data = json.loads(content)
-        findings = data.get("findings", [])
-        logger.info(
-            f"Retry ({model}) returned {len(findings)} corrected findings"
-        )
-        return findings
-    except json.JSONDecodeError as e:
-        logger.warning(f"Failed to parse retry JSON: {e}")
-        return []
-    except Exception as e:
-        logger.error(f"Retry call failed ({model}): {e}")
-        return []
+    for attempt in range(max_retries):
+        try:
+            response = litellm.completion(**kwargs)
+            content = response.choices[0].message.content
+            content = _strip_code_fences(content)
+            data = json.loads(content)
+            findings = data.get("findings", [])
+            logger.info(
+                f"Retry ({model}) returned {len(findings)} corrected findings"
+            )
+            return findings
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse retry JSON: {e}")
+            return []  # Not retryable
+        except Exception as e:
+            if attempt < max_retries - 1:
+                delay = _RETRY_DELAYS[attempt]
+                logger.warning(
+                    f"Retry call failed (attempt {attempt + 1}/{max_retries}, "
+                    f"retry in {delay}s): {e}"
+                )
+                time.sleep(delay)
+            else:
+                logger.error(f"Retry call failed after {max_retries} attempts ({model}): {e}")
+    return []
 
 
 def _strip_code_fences(content: str) -> str:
