@@ -32,23 +32,44 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("rlaif.format_dpo")
 
 
-def load_training_data(db_path: str) -> Tuple[List[Dict], List[Dict]]:
-    """Load verified and dropped findings from SQLite."""
+def load_training_data(
+    db_path: str,
+) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+    """Load verified, dropped, and retry-verified findings from SQLite.
+
+    Returns (verified_pass1, dropped, verified_retry).
+    verified_retry = findings that failed pass@1 but passed pass@2.
+    """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
 
+    # Pass@1 verified (excludes retry-verified)
     verified = [dict(r) for r in conn.execute(
-        "SELECT * FROM training_data WHERE verified = 1 ORDER BY category, repo"
+        "SELECT * FROM training_data WHERE verified = 1 "
+        "AND verification_notes NOT LIKE 'pass2:verified_retry%' "
+        "ORDER BY category, repo"
     ).fetchall()]
 
+    # Pass@2 retry-verified (separate confidence tier)
+    retry_verified = [dict(r) for r in conn.execute(
+        "SELECT * FROM training_data WHERE verified = 1 "
+        "AND verification_notes LIKE 'pass2:verified_retry%' "
+        "ORDER BY category, repo"
+    ).fetchall()]
+
+    # All dropped (includes pass@2 permanently rejected)
     dropped = [dict(r) for r in conn.execute(
         "SELECT * FROM training_data WHERE verified = 0 ORDER BY category, repo"
     ).fetchall()]
 
     conn.close()
 
-    logger.info(f"Loaded {len(verified)} verified, {len(dropped)} dropped findings")
-    return verified, dropped
+    logger.info(
+        f"Loaded {len(verified)} pass@1 verified, "
+        f"{len(retry_verified)} pass@2 recovered, "
+        f"{len(dropped)} dropped findings"
+    )
+    return verified, dropped, retry_verified
 
 
 def format_finding_as_json(row: Dict) -> str:
@@ -107,13 +128,14 @@ def _group_by_category(rows: List[Dict]) -> Dict[str, List[Dict]]:
 
 
 def _make_dpo_pair(
-    category: str, chosen_row: Dict, dropped_row: Dict
+    category: str, chosen_row: Dict, dropped_row: Dict,
+    weight: float = 1.0,
 ) -> Dict:
     prompt = (
         f"Analyze this codebase for {category} issues.\n"
         f"File: {dropped_row['file_path']} (repo: {dropped_row['repo']})"
     )
-    return {
+    pair = {
         "prompt": prompt,
         "chosen": format_finding_as_json(chosen_row),
         "rejected": format_finding_as_json(dropped_row),
@@ -121,14 +143,23 @@ def _make_dpo_pair(
         "chosen_notes": "Passed structural verification",
         "rejected_notes": dropped_row.get("verification_notes", ""),
     }
+    if weight != 1.0:
+        pair["weight"] = weight
+    return pair
 
 
 def build_dpo_pairs(
     verified: List[Dict],
     dropped: List[Dict],
     max_pairs: int = 10000,
+    retry_verified: List[Dict] = None,
+    retry_weight: float = 0.6,
 ) -> List[Dict]:
-    """Build DPO preference pairs by matching verified/dropped per category."""
+    """Build DPO preference pairs by matching verified/dropped per category.
+
+    Pass@2 retry-verified findings are included with lower weight (0.6x default)
+    since they required a correction step and may carry subtle biases.
+    """
     verified_by_cat = _group_by_category(verified)
     dropped_by_cat = _group_by_category(dropped)
     all_cats = set(verified_by_cat) | set(dropped_by_cat)
@@ -136,6 +167,7 @@ def build_dpo_pairs(
     pairs = []
     categories_used = set()
 
+    # Pass@1 DPO pairs (full weight)
     for category in all_cats:
         v_list = verified_by_cat.get(category, [])
         d_list = dropped_by_cat.get(category, [])
@@ -150,18 +182,56 @@ def build_dpo_pairs(
         if len(pairs) >= max_pairs:
             break
 
+    # Pass@2 retry-verified DPO pairs (lower weight)
+    if retry_verified and len(pairs) < max_pairs:
+        retry_by_cat = _group_by_category(retry_verified)
+        retry_pairs = 0
+        for category in retry_by_cat:
+            rv_list = retry_by_cat[category]
+            d_list = dropped_by_cat.get(category, [])
+            if not d_list:
+                continue
+            categories_used.add(category)
+            for dropped_row in d_list:
+                chosen_row = random.choice(rv_list)
+                pairs.append(_make_dpo_pair(
+                    category, chosen_row, dropped_row,
+                    weight=retry_weight,
+                ))
+                retry_pairs += 1
+                if len(pairs) >= max_pairs:
+                    break
+            if len(pairs) >= max_pairs:
+                break
+        if retry_pairs > 0:
+            logger.info(
+                f"Added {retry_pairs} Pass@2 DPO pairs (weight={retry_weight})"
+            )
+
     random.shuffle(pairs)
     logger.info(f"Built {len(pairs)} DPO pairs across {len(categories_used)} categories")
     return pairs
 
 
-def build_category_stats(verified: List[Dict], dropped: List[Dict]) -> Dict:
+def build_category_stats(
+    verified: List[Dict],
+    dropped: List[Dict],
+    retry_verified: List[Dict] = None,
+) -> Dict:
     """Build per-category statistics for reporting."""
-    stats = defaultdict(lambda: {"verified": 0, "dropped": 0, "total": 0})
+    stats = defaultdict(lambda: {
+        "verified": 0, "dropped": 0, "total": 0, "retry_verified": 0,
+    })
 
     for row in verified:
         cat = row["category"]
         stats[cat]["verified"] += 1
+        stats[cat]["total"] += 1
+
+    for row in (retry_verified or []):
+        cat = row["category"]
+        stats[cat]["retry_verified"] += 1
+        stats[cat]["verified"] += 1  # Also counts as verified
         stats[cat]["total"] += 1
 
     for row in dropped:
@@ -169,9 +239,10 @@ def build_category_stats(verified: List[Dict], dropped: List[Dict]) -> Dict:
         stats[cat]["dropped"] += 1
         stats[cat]["total"] += 1
 
-    # Calculate verification rate
     for cat, s in stats.items():
-        s["verification_rate"] = round(s["verified"] / s["total"] * 100, 1) if s["total"] > 0 else 0
+        s["verification_rate"] = (
+            round(s["verified"] / s["total"] * 100, 1) if s["total"] > 0 else 0
+        )
 
     return dict(sorted(stats.items(), key=lambda x: x[1]["total"], reverse=True))
 
@@ -302,17 +373,22 @@ def main():
         logger.error("Run 'python -m rlaif.generate' first to create training data")
         return
 
-    # Load data
-    verified, dropped = load_training_data(args.db)
+    # Load data (now 3-way split: pass@1 verified, dropped, pass@2 recovered)
+    verified, dropped, retry_verified = load_training_data(args.db)
 
-    if not verified:
+    if not verified and not retry_verified:
         logger.error("No verified findings in database. Need more training data.")
         return
 
-    # Build pairs
-    sft_pairs = build_sft_pairs(verified)
-    dpo_pairs = build_dpo_pairs(verified, dropped, max_pairs=args.max_dpo_pairs)
-    stats = build_category_stats(verified, dropped)
+    # Build pairs — SFT includes both pass@1 and pass@2 verified
+    all_verified = verified + retry_verified
+    sft_pairs = build_sft_pairs(all_verified)
+    dpo_pairs = build_dpo_pairs(
+        verified, dropped,
+        max_pairs=args.max_dpo_pairs,
+        retry_verified=retry_verified,
+    )
+    stats = build_category_stats(verified, dropped, retry_verified)
 
     # Export
     export_for_huggingface(sft_pairs, dpo_pairs, args.output, stats)

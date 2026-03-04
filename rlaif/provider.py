@@ -159,6 +159,102 @@ def call_teacher(
         return []
 
 
+RETRY_SYSTEM_PROMPT = """You are an expert code reviewer correcting a previous analysis.
+Your earlier finding was REJECTED by the structural verifier. You receive:
+1. The original AST facts
+2. Your rejected finding
+3. The specific rejection reason from the verifier
+
+RULES:
+1. Fix ONLY the specific issue identified in the rejection reason.
+2. If the rejection says an entity doesn't exist, use ONLY entities from the facts.
+3. If the rejection says a metric is too small, find a better example or drop the finding.
+4. Keep the same category unless the rejection invalidates it entirely.
+5. If you cannot produce a valid finding, respond with: {"findings": []}
+6. Respond ONLY with valid JSON. No text outside JSON.
+
+OUTPUT FORMAT (same as before):
+{
+  "findings": [
+    {
+      "category": "string",
+      "severity": "critical|high|medium|low|info",
+      "file": "string (exact path from facts)",
+      "line": null,
+      "description": "string (reference specific entities FROM THE FACTS)",
+      "suggestion": "string (actionable fix)",
+      "confidence": 0.0-1.0
+    }
+  ]
+}"""
+
+
+def build_retry_prompt(
+    finding: dict,
+    rejection_reason: str,
+    original_facts_prompt: str,
+) -> str:
+    """Build a refinement prompt for Pass@2 retry.
+
+    Sends the rejected finding + rejection reason + original AST facts
+    back to the teacher so it can produce a corrected finding.
+    """
+    finding_json = json.dumps(finding, indent=2)
+    return (
+        f"Your previous finding was REJECTED by structural verification.\n\n"
+        f"REJECTION REASON: {rejection_reason}\n\n"
+        f"YOUR REJECTED FINDING:\n{finding_json}\n\n"
+        f"ORIGINAL AST FACTS:\n{original_facts_prompt}\n\n"
+        f"Please produce a CORRECTED finding that addresses the rejection reason, "
+        f"or return empty findings if no valid issue exists."
+    )
+
+
+def call_teacher_retry(
+    finding: dict,
+    rejection_reason: str,
+    facts_prompt: str,
+    model: str = DEFAULT_TEACHER_MODEL,
+    api_base: str = "",
+) -> List[Dict]:
+    """Send a rejected finding back to teacher for correction (Pass@2)."""
+    user_prompt = build_retry_prompt(finding, rejection_reason, facts_prompt)
+
+    kwargs = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": RETRY_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": 0.05,  # Lower temp for corrections
+        "max_tokens": 2048,   # Single finding needs less tokens
+    }
+
+    provider = model.split("/")[0] if "/" in model else "unknown"
+    if provider not in ("ollama", "ollama_chat"):
+        kwargs["response_format"] = {"type": "json_object"}
+
+    if api_base:
+        kwargs["api_base"] = api_base
+
+    try:
+        response = litellm.completion(**kwargs)
+        content = response.choices[0].message.content
+        content = _strip_code_fences(content)
+        data = json.loads(content)
+        findings = data.get("findings", [])
+        logger.info(
+            f"Retry ({model}) returned {len(findings)} corrected findings"
+        )
+        return findings
+    except json.JSONDecodeError as e:
+        logger.warning(f"Failed to parse retry JSON: {e}")
+        return []
+    except Exception as e:
+        logger.error(f"Retry call failed ({model}): {e}")
+        return []
+
+
 def _strip_code_fences(content: str) -> str:
     """Strip markdown code fences from model output."""
     text = content.strip()

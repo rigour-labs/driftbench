@@ -34,6 +34,11 @@ on:
         required: false
         type: boolean
         default: true
+      enable_retry:
+        description: 'Enable Pass@2 retry for rejected findings (15-20% more verified data)'
+        required: false
+        type: boolean
+        default: true
 
 env:
   PYTHON_VERSION: '3.11'
@@ -77,6 +82,7 @@ jobs:
           API_BASE="${{ inputs.api_base || '' }}"
           REPOS_INPUT="${{ inputs.repos || 'all' }}"
           USE_BATCH="${{ inputs.use_batch_api || 'true' }}"
+          ENABLE_RETRY="${{ inputs.enable_retry || 'true' }}"
 
           COMMON_ARGS="--provider $PROVIDER --model-name $MODEL_NAME --output rlaif/data --workspace .rlaif_repos"
           if [ -n "$API_BASE" ]; then
@@ -89,17 +95,23 @@ jobs:
             BATCH_FLAG="--batch"
           fi
 
+          # Pass@2 retry flag (15-20% more verified data)
+          RETRY_FLAG=""
+          if [ "$ENABLE_RETRY" = "false" ]; then
+            RETRY_FLAG="--no-retry"
+          fi
+
           if [ "$REPOS_INPUT" = "all" ]; then
             python -m rlaif.generate \
               --repos rlaif/repos_training.json \
-              $COMMON_ARGS $BATCH_FLAG
+              $COMMON_ARGS $BATCH_FLAG $RETRY_FLAG
           else
             IFS=',' read -ra REPOS <<< "$REPOS_INPUT"
             for repo in "${REPOS[@]}"; do
               repo=$(echo "$repo" | xargs)
               python -m rlaif.generate \
                 --repo "$repo" \
-                $COMMON_ARGS $BATCH_FLAG
+                $COMMON_ARGS $BATCH_FLAG $RETRY_FLAG
             done
           fi
 
@@ -134,6 +146,9 @@ jobs:
           print(f'DPO pairs:  {stats[\"dpo_pairs\"]}')
           print(f'Verified:   {stats[\"total_verified\"]}')
           print(f'Dropped:    {stats[\"total_dropped\"]}')
+          retry_total = sum(s.get('retry_verified', 0) for s in stats.get('categories', {}).values())
+          if retry_total > 0:
+              print(f'Pass@2 recovered: {retry_total}')
           print()
           print('Per-category breakdown:')
           for cat, s in sorted(stats['categories'].items(), key=lambda x: x[1]['total'], reverse=True):

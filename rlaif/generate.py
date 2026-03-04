@@ -19,7 +19,7 @@ from .verifier import verify_finding
 from .provider import (
     DEFAULT_PROVIDER, DEFAULT_MODEL_NAME, DEFAULT_API_KEY,
     DEFAULT_API_BASE, DEFAULT_TEACHER_MODEL,
-    setup_provider, build_model_string, call_teacher,
+    setup_provider, build_model_string, call_teacher, call_teacher_retry,
 )
 
 load_dotenv(override=True)
@@ -162,8 +162,9 @@ def process_repo(
     teacher_model: str = DEFAULT_TEACHER_MODEL,
     batch_size: int = 15,
     api_base: str = "",
+    enable_retry: bool = True,
 ) -> Dict:
-    """Full RLAIF pipeline for one repository."""
+    """Full RLAIF pipeline for one repository (with Pass@2 retry)."""
     scan_id = f"{repo.replace('/', '_')}_{int(time.time())}"
     start = time.time()
 
@@ -182,6 +183,9 @@ def process_repo(
     )
     facts_hash = hashlib.sha256(facts_json.encode()).hexdigest()[:16]
 
+    # Build facts prompt map for retry (path -> prompt with that file's batch)
+    facts_prompt_map = _build_facts_prompt_map(facts, batch_size)
+
     all_findings = _call_teacher_batched(
         facts, teacher_model, batch_size, api_base
     )
@@ -189,23 +193,65 @@ def process_repo(
         all_findings, facts_by_path, repo, scan_id,
         teacher_model, facts_hash
     )
+
+    # Pass@2: retry rejected findings
+    retry_verified = 0
+    retry_dropped = 0
+    if enable_retry:
+        rejected = [ex for ex in examples if not ex.verified]
+        retry_v, retry_d, retry_examples = _retry_rejected(
+            rejected, facts_by_path, facts_prompt_map,
+            repo, scan_id, teacher_model, facts_hash, api_base,
+        )
+        retry_verified = retry_v
+        retry_dropped = retry_d
+        examples.extend(retry_examples)
+        logger.info(
+            f"Pass@2 retry: {retry_verified} recovered, "
+            f"{retry_dropped} permanently rejected"
+        )
+
     save_examples(db_conn, examples)
 
     duration_ms = int((time.time() - start) * 1000)
+    total_verified = verified_count + retry_verified
+    total_dropped = dropped_count - retry_verified + retry_dropped
     _log_scan(
         db_conn, scan_id, repo, teacher_model,
-        len(all_findings), verified_count, dropped_count, duration_ms,
+        len(all_findings), total_verified, total_dropped, duration_ms,
     )
     logger.info(
-        f"Results: {verified_count} verified, "
-        f"{dropped_count} dropped ({duration_ms}ms)"
+        f"Results: {total_verified} verified "
+        f"({verified_count} pass@1 + {retry_verified} pass@2), "
+        f"{total_dropped} dropped ({duration_ms}ms)"
     )
     return {
         "repo": repo, "status": "ok",
         "total_findings": len(all_findings),
-        "verified": verified_count, "dropped": dropped_count,
+        "verified": total_verified, "dropped": total_dropped,
+        "pass1_verified": verified_count,
+        "pass2_recovered": retry_verified,
+        "pass2_rejected": retry_dropped,
         "duration_ms": duration_ms,
     }
+
+
+def _build_facts_prompt_map(
+    facts: list, batch_size: int
+) -> Dict[str, str]:
+    """Build file_path -> facts_prompt map for retry.
+
+    Each file maps to the prompt for the batch it was included in,
+    so the teacher sees the same context during retry.
+    """
+    prompt_map: Dict[str, str] = {}
+    batch_count = max(1, len(facts) // batch_size)
+    for i in range(batch_count):
+        batch = facts[i * batch_size: (i + 1) * batch_size]
+        prompt = facts_to_prompt(batch)
+        for f in batch:
+            prompt_map[f.path] = prompt
+    return prompt_map
 
 
 def _call_teacher_batched(
@@ -250,6 +296,116 @@ def _verify_all(
     return examples, verified_count, dropped_count
 
 
+def _retry_rejected(
+    rejected_examples: List[TrainingExample],
+    facts_by_path: Dict,
+    facts_prompt_map: Dict[str, str],
+    repo: str,
+    scan_id: str,
+    teacher_model: str,
+    facts_hash: str,
+    api_base: str = "",
+    max_retries: int = 50,
+) -> tuple:
+    """Pass@2: retry rejected findings with rejection reason.
+
+    Sends each rejected finding back to the teacher with:
+    - The original AST facts
+    - The rejected finding
+    - The specific rejection reason
+
+    Returns (verified_count, dropped_count, new_examples).
+    """
+    if not rejected_examples:
+        return 0, 0, []
+
+    # Only retry findings with actionable rejection notes
+    # Skip generic "confidence floor" rejections — those aren't fixable
+    retryable = [
+        ex for ex in rejected_examples
+        if ex.verification_notes
+        and "confidence floor" not in ex.verification_notes.lower()
+        and "batch_mode" not in ex.verification_notes.lower()
+    ][:max_retries]
+
+    if not retryable:
+        return 0, 0, []
+
+    logger.info(f"Pass@2: retrying {len(retryable)} rejected findings")
+
+    verified_count = 0
+    dropped_count = 0
+    new_examples: List[TrainingExample] = []
+
+    for ex in retryable:
+        file_path = ex.finding.get("file", "")
+        facts_prompt = facts_prompt_map.get(file_path, "")
+        if not facts_prompt:
+            # Fallback: try partial match
+            for path, prompt in facts_prompt_map.items():
+                if path.endswith(file_path) or file_path.endswith(path):
+                    facts_prompt = prompt
+                    break
+        if not facts_prompt:
+            dropped_count += 1
+            continue
+
+        corrected = call_teacher_retry(
+            finding=ex.finding,
+            rejection_reason=ex.verification_notes,
+            facts_prompt=facts_prompt,
+            model=teacher_model,
+            api_base=api_base,
+        )
+
+        if not corrected:
+            # Teacher gave up — permanent rejection (good negative example)
+            new_examples.append(TrainingExample(
+                repo=repo, scan_id=scan_id,
+                file_path=file_path, finding=ex.finding,
+                verified=False,
+                verification_notes="pass2:teacher_gave_up",
+                teacher_model=teacher_model,
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                facts_hash=facts_hash,
+            ))
+            dropped_count += 1
+            continue
+
+        # Re-verify the corrected finding
+        for corrected_finding in corrected[:1]:  # Take only first
+            verified, notes = verify_finding(corrected_finding, facts_by_path)
+            if verified:
+                verified_count += 1
+                new_examples.append(TrainingExample(
+                    repo=repo, scan_id=scan_id,
+                    file_path=corrected_finding.get("file", file_path),
+                    finding=corrected_finding,
+                    verified=True,
+                    verification_notes=f"pass2:verified_retry|{notes}",
+                    teacher_model=teacher_model,
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    facts_hash=facts_hash,
+                ))
+            else:
+                dropped_count += 1
+                new_examples.append(TrainingExample(
+                    repo=repo, scan_id=scan_id,
+                    file_path=corrected_finding.get("file", file_path),
+                    finding=corrected_finding,
+                    verified=False,
+                    verification_notes=f"pass2:rejected_again|{notes}",
+                    teacher_model=teacher_model,
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    facts_hash=facts_hash,
+                ))
+
+        # Small delay between retries to avoid rate limits
+        time.sleep(0.5)
+
+    return verified_count, dropped_count, new_examples
+
+
 def _log_scan(
     conn, scan_id, repo, model, total, verified, dropped, duration_ms
 ):
@@ -278,6 +434,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--batch", action="store_true", help="Anthropic Batch API (50%% cheaper)")
     parser.add_argument("--batch-collect", type=str, metavar="ID", help="Collect batch results")
     parser.add_argument("--batch-collect-all", action="store_true", help="Collect all pending")
+    parser.add_argument("--no-retry", action="store_true", help="Disable Pass@2 retry for rejected findings")
     return parser
 
 
@@ -381,6 +538,7 @@ def main():
                 repo, args.workspace, conn,
                 teacher_model=teacher_model,
                 api_base=args.api_base,
+                enable_retry=not args.no_retry,
             )
             results.append(result)
         except Exception as e:

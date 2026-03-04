@@ -102,10 +102,14 @@ driftbench/
 │   └── harness.py           # LLM harness for generating patches
 ├── rlaif/                   # RLAIF training data pipeline
 │   ├── facts.py             # AST fact extraction
-│   ├── verifier.py          # 4-tier structural verification
-│   ├── provider.py          # Provider-agnostic teacher model
+│   ├── verifier.py          # 4-tier structural verification (14 checks)
+│   ├── provider.py          # Provider-agnostic teacher + Pass@2 retry
 │   ├── generate.py          # Pipeline orchestrator + CLI
-│   ├── format_dpo.py        # DPO/SFT formatter for HuggingFace
+│   ├── batch_provider.py    # Anthropic Batch API (50% cheaper)
+│   ├── batch_orchestrator.py # Batch submit/collect + retry
+│   ├── format_dpo.py        # DPO/SFT formatter with retry weighting
+│   ├── finetune.py          # QLoRA fine-tune (SFT + DPO)
+│   ├── export_gguf.py       # GGUF export + HuggingFace upload
 │   └── repos_training.json  # 30 training repos (no eval overlap)
 ├── scripts/
 │   ├── run_full_benchmark.py    # Run all models against all tasks
@@ -182,26 +186,56 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## RLAIF Training Pipeline
 
-DriftBench includes a full RLAIF (Reinforcement Learning from AI Feedback) pipeline for improving Rigour's deep analysis model. The pipeline uses a strong teacher model to label public repos, filters findings through structural verification, and outputs DPO training pairs.
+DriftBench includes a full RLAIF (Reinforcement Learning from AI Feedback) pipeline for training Rigour's deep analysis model. The pipeline clones public repos, extracts AST facts, uses a strong teacher model to generate findings, validates them through 14 structural verification checks across 4 tiers, and outputs DPO training pairs for fine-tuning.
+
+### Pipeline Steps
+
+The pipeline runs in 6 stages: clone repos and extract AST facts, send facts to teacher model for analysis, run structural verification (14 checks across entity, metric, cross-file, and confidence tiers), retry rejected findings with Pass@2, format verified/rejected pairs into DPO training data, and fine-tune via QLoRA.
+
+### Pass@2 Retry Pipeline
+
+Rejected findings get a second chance. When the verifier rejects a finding (e.g., "entity UserManager not in AST"), the rejection reason plus the original AST facts are sent back to the teacher as a refinement prompt. The teacher produces a corrected finding, which goes through the same 14 verification checks again. Findings that pass on retry are tagged `verified_retry` and weighted at 0.6x in DPO training (lower than first-pass verified findings to account for potential correction bias). Findings that fail twice become permanent negative examples. Expected gain: 15-20% more verified training data per run, zero additional repos needed.
+
+### Batch API (50% Cheaper)
+
+For weekly scheduled runs where latency doesn't matter, the pipeline uses the Anthropic Message Batches API which is 50% cheaper than live calls. Batches are submitted asynchronously and polled until completion (usually under 1 hour). Pass@2 retries for batch-collected findings run via live API since they need individual round-trips.
+
+### Usage
 
 ```bash
-# Generate training data with any provider
+# Live mode — generate training data with any provider
 python -m rlaif.generate --provider deepseek --model-name deepseek-chat --repo "expressjs/express"
+
+# Batch mode — 50% cheaper via Anthropic Batch API
+python -m rlaif.generate --batch --repo "expressjs/express"
+python -m rlaif.generate --batch-collect-all --output rlaif/data
+
+# Disable Pass@2 retry (faster, fewer API calls)
+python -m rlaif.generate --no-retry --repo "expressjs/express"
 
 # Format DPO pairs for fine-tuning
 python -m rlaif.format_dpo --db rlaif/data/training_data.db
+
+# Fine-tune Qwen via QLoRA
+python -m rlaif.finetune --sft rlaif/data/sft_data.jsonl --dpo rlaif/data/dpo_data.jsonl
+
+# Export to GGUF for local inference
+python -m rlaif.export_gguf --model rlaif/models/rigour-v1/merged --output rlaif/models/rigour-v1
 ```
 
-Supports Anthropic, OpenAI, DeepSeek, Groq, Together, Ollama, and any OpenAI SDK-compatible endpoint. See [rlaif/README.md](rlaif/README.md) for details and [docs/RLAIF_SETUP.md](docs/RLAIF_SETUP.md) for CI/CD setup.
+Supports Anthropic, OpenAI, DeepSeek, Groq, Together, Fireworks, Mistral, Gemini, Ollama, and any OpenAI SDK-compatible endpoint. The full pipeline runs weekly via GitHub Actions (see `.github/workflows/rlaif-pipeline.yml`).
 
 ## Roadmap
 
 - [ ] Expand to 100+ tasks across 20 repositories
 - [ ] Add Python-specific drift detection (mypy, ruff integration)
 - [ ] Support for multi-file changes
-- [ ] CI/CD integration for automated benchmarking
+- [x] CI/CD integration for automated benchmarking (GitHub Actions weekly pipeline)
 - [ ] Public API for running benchmarks
-- [ ] QLoRA fine-tune script for Qwen model training
+- [x] QLoRA fine-tune script for Qwen model training
+- [x] GGUF export + HuggingFace upload
+- [x] Anthropic Batch API for 50% cost savings
+- [x] Pass@2 retry pipeline for 15-20% more training data
 - [ ] Auto-update model from HuggingFace in Rigour CLI
 
 ## Powered By
