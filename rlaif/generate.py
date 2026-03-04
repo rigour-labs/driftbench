@@ -1,4 +1,4 @@
-"""RLAIF Synthetic Data Generator — clone, extract facts, call teacher, verify, store."""
+"""RLAIF data generator — live (litellm) or batch (Anthropic Batch API, 50% cheaper)."""
 
 import os
 import json
@@ -265,45 +265,19 @@ def _log_scan(
     conn.commit()
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="RLAIF Training Data Generator",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  --provider anthropic --model-name claude-sonnet-4-20250514
-  --provider deepseek  --model-name deepseek-chat
-  --provider ollama    --model-name qwen2.5-coder:7b
-        """,
-    )
+    parser = argparse.ArgumentParser(description="RLAIF Training Data Generator")
     parser.add_argument("--repo", type=str, help="Single repo (owner/repo)")
     parser.add_argument("--repos", type=str, help="JSON file with repos")
-    parser.add_argument(
-        "--output", type=str, default="rlaif/data", help="Output dir"
-    )
-    parser.add_argument(
-        "--provider", type=str, default=DEFAULT_PROVIDER,
-        help=f"LLM provider (default: {DEFAULT_PROVIDER})",
-    )
-    parser.add_argument(
-        "--model-name", type=str, default=DEFAULT_MODEL_NAME,
-        help=f"Model name (default: {DEFAULT_MODEL_NAME})",
-    )
-    parser.add_argument(
-        "--api-key", type=str, default=DEFAULT_API_KEY,
-        help="API key",
-    )
-    parser.add_argument(
-        "--api-base", type=str, default=DEFAULT_API_BASE,
-        help="Custom API base URL",
-    )
-    parser.add_argument(
-        "--model", type=str, default="",
-        help="(Legacy) Full litellm model string",
-    )
-    parser.add_argument(
-        "--workspace", type=str, default=".rlaif_repos",
-        help="Repo clone directory",
-    )
+    parser.add_argument("--output", type=str, default="rlaif/data", help="Output dir")
+    parser.add_argument("--provider", type=str, default=DEFAULT_PROVIDER, help="LLM provider")
+    parser.add_argument("--model-name", type=str, default=DEFAULT_MODEL_NAME, help="Model name")
+    parser.add_argument("--api-key", type=str, default=DEFAULT_API_KEY, help="API key")
+    parser.add_argument("--api-base", type=str, default=DEFAULT_API_BASE, help="Custom API base")
+    parser.add_argument("--model", type=str, default="", help="Full litellm model string")
+    parser.add_argument("--workspace", type=str, default=".rlaif_repos", help="Clone directory")
+    parser.add_argument("--batch", action="store_true", help="Anthropic Batch API (50%% cheaper)")
+    parser.add_argument("--batch-collect", type=str, metavar="ID", help="Collect batch results")
+    parser.add_argument("--batch-collect-all", action="store_true", help="Collect all pending")
     return parser
 
 
@@ -354,6 +328,26 @@ def main():
     parser = _build_parser()
     args = parser.parse_args()
 
+    os.makedirs(args.output, exist_ok=True)
+    os.makedirs(args.workspace, exist_ok=True)
+    db_path = os.path.join(args.output, "training_data.db")
+    conn = init_db(db_path)
+
+    # --- Batch collect mode (no provider setup needed) ---
+    if args.batch_collect:
+        from .batch_orchestrator import collect_batch
+        collect_batch(args.batch_collect, args.output, conn)
+        conn.close()
+        return
+    if args.batch_collect_all:
+        from .batch_provider import load_pending_batches
+        from .batch_orchestrator import collect_batch
+        for bid in list(load_pending_batches(args.output).keys()):
+            collect_batch(bid, args.output, conn)
+        conn.close()
+        return
+
+    # --- Resolve model + provider ---
     if args.model:
         teacher_model = args.model
         provider = (args.model.split("/")[0] if "/" in args.model
@@ -362,18 +356,22 @@ def main():
         provider = args.provider
         teacher_model = build_model_string(provider, args.model_name)
 
-    setup_provider(provider, args.api_key, args.api_base)
-
     repos = _resolve_repos(args)
     if not repos:
         parser.error("Provide --repo or --repos")
 
-    os.makedirs(args.output, exist_ok=True)
-    os.makedirs(args.workspace, exist_ok=True)
+    # --- Batch submit mode (Anthropic Batch API — 50% cheaper) ---
+    if args.batch:
+        from .batch_orchestrator import submit_batch
+        submit_batch(
+            repos, args.workspace, args.output,
+            model_name=args.model_name, batch_size=15,
+        )
+        conn.close()
+        return
 
-    db_path = os.path.join(args.output, "training_data.db")
-    conn = init_db(db_path)
-
+    # --- Live mode (synchronous litellm) ---
+    setup_provider(provider, args.api_key, args.api_base)
     logger.info(f"Processing {len(repos)} repos with {teacher_model}")
 
     results = []

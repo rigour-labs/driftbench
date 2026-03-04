@@ -29,6 +29,11 @@ on:
         required: false
         type: boolean
         default: false
+      use_batch_api:
+        description: 'Use Anthropic Batch API (50% cheaper, async — submit + poll + collect)'
+        required: false
+        type: boolean
+        default: true
 
 env:
   PYTHON_VERSION: '3.11'
@@ -53,13 +58,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install litellm huggingface_hub
+          pip install litellm huggingface_hub anthropic
 
       - name: Generate training data
         if: ${{ !inputs.skip_generate }}
         env:
-          # Provider-agnostic: set ALL possible API keys from secrets
-          # The pipeline uses whichever key matches the chosen provider
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -73,26 +76,43 @@ jobs:
           MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-20250514' }}"
           API_BASE="${{ inputs.api_base || '' }}"
           REPOS_INPUT="${{ inputs.repos || 'all' }}"
+          USE_BATCH="${{ inputs.use_batch_api || 'true' }}"
 
-          # Build common args
           COMMON_ARGS="--provider $PROVIDER --model-name $MODEL_NAME --output rlaif/data --workspace .rlaif_repos"
           if [ -n "$API_BASE" ]; then
             COMMON_ARGS="$COMMON_ARGS --api-base $API_BASE"
           fi
 
+          # Batch mode flag (50% cheaper via Anthropic Batch API)
+          BATCH_FLAG=""
+          if [ "$USE_BATCH" = "true" ] && [ "$PROVIDER" = "anthropic" ]; then
+            BATCH_FLAG="--batch"
+          fi
+
           if [ "$REPOS_INPUT" = "all" ]; then
             python -m rlaif.generate \
               --repos rlaif/repos_training.json \
-              $COMMON_ARGS
+              $COMMON_ARGS $BATCH_FLAG
           else
-            # Process comma-separated repos
             IFS=',' read -ra REPOS <<< "$REPOS_INPUT"
             for repo in "${REPOS[@]}"; do
-              repo=$(echo "$repo" | xargs)  # trim whitespace
+              repo=$(echo "$repo" | xargs)
               python -m rlaif.generate \
                 --repo "$repo" \
-                $COMMON_ARGS
+                $COMMON_ARGS $BATCH_FLAG
             done
+          fi
+
+      - name: Collect batch results (poll until complete)
+        if: ${{ !inputs.skip_generate && (inputs.use_batch_api || true) && (inputs.model_provider || 'anthropic') == 'anthropic' }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -f rlaif/data/pending_batches.json ]; then
+            echo "Polling for batch completion (may take up to 1 hour)..."
+            python -m rlaif.generate --batch-collect-all --output rlaif/data
+          else
+            echo "No pending batches found (live mode was used)"
           fi
 
       - name: Format DPO training pairs
