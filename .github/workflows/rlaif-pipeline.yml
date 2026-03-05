@@ -487,8 +487,12 @@ jobs:
           INTERVAL=60
           ELAPSED=0
 
+          # Wait for kernel to register before polling
+          echo "Waiting 120s for kernel to register on Kaggle..."
+          sleep 120
+
           while [ $ELAPSED -lt $MAX_WAIT ]; do
-            STATUS=$(kaggle kernels status "$KERNEL_ID" 2>&1 || echo "error")
+            STATUS=$(kaggle kernels status "$KERNEL_ID" 2>&1 || echo "status_check_failed")
             echo "[$(date +%H:%M:%S)] Status: $STATUS"
 
             if echo "$STATUS" | grep -qi "complete"; then
@@ -496,7 +500,21 @@ jobs:
               exit 0
             fi
 
-            if echo "$STATUS" | grep -qi "error\|cancel"; then
+            # 403/401 = transient auth issue or kernel not ready yet, just retry
+            if echo "$STATUS" | grep -qi "403\|401\|Forbidden\|Unauthorized\|status_check_failed"; then
+              echo "Status check failed (transient), retrying in ${INTERVAL}s..."
+              sleep $INTERVAL
+              ELAPSED=$((ELAPSED + INTERVAL))
+              continue
+            fi
+
+            if echo "$STATUS" | grep -qi "cancel"; then
+              echo "Kaggle kernel was cancelled!"
+              exit 1
+            fi
+
+            # Only fail on actual kernel execution errors (not API errors)
+            if echo "$STATUS" | grep -qi "error" && ! echo "$STATUS" | grep -qi "Client Error"; then
               echo "Kaggle kernel failed!"
               kaggle kernels output "$KERNEL_ID" -p kaggle_output/ || true
               cat kaggle_output/*.log 2>/dev/null || true
