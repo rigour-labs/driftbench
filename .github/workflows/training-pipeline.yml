@@ -191,12 +191,10 @@ jobs:
 
             COMMON_ARGS="--provider $PROVIDER --model-name $MODEL_NAME --output rlaif/data --workspace .rlaif_repos"
 
-            # Enable batch for providers that support it
+            # Batch API only implemented for Anthropic — others run live
             BATCH_FLAG=""
-            if [ "$USE_BATCH" = "true" ]; then
-              if [ "$PROVIDER" = "anthropic" ] || [ "$PROVIDER" = "openai" ] || [ "$PROVIDER" = "together_ai" ]; then
-                BATCH_FLAG="--batch"
-              fi
+            if [ "$USE_BATCH" = "true" ] && [ "$PROVIDER" = "anthropic" ]; then
+              BATCH_FLAG="--batch"
             fi
 
             if [ "$REPOS_INPUT" = "all" ]; then
@@ -221,8 +219,6 @@ jobs:
         if: ${{ !inputs.skip_generate && (inputs.use_batch_api != false) }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          TOGETHERAI_API_KEY: ${{ secrets.TOGETHERAI_API_KEY }}
         run: |
           set -e
           if [ -f rlaif/data/pending_batches.json ]; then

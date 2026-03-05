@@ -153,7 +153,10 @@ def collect_results(batch_id: str) -> Tuple[Dict[str, str], int, int]:
             results_map[cid] = text
             succeeded += 1
         else:
-            logger.warning(f"Batch entry {cid} failed: {entry.result.type}")
+            error_detail = ""
+            if hasattr(entry.result, "error") and entry.result.error:
+                error_detail = f" — {entry.result.error.type}: {entry.result.error.message}"
+            logger.warning(f"Batch entry {cid} failed: {entry.result.type}{error_detail}")
             errored += 1
 
     logger.info(
