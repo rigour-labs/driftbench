@@ -418,7 +418,7 @@ jobs:
                   max_length=1024,
                   **dtype_args,
               )
-              trainer = SFTTrainer(model=model, tokenizer=tokenizer, train_dataset=sft_ds, args=sft_args)
+              trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=sft_ds, args=sft_args)
               trainer.train()
               print('SFT complete')
 
@@ -442,7 +442,7 @@ jobs:
                   beta=0.1,
                   **dtype_args,
               )
-              trainer = DPOTrainer(model=model, tokenizer=tokenizer, train_dataset=dpo_ds, args=dpo_args)
+              trainer = DPOTrainer(model=model, processing_class=tokenizer, train_dataset=dpo_ds, args=dpo_args)
               trainer.train()
               print('DPO complete')
 
