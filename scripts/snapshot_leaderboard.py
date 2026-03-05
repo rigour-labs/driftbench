@@ -2,12 +2,17 @@
 """
 Snapshot leaderboard data from benchmark results.
 
-Aggregates results from results/<model>/*.json and generates
-a leaderboard data file for the web dashboard with repo-wise breakdown.
+Two data sources (merged automatically):
+1. Local results: results/<model>/*.json  (from run_full_benchmark.py)
+2. Batch results: results/leaderboard.json (from run_leaderboard_batch.py)
+
+Rich metrics: per-category accuracy, ECE calibration, overconfident errors,
+per-repo and per-language breakdown.
 """
 import os
 import json
 import glob
+import math
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 
@@ -45,7 +50,9 @@ CATEGORIES = {
     "architecture_drift": "Code violates architectural boundaries",
     "pattern_drift": "Code deviates from established patterns",
     "logic_drift": "Code has logical inconsistencies",
+    "standard_drift": "Code violates naming/formatting standards",
 }
+BATCH_LEADERBOARD_PATH = os.path.join(RESULTS_DIR, "leaderboard.json")
 
 # Rigour gate names (for per-gate scoring)
 GATE_NAMES = [
@@ -181,6 +188,12 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
     correct = 0
     false_positives_excluded = 0
 
+    # Confidence calibration tracking
+    confidence_bins: Dict[int, Dict[str, int]] = {}  # bin_idx -> {correct, total}
+    overconfident_errors = 0  # high confidence (>=0.8) + wrong
+    underconfident_correct = 0  # low confidence (<0.5) + correct
+    all_confidences: List[float] = []
+
     # Breakdown tracking
     by_repo: Dict[str, Dict[str, int]] = {}
     by_language: Dict[str, Dict[str, int]] = {}
@@ -240,8 +253,29 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
                 by_category[category]["failed"] += 1
 
             # Check correctness
-            if data.get("correct"):
+            is_correct = bool(data.get("correct"))
+            if is_correct:
                 correct += 1
+
+            # ── Confidence calibration ──
+            confidence = data.get("confidence")
+            if confidence is not None:
+                conf = float(confidence)
+                all_confidences.append(conf)
+
+                # Bin into 10 buckets (0.0-0.1, 0.1-0.2, ..., 0.9-1.0)
+                bin_idx = min(int(conf * 10), 9)
+                if bin_idx not in confidence_bins:
+                    confidence_bins[bin_idx] = {"correct": 0, "total": 0}
+                confidence_bins[bin_idx]["total"] += 1
+                if is_correct:
+                    confidence_bins[bin_idx]["correct"] += 1
+
+                # Track overconfident errors and underconfident correct
+                if conf >= 0.8 and not is_correct:
+                    overconfident_errors += 1
+                if conf < 0.5 and is_correct:
+                    underconfident_correct += 1
 
             # ── Per-gate scoring ──
             # Extract which gates passed/failed from the LLM result report
@@ -273,9 +307,18 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
     # Calculate rates based on tasks that actually ran (excluding errors)
     tasks_completed = total - errors
 
-    # Pass Rate = (Passed + FPs corrected) / Tasks Completed
-    # DDR = Real drift detected / Tasks Completed
-    # Error Rate = Errors / Total (for transparency)
+    # ── ECE (Expected Calibration Error) ──
+    # Weighted average of |accuracy_in_bin - avg_confidence_in_bin| across bins
+    ece = 0.0
+    n_with_conf = sum(b["total"] for b in confidence_bins.values())
+    if n_with_conf > 0:
+        for bin_idx, bucket in confidence_bins.items():
+            if bucket["total"] == 0:
+                continue
+            bin_accuracy = bucket["correct"] / bucket["total"]
+            bin_confidence = (bin_idx + 0.5) / 10  # midpoint of bin
+            ece += (bucket["total"] / n_with_conf) * abs(bin_accuracy - bin_confidence)
+
     return {
         "pass_rate": round((passed / tasks_completed) * 100, 1) if tasks_completed > 0 else 0.0,
         "drift_detection_rate": round((failed / tasks_completed) * 100, 1) if tasks_completed > 0 else 0.0,
@@ -288,6 +331,11 @@ def calculate_model_stats(model_dir: str) -> Optional[Dict]:
         "errors": errors,
         "correct": correct,
         "false_positives_excluded": false_positives_excluded,
+        # Confidence calibration metrics
+        "calibration_ece": round(ece, 4),
+        "overconfident_errors": overconfident_errors,
+        "underconfident_correct": underconfident_correct,
+        "avg_confidence": round(sum(all_confidences) / len(all_confidences), 3) if all_confidences else None,
         "breakdown": {
             "by_repo": by_repo,
             "by_language": by_language,
@@ -363,21 +411,90 @@ def calculate_stats() -> Dict[str, Any]:
             "tasks_total": sum(repo_tasks.values()),
             "errors": stats.get("errors", 0),
             "false_positives_excluded": stats.get("false_positives_excluded", 0),
+            # Rich calibration metrics
+            "calibration_ece": stats.get("calibration_ece", 0.0),
+            "overconfident_errors": stats.get("overconfident_errors", 0),
+            "underconfident_correct": stats.get("underconfident_correct", 0),
+            "avg_confidence": stats.get("avg_confidence"),
             "breakdown": stats["breakdown"],
             "verified_at": datetime.now().strftime("%Y-%m-%d"),
-            "status": "verified" if stats.get("tasks_completed", stats["tasks_run"]) >= 20 else "partial"
+            "status": "verified" if stats.get("tasks_completed", stats["tasks_run"]) >= 20 else "partial",
+            "source": "local",
         })
 
-    # Sort by: 1) Tasks completed (higher is better), 2) Pass rate (higher is better)
-    # This ensures models with more errors don't rank higher just because they "passed" few tasks
-    leaderboard.sort(key=lambda x: (x.get("tasks_completed", x["tasks_run"]), x["pass_rate"]), reverse=True)
+    # ── Merge batch leaderboard results ──
+    # If run_leaderboard_batch.py has produced results, merge them in
+    if os.path.exists(BATCH_LEADERBOARD_PATH):
+        try:
+            with open(BATCH_LEADERBOARD_PATH, 'r') as f:
+                batch_data = json.load(f)
+
+            local_models = {e["model"] for e in leaderboard}
+
+            for batch_model in batch_data.get("models", []):
+                model_id = batch_model.get("model", "")
+                if model_id in local_models:
+                    # Update existing entry with batch metrics where richer
+                    for entry in leaderboard:
+                        if entry["model"] == model_id:
+                            entry["calibration_ece"] = batch_model.get("calibration_ece", entry.get("calibration_ece", 0))
+                            entry["overconfident_errors"] = batch_model.get("overconfident_errors", entry.get("overconfident_errors", 0))
+                            if "by_category" in batch_model:
+                                entry["breakdown"]["by_category_batch"] = batch_model["by_category"]
+                            break
+                else:
+                    # New model from batch — add it
+                    provider = batch_model.get("provider", "unknown").capitalize()
+                    by_cat = batch_model.get("by_category", {})
+                    overall_acc = batch_model.get("overall_accuracy", 0)
+
+                    leaderboard.append({
+                        "model": model_id,
+                        "slug": model_id.replace("/", "_"),
+                        "display_name": batch_model.get("display_name", model_id),
+                        "provider": provider,
+                        "pass_rate": 0.0,  # N/A for batch (binary drift detection)
+                        "drift_detection_rate": 0.0,
+                        "error_rate": 0.0,
+                        "accuracy": round(overall_acc * 100, 1),
+                        "tasks_run": batch_model.get("scenarios_evaluated", 0),
+                        "tasks_completed": batch_model.get("scenarios_evaluated", 0),
+                        "tasks_total": sum(repo_tasks.values()),
+                        "errors": 0,
+                        "false_positives_excluded": 0,
+                        "calibration_ece": batch_model.get("calibration_ece", 0),
+                        "overconfident_errors": batch_model.get("overconfident_errors", 0),
+                        "underconfident_correct": batch_model.get("underconfident_correct", 0),
+                        "avg_confidence": batch_model.get("avg_confidence"),
+                        "breakdown": {
+                            "by_repo": batch_model.get("by_repository", {}),
+                            "by_language": {},
+                            "by_category": {
+                                cat: {"passed": d.get("correct", 0), "failed": d.get("total", 0) - d.get("correct", 0), "total": d.get("total", 0)}
+                                for cat, d in by_cat.items()
+                            },
+                            "by_gate": {},
+                            "by_finding": {},
+                        },
+                        "verified_at": datetime.now().strftime("%Y-%m-%d"),
+                        "status": "verified" if batch_model.get("scenarios_evaluated", 0) >= 20 else "partial",
+                        "source": "batch",
+                    })
+
+            print(f"  📦 Merged {len(batch_data.get('models', []))} models from batch leaderboard")
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"  ⚠️  Could not read batch leaderboard: {e}")
+
+    # Sort by: 1) Accuracy (higher is better), 2) Tasks completed
+    leaderboard.sort(key=lambda x: (x.get("accuracy", 0), x.get("tasks_completed", x["tasks_run"])), reverse=True)
     for i, entry in enumerate(leaderboard):
         entry["rank"] = i + 1
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "version": "1.0",
+        "version": "2.0",
         "total_tasks": sum(repo_tasks.values()),
+        "total_scenarios": 54,
         "repositories": repositories,
         "categories": CATEGORIES,
         "methodology": {
@@ -387,13 +504,15 @@ def calculate_stats() -> Dict[str, Any]:
                 "(SPEC.md, ARCH.md, DECISIONS.md, TASKS.md) that don't exist in most open-source "
                 "repositories. This is a configuration issue, not a model drift detection failure."
             ),
-            "scoring": "Pass rate = tasks passed / tasks completed (excluding errors and FPs). "
-                       "DDR = drift detected / tasks completed. "
-                       "Ranking prioritizes models that completed more tasks.",
+            "scoring": (
+                "Accuracy = correct predictions / total scenarios. "
+                "ECE = Expected Calibration Error (lower is better). "
+                "Overconfident errors = high confidence (>=0.8) but wrong answer. "
+                "Ranking prioritizes accuracy across all 54 scenarios."
+            ),
             "error_explanation": (
                 "Errors indicate infrastructure failures (e.g., model timeout, git clone failed) "
-                "where the model did not produce output to evaluate. High error rates suggest "
-                "reliability issues with the model or benchmark setup."
+                "where the model did not produce output to evaluate."
             )
         },
         "leaderboard": leaderboard
@@ -409,19 +528,23 @@ def main():
     if not data["leaderboard"]:
         print("⚠️  No results found. Check that benchmarks have been run.")
         print(f"   Expected results in: {RESULTS_DIR}/<model>/*.json")
+        print(f"   Or batch results in: {BATCH_LEADERBOARD_PATH}")
     else:
         print(f"✅ Found {len(data['leaderboard'])} model(s):")
         for model in data["leaderboard"]:
-            fp_note = ""
-            if model.get("false_positives_excluded", 0) > 0:
-                fp_note = f" (excl. {model['false_positives_excluded']} structure-check FPs)"
-            print(f"   #{model['rank']} {model['display_name']}: {model['pass_rate']}% pass rate ({model['tasks_run']} tasks){fp_note}")
+            ece = model.get("calibration_ece", 0)
+            oc = model.get("overconfident_errors", 0)
+            src = model.get("source", "local")
+            print(f"   #{model['rank']} {model['display_name']}: "
+                  f"{model['accuracy']}% accuracy "
+                  f"(ECE: {ece:.3f}, overconfident: {oc}) [{src}]")
 
-            # Show repo breakdown
-            for repo, stats in model["breakdown"]["by_repo"].items():
+            # Show category breakdown
+            by_cat = model["breakdown"].get("by_category", {})
+            for cat, stats in sorted(by_cat.items()):
                 if stats["total"] > 0:
-                    repo_rate = round(stats["passed"] / stats["total"] * 100, 1)
-                    print(f"      └─ {repo}: {repo_rate}% ({stats['passed']}/{stats['total']})")
+                    cat_rate = round(stats["passed"] / stats["total"] * 100, 1)
+                    print(f"      {cat}: {cat_rate}% ({stats['passed']}/{stats['total']})")
 
     # Ensure output directory exists
     output_dir = os.path.dirname(WEB_DATA_PATH)

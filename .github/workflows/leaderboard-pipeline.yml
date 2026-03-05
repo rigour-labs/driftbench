@@ -1,0 +1,167 @@
+name: DriftBench Leaderboard (Batch)
+
+on:
+  schedule:
+    # Every Sunday at 7 PM UTC (12:30 AM IST Monday)
+    - cron: '0 19 * * 0'
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'Provider (anthropic, openai, gemini, deepseek, groq, together). Leave empty for all.'
+        required: false
+        type: string
+        default: ''
+      model:
+        description: 'Model name (e.g. claude-sonnet-4-6). Leave empty for all.'
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        description: 'Dry run (no API calls)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  evaluate:
+    name: Run Batch Drift Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6h max (batch APIs can take hours)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          set -e
+          pip install -r requirements.txt
+          pip install anthropic openai litellm
+
+      - name: Export scenarios from datasets
+        run: python -m kaggle_benchmark.export_dataset
+
+      - name: Run leaderboard evaluation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TOGETHERAI_API_KEY: ${{ secrets.TOGETHERAI_API_KEY }}
+        run: |
+          set -e
+          ARGS="--output results/leaderboard.json -v"
+
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+
+          if [ -n "${{ inputs.provider }}" ] && [ -n "${{ inputs.model }}" ]; then
+            ARGS="$ARGS --provider ${{ inputs.provider }} --model ${{ inputs.model }}"
+          elif [ -n "${{ inputs.provider }}" ] || [ -n "${{ inputs.model }}" ]; then
+            echo "ERROR: Both provider and model must be specified together"
+            exit 1
+          else
+            ARGS="$ARGS --all"
+          fi
+
+          python scripts/run_leaderboard_batch.py $ARGS
+
+      - name: Upload leaderboard artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: leaderboard-${{ github.run_id }}
+          path: |
+            results/leaderboard.json
+            results/leaderboard/
+          retention-days: 90
+
+      - name: Print leaderboard summary
+        if: always()
+        run: |
+          if [ -f results/leaderboard.json ]; then
+            echo "DriftBench Leaderboard"
+            echo "======================"
+            python3 -c '
+          import json, sys
+          try:
+              with open("results/leaderboard.json") as f:
+                  data = json.load(f)
+              print(f"Generated: {data[\"generated_at\"]}")
+              print(f"Scenarios: {data.get(\"total_scenarios\", \"?\")}")
+              print()
+              for m in data.get("models", []):
+                  acc = m.get("overall_accuracy", 0)
+                  oc = m.get("overconfident_errors", 0)
+                  ece = m.get("calibration_ece", 0)
+                  print(f"  #{m[\"rank\"]} {m[\"display_name\"]}: {acc:.1%} (overconfident: {oc}, ECE: {ece:.3f})")
+                  for cat, d in sorted(m.get("by_category", {}).items()):
+                      print(f"      {cat}: {d[\"accuracy\"]:.1%} ({d[\"correct\"]}/{d[\"total\"]})")
+          except Exception as e:
+              print(f"Error reading leaderboard: {e}", file=sys.stderr)
+          '
+          else
+            echo "No leaderboard.json found"
+          fi
+
+  publish:
+    name: Publish to Rigour Website
+    needs: evaluate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && inputs.dry_run != true
+
+    steps:
+      - name: Download leaderboard artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: leaderboard-${{ github.run_id }}
+          path: results/
+
+      - name: Push to rigour-web
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+        run: |
+          set -e
+
+          if [ ! -f results/leaderboard.json ]; then
+            echo "SKIP: No leaderboard to publish"
+            exit 0
+          fi
+
+          WORK_DIR="${RUNNER_TEMP}/rigour-web-$$"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/rigour-labs/rigour-web" "$WORK_DIR" 2>/dev/null || {
+            echo "SKIP: Could not clone rigour-web (token may lack access)"
+            exit 0
+          }
+
+          # Copy leaderboard data
+          mkdir -p "$WORK_DIR/src/app/api/stats/"
+          cp results/leaderboard.json "$WORK_DIR/src/app/api/stats/data.json"
+
+          cd "$WORK_DIR"
+          git config user.email "action@github.com"
+          git config user.name "DriftBench Bot"
+          git add -A
+          git diff --cached --quiet && {
+            echo "SKIP: No changes to publish (leaderboard data unchanged)"
+            exit 0
+          }
+          git commit -m "chore: update DriftBench leaderboard $(date -Iseconds)"
+          git push || {
+            echo "ERROR: Failed to push to rigour-web"
+            exit 1
+          }
+          echo "Published to rigour-web"
