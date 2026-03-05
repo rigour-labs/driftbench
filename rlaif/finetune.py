@@ -44,10 +44,11 @@ logger = logging.getLogger("rlaif.finetune")
 
 # Base models (same as rigour-core/src/inference/types.ts)
 # Qwen2.5-Coder-1.5B is the default — code-specialized pretrain + QLoRA = best quality
-# Qwen3.5-0.8B available as "lite" tier — lightweight sidecar for individual devs
+# Qwen2.5-Coder-0.5B is the lite tier — same architecture as deep, proven LoRA compatibility
+# Note: Qwen3.5-0.8B has hybrid Gated DeltaNet architecture incompatible with standard LoRA targets
 BASE_MODELS = {
     "deep": "Qwen/Qwen2.5-Coder-1.5B-Instruct",      # Full: code pretrain + QLoRA, company-hosted
-    "lite": "Qwen/Qwen3.5-0.8B",                      # Lite: runs on any CPU, default sidecar
+    "lite": "Qwen/Qwen2.5-Coder-0.5B-Instruct",      # Lite: same arch as deep, runs on any CPU
     "legacy": "Qwen/Qwen2.5-Coder-0.5B-Instruct",    # Previous default, reproducibility
 }
 

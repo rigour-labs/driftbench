@@ -11,25 +11,47 @@ on:
         description: 'Comma-separated repos (owner/repo) or "all" for training list'
         required: false
         default: 'all'
+      teacher_strategy:
+        description: 'Teacher selection: "multi" = all 3 teachers (Option A), "tournament" = best teacher per category (Option C), "single" = one teacher only'
+        required: false
+        type: choice
+        options:
+          - multi
+          - tournament
+          - single
+        default: 'multi'
+      teachers:
+        description: 'Comma-separated teachers as provider:model (e.g., "anthropic:claude-sonnet-4-6,openai:gpt-4o"). Used with multi/tournament strategy.'
+        required: false
+        default: 'anthropic:claude-sonnet-4-6,openai:gpt-4o,together_ai:meta-llama/Llama-3.3-70B-Instruct-Turbo'
       model_provider:
-        description: 'LLM provider (anthropic, openai, deepseek, groq, together, fireworks, mistral, gemini, ollama)'
+        description: 'Single teacher provider — only used when teacher_strategy=single'
         required: false
         default: 'anthropic'
       model_name:
-        description: 'Model name (e.g., claude-sonnet-4-6, gpt-4o, deepseek-chat)'
+        description: 'Single teacher model — only used when teacher_strategy=single'
         required: false
         default: 'claude-sonnet-4-6'
       api_base:
         description: 'Custom API base URL (for self-hosted / proxy endpoints, leave empty for default)'
         required: false
         default: ''
+      training_tiers:
+        description: 'Which model tiers to train: "both", "deep", or "lite"'
+        required: false
+        type: choice
+        options:
+          - both
+          - deep
+          - lite
+        default: 'both'
       skip_generate:
         description: 'Skip data generation, only format existing DB'
         required: false
         type: boolean
         default: false
       use_batch_api:
-        description: 'Use Anthropic Batch API (50% cheaper, async — submit + poll + collect)'
+        description: 'Use Batch API where available (50% cheaper, async)'
         required: false
         type: boolean
         default: true
@@ -49,6 +71,7 @@ permissions:
 
 env:
   PYTHON_VERSION: '3.12'
+  MODEL_VERSION: ${{ github.run_number }}
 
 jobs:
   # ═══════════════════════════════════════════════════════════════
@@ -79,7 +102,7 @@ jobs:
           pip install -r requirements.txt
           pip install litellm huggingface_hub anthropic
 
-      - name: Generate training data
+      - name: Generate training data (multi-teacher)
         if: ${{ !inputs.skip_generate }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -90,47 +113,133 @@ jobs:
           FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          PROVIDER="${{ inputs.model_provider || 'anthropic' }}"
-          MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-6' }}"
-          API_BASE="${{ inputs.api_base || '' }}"
           REPOS_INPUT="${{ inputs.repos || 'all' }}"
-          USE_BATCH="${{ inputs.use_batch_api || 'true' }}"
           ENABLE_RETRY="${{ inputs.enable_retry || 'true' }}"
-
-          COMMON_ARGS="--provider $PROVIDER --model-name $MODEL_NAME --output rlaif/data --workspace .rlaif_repos"
-          if [ -n "$API_BASE" ]; then
-            COMMON_ARGS="$COMMON_ARGS --api-base $API_BASE"
-          fi
-
-          BATCH_FLAG=""
-          if [ "$USE_BATCH" = "true" ] && [ "$PROVIDER" = "anthropic" ]; then
-            BATCH_FLAG="--batch"
-          fi
+          USE_BATCH="${{ inputs.use_batch_api || 'true' }}"
+          STRATEGY="${{ inputs.teacher_strategy || 'multi' }}"
 
           RETRY_FLAG=""
           if [ "$ENABLE_RETRY" = "false" ]; then
             RETRY_FLAG="--no-retry"
           fi
 
-          if [ "$REPOS_INPUT" = "all" ]; then
-            python -m rlaif.generate \
-              --repos rlaif/repos_training.json \
-              $COMMON_ARGS $BATCH_FLAG $RETRY_FLAG
+          # ─── Build teacher list based on strategy ───
+          if [ "$STRATEGY" = "single" ]; then
+            # Single teacher mode — uses model_provider + model_name inputs
+            PROVIDER="${{ inputs.model_provider || 'anthropic' }}"
+            MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-6' }}"
+            TEACHERS=("${PROVIDER}:${MODEL_NAME}")
+            echo "Strategy: SINGLE teacher → $PROVIDER/$MODEL_NAME"
+
+          elif [ "$STRATEGY" = "tournament" ]; then
+            # Tournament mode (Option C) — pick best teacher per category
+            # Downloads teacher_scores.json from HF and routes accordingly
+            echo "Strategy: TOURNAMENT — routing best teacher per category"
+            TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6,openai:gpt-4o,together_ai:meta-llama/Llama-3.3-70B-Instruct-Turbo' }}"
+            IFS=',' read -ra TEACHERS <<< "$TEACHERS_INPUT"
+
+            # Download historical teacher scores for routing
+            python3 -c "
+          import os, json
+          os.makedirs('rlaif/data', exist_ok=True)
+          try:
+              from huggingface_hub import hf_hub_download
+              path = hf_hub_download('rigour-labs/rigour-rlaif-data', 'metrics_history.json',
+                                     repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
+              with open(path) as f:
+                  history = json.load(f)
+              # Average teacher scores across last 4 runs
+              recent = history.get('runs', [])[-4:]
+              agg = {}
+              for run in recent:
+                  for teacher, cats in run.get('teacher_scores', {}).items():
+                      if teacher not in agg:
+                          agg[teacher] = {}
+                      for cat, rate in cats.items():
+                          if cat not in agg[teacher]:
+                              agg[teacher][cat] = []
+                          agg[teacher][cat].append(rate)
+              # Pick best teacher per category
+              routing = {}
+              categories = set()
+              for t in agg:
+                  categories.update(agg[t].keys())
+              for cat in categories:
+                  best_teacher = None
+                  best_rate = -1
+                  for t in agg:
+                      avg = sum(agg[t].get(cat, [0])) / len(agg[t].get(cat, [1]))
+                      if avg > best_rate:
+                          best_rate = avg
+                          best_teacher = t
+                  routing[cat] = {'teacher': best_teacher, 'rate': round(best_rate, 3)}
+              with open('rlaif/data/tournament_routing.json', 'w') as f:
+                  json.dump(routing, f, indent=2)
+              print('Tournament routing:')
+              for cat, info in sorted(routing.items()):
+                  print(f'  {cat} → {info[\"teacher\"]} ({info[\"rate\"]:.1%})')
+          except Exception as e:
+              print(f'WARNING: Could not load teacher history ({e}), falling back to multi')
+              with open('rlaif/data/tournament_routing.json', 'w') as f:
+                  json.dump({}, f)
+          "
+
           else
-            IFS=',' read -ra REPOS <<< "$REPOS_INPUT"
-            for repo in "${REPOS[@]}"; do
-              repo=$(echo "$repo" | xargs)
-              python -m rlaif.generate \
-                --repo "$repo" \
-                $COMMON_ARGS $BATCH_FLAG $RETRY_FLAG
-            done
+            # Multi mode (Option A, default) — all teachers run on everything
+            echo "Strategy: MULTI — all teachers generate data (union)"
+            TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6,openai:gpt-4o,together_ai:meta-llama/Llama-3.3-70B-Instruct-Turbo' }}"
+            IFS=',' read -ra TEACHERS <<< "$TEACHERS_INPUT"
           fi
 
+          # ─── Run each teacher ───
+          for TEACHER in "${TEACHERS[@]}"; do
+            IFS=':' read -r PROVIDER MODEL_NAME <<< "$TEACHER"
+            echo ""
+            echo "════════════════════════════════════════"
+            echo "Teacher: $PROVIDER / $MODEL_NAME"
+            echo "════════════════════════════════════════"
+
+            COMMON_ARGS="--provider $PROVIDER --model-name $MODEL_NAME --output rlaif/data --workspace .rlaif_repos"
+
+            API_BASE="${{ inputs.api_base || '' }}"
+            if [ -n "$API_BASE" ]; then
+              COMMON_ARGS="$COMMON_ARGS --api-base $API_BASE"
+            fi
+
+            # Enable batch for providers that support it
+            BATCH_FLAG=""
+            if [ "$USE_BATCH" = "true" ]; then
+              if [ "$PROVIDER" = "anthropic" ] || [ "$PROVIDER" = "openai" ] || [ "$PROVIDER" = "together_ai" ]; then
+                BATCH_FLAG="--batch"
+              fi
+            fi
+
+            if [ "$REPOS_INPUT" = "all" ]; then
+              python -m rlaif.generate \
+                --repos rlaif/repos_training.json \
+                $COMMON_ARGS $BATCH_FLAG $RETRY_FLAG || {
+                echo "WARNING: Teacher $TEACHER failed, continuing with next teacher"
+                continue
+              }
+            else
+              IFS=',' read -ra REPOS <<< "$REPOS_INPUT"
+              for repo in "${REPOS[@]}"; do
+                repo=$(echo "$repo" | xargs)
+                python -m rlaif.generate \
+                  --repo "$repo" \
+                  $COMMON_ARGS $BATCH_FLAG $RETRY_FLAG || true
+              done
+            fi
+          done
+
       - name: Collect batch results (poll until complete)
-        if: ${{ !inputs.skip_generate && (inputs.use_batch_api || true) && (inputs.model_provider || 'anthropic') == 'anthropic' }}
+        if: ${{ !inputs.skip_generate && (inputs.use_batch_api != false) }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TOGETHERAI_API_KEY: ${{ secrets.TOGETHERAI_API_KEY }}
         run: |
           set -e
           if [ -f rlaif/data/pending_batches.json ]; then
@@ -186,6 +295,18 @@ jobs:
             python3 scripts/print_stats.py rlaif/data/category_stats.json
           fi
 
+      - name: Compute teacher scores + update metrics history
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python scripts/update_metrics_history.py \
+            --stats rlaif/data/category_stats.json \
+            --db rlaif/data/training_data.db \
+            --run-number "${{ env.MODEL_VERSION }}" \
+            --hf-repo rigour-labs/rigour-rlaif-data || {
+            echo "WARNING: Metrics history update failed (non-fatal)"
+          }
+
       - name: Upload training data artifact
         uses: actions/upload-artifact@v4
         with:
@@ -195,6 +316,7 @@ jobs:
             rlaif/data/dpo_data.jsonl
             rlaif/data/category_stats.json
             rlaif/data/generate_summary.json
+            rlaif/data/teacher_scores.json
             rlaif/data/README.md
           if-no-files-found: warn
           retention-days: 90
@@ -286,8 +408,12 @@ jobs:
   # Job 3: Fine-tune on Lightning.ai GPU (FREE 7-22 hrs/month)
   # ═══════════════════════════════════════════════════════════════
   finetune-model:
-    name: Fine-tune Qwen Model (QLoRA)
+    name: Fine-tune ${{ matrix.tier }} Model (QLoRA)
     needs: upload-to-huggingface
+    strategy:
+      matrix:
+        tier: [deep, lite]
+      fail-fast: false
     # Lightning.ai GPU runner — set up via:
     #   1. Create account at lightning.ai
     #   2. Settings → CI/CD Runners → Connect to GitHub
@@ -297,7 +423,8 @@ jobs:
     timeout-minutes: 240
     if: >-
       github.ref == 'refs/heads/main' &&
-      inputs.skip_finetune != true
+      inputs.skip_finetune != true &&
+      (inputs.training_tiers == 'both' || inputs.training_tiers == matrix.tier || inputs.training_tiers == '')
 
     steps:
       - name: Checkout repository
@@ -332,9 +459,15 @@ jobs:
       - name: Run QLoRA fine-tuning
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TIER: ${{ matrix.tier }}
+          VERSION: ${{ env.MODEL_VERSION }}
         run: |
           python -c "
           import os, sys, torch
+
+          TIER = os.environ.get('TIER', 'deep')
+          VERSION = os.environ.get('VERSION', '1')
+          print(f'Training tier={TIER} version=v{VERSION}')
 
           print(f'GPU available: {torch.cuda.is_available()}')
           if torch.cuda.is_available():
@@ -348,7 +481,25 @@ jobs:
 
           HF_TOKEN = os.environ.get('HF_TOKEN', '')
           DATASET_ID = 'rigour-labs/rigour-rlaif-data'
-          OUTPUT_DIR = 'rlaif/models/rigour-v1'
+          OUTPUT_DIR = f'rlaif/models/rigour-{TIER}-v{VERSION}'
+
+          # Tier-specific configuration
+          TIER_CONFIG = {
+              'deep': {
+                  'base_model': 'Qwen/Qwen2.5-Coder-1.5B-Instruct',
+                  'sft_epochs': 3, 'sft_batch': 4, 'sft_grad_accum': 4,
+                  'dpo_epochs': 1, 'dpo_batch': 2, 'dpo_grad_accum': 8,
+                  'max_length': 1024, 'lr_sft': 2e-4, 'lr_dpo': 5e-5,
+              },
+              'lite': {
+                  'base_model': 'Qwen/Qwen2.5-Coder-0.5B-Instruct',
+                  'sft_epochs': 2, 'sft_batch': 8, 'sft_grad_accum': 2,
+                  'dpo_epochs': 1, 'dpo_batch': 4, 'dpo_grad_accum': 4,
+                  'max_length': 768, 'lr_sft': 3e-4, 'lr_dpo': 8e-5,
+              },
+          }
+          cfg = TIER_CONFIG[TIER]
+          BASE_MODEL = cfg['base_model']
 
           # Download training data
           print('Downloading training data...')
@@ -367,8 +518,7 @@ jobs:
           from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
           from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
-          BASE_MODEL = 'Qwen/Qwen2.5-Coder-1.5B-Instruct'
-          print(f'Loading {BASE_MODEL}...')
+          print(f'Loading {BASE_MODEL} (tier={TIER})...')
 
           tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
           if tokenizer.pad_token is None:
@@ -405,17 +555,17 @@ jobs:
               from trl import SFTTrainer, SFTConfig
               use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
               dtype_args = {'bf16': True} if use_bf16 else ({'fp16': True} if torch.cuda.is_available() else {})
-              steps_per_epoch = max(1, len(sft_ds) // (4 * 4))
+              steps_per_epoch = max(1, len(sft_ds) // (cfg['sft_batch'] * cfg['sft_grad_accum']))
               sft_args = SFTConfig(
                   output_dir=os.path.join(OUTPUT_DIR, 'sft'),
-                  num_train_epochs=3,
-                  per_device_train_batch_size=4,
-                  gradient_accumulation_steps=4,
-                  learning_rate=2e-4,
-                  warmup_steps=max(1, int(steps_per_epoch * 3 * 0.1)),
+                  num_train_epochs=cfg['sft_epochs'],
+                  per_device_train_batch_size=cfg['sft_batch'],
+                  gradient_accumulation_steps=cfg['sft_grad_accum'],
+                  learning_rate=cfg['lr_sft'],
+                  warmup_steps=max(1, int(steps_per_epoch * cfg['sft_epochs'] * 0.1)),
                   logging_steps=10,
                   save_strategy='epoch',
-                  max_length=1024,
+                  max_length=cfg['max_length'],
                   **dtype_args,
               )
               trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=sft_ds, args=sft_args)
@@ -425,20 +575,20 @@ jobs:
           # DPO Phase
           if len(dpo_ds) > 0:
               from trl import DPOTrainer, DPOConfig
+              tokenizer.padding_side = 'left'  # Required by DPOTrainer
               use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
               dtype_args = {'bf16': True} if use_bf16 else ({'fp16': True} if torch.cuda.is_available() else {})
-              steps_per_epoch = max(1, len(dpo_ds) // (2 * 8))
+              steps_per_epoch = max(1, len(dpo_ds) // (cfg['dpo_batch'] * cfg['dpo_grad_accum']))
               dpo_args = DPOConfig(
                   output_dir=os.path.join(OUTPUT_DIR, 'dpo'),
-                  num_train_epochs=1,
-                  per_device_train_batch_size=2,
-                  gradient_accumulation_steps=8,
-                  learning_rate=5e-5,
+                  num_train_epochs=cfg['dpo_epochs'],
+                  per_device_train_batch_size=cfg['dpo_batch'],
+                  gradient_accumulation_steps=cfg['dpo_grad_accum'],
+                  learning_rate=cfg['lr_dpo'],
                   warmup_steps=max(1, int(steps_per_epoch * 0.1)),
                   logging_steps=10,
                   save_strategy='epoch',
-                  max_length=1024,
-                  max_prompt_length=512,
+                  max_length=cfg['max_length'],
                   beta=0.1,
                   **dtype_args,
               )
@@ -446,53 +596,65 @@ jobs:
               trainer.train()
               print('DPO complete')
 
-          # Merge LoRA + Upload
+          # Merge LoRA + Upload (versioned)
           print('Merging LoRA adapter...')
           merged = model.merge_and_unload()
           merged_path = os.path.join(OUTPUT_DIR, 'merged')
           merged.save_pretrained(merged_path)
           tokenizer.save_pretrained(merged_path)
 
+          REPO_ID = f'rigour-labs/rigour-{TIER}-v{VERSION}-merged'
           if HF_TOKEN:
               from huggingface_hub import HfApi
-              print('Uploading merged model to HuggingFace...')
+              print(f'Uploading merged model to {REPO_ID}...')
               api = HfApi(token=HF_TOKEN)
-              api.create_repo('rigour-labs/rigour-deep-v1-merged', exist_ok=True, repo_type='model')
+              api.create_repo(REPO_ID, exist_ok=True, repo_type='model')
               api.upload_folder(
                   folder_path=merged_path,
-                  repo_id='rigour-labs/rigour-deep-v1-merged',
-                  commit_message=f'QLoRA fine-tune: SFT={len(sft_ds)} DPO={len(dpo_ds)}',
+                  repo_id=REPO_ID,
+                  commit_message=f'QLoRA fine-tune v{VERSION}: tier={TIER} SFT={len(sft_ds)} DPO={len(dpo_ds)}',
               )
-              print('Model uploaded: https://huggingface.co/rigour-labs/rigour-deep-v1-merged')
+              print(f'Model uploaded: https://huggingface.co/{REPO_ID}')
 
-          print('Fine-tuning complete!')
+          print(f'Fine-tuning complete! tier={TIER} version=v{VERSION}')
           "
 
       - name: Verify model on HuggingFace
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TIER: ${{ matrix.tier }}
+          VERSION: ${{ env.MODEL_VERSION }}
         run: |
           python -c "
           from huggingface_hub import HfApi
           import os
+          tier = os.environ.get('TIER', 'deep')
+          version = os.environ.get('VERSION', '1')
+          repo_id = f'rigour-labs/rigour-{tier}-v{version}-merged'
           api = HfApi(token=os.environ['HF_TOKEN'])
-          files = api.list_repo_files('rigour-labs/rigour-deep-v1-merged')
-          print(f'Merged model files: {len(files)}')
+          files = api.list_repo_files(repo_id)
+          print(f'Merged model files ({repo_id}): {len(files)}')
           for f in files:
               print(f'  {f}')
           assert any('model' in f or 'safetensors' in f for f in files), 'No model files found!'
-          print('Model verified on HuggingFace')
+          print(f'Model verified: {repo_id}')
           "
 
   # ═══════════════════════════════════════════════════════════════
   # Job 4: Export GGUF + Upload to HuggingFace
   # ═══════════════════════════════════════════════════════════════
   export-gguf:
-    name: Export GGUF + Upload
+    name: Export GGUF (${{ matrix.tier }}) + Upload
     needs: finetune-model
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (inputs.training_tiers == 'both' || inputs.training_tiers == matrix.tier || inputs.training_tiers == '')
+    strategy:
+      matrix:
+        tier: [deep, lite]
+      fail-fast: false
 
     steps:
       - name: Checkout repository
@@ -517,41 +679,58 @@ jobs:
       - name: Download merged model from HuggingFace
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TIER: ${{ matrix.tier }}
+          VERSION: ${{ env.MODEL_VERSION }}
         run: |
           python -c "
           import os
           from huggingface_hub import snapshot_download
-          print('Downloading merged model...')
-          snapshot_download(
-              'rigour-labs/rigour-deep-v1-merged',
-              local_dir='rlaif/models/rigour-v1/merged',
-              token=os.environ['HF_TOKEN'],
-          )
+          tier = os.environ.get('TIER', 'deep')
+          version = os.environ.get('VERSION', '1')
+          repo_id = f'rigour-labs/rigour-{tier}-v{version}-merged'
+          local_dir = f'rlaif/models/rigour-{tier}-v{version}/merged'
+          print(f'Downloading {repo_id}...')
+          snapshot_download(repo_id, local_dir=local_dir, token=os.environ['HF_TOKEN'])
           print('Model downloaded')
           "
 
       - name: Convert to GGUF + quantize
+        env:
+          TIER: ${{ matrix.tier }}
+          VERSION: ${{ env.MODEL_VERSION }}
         run: |
+          TIER_FLAG=""
+          if [ "$TIER" = "lite" ]; then
+            TIER_FLAG="--lite"
+          elif [ "$TIER" = "legacy" ]; then
+            TIER_FLAG="--legacy"
+          fi
           python -m rlaif.export_gguf \
-            --model rlaif/models/rigour-v1/merged \
-            --output rlaif/models/rigour-v1 \
+            --model "rlaif/models/rigour-${TIER}-v${VERSION}/merged" \
+            --output "rlaif/models/rigour-${TIER}-v${VERSION}" \
             --llama-cpp-path llama.cpp \
-            --version 1
+            --version "$VERSION" \
+            $TIER_FLAG
 
       - name: Upload GGUF to HuggingFace
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TIER: ${{ matrix.tier }}
+          VERSION: ${{ env.MODEL_VERSION }}
         run: |
           python -c "
           import os, glob
           from rlaif.export_gguf import upload_to_huggingface
-          gguf_files = glob.glob('rlaif/models/rigour-v1/*.gguf')
+          tier = os.environ.get('TIER', 'deep')
+          version = os.environ.get('VERSION', '1')
+          pattern = f'rlaif/models/rigour-{tier}-v{version}/*.gguf'
+          gguf_files = glob.glob(pattern)
           gguf_files = [f for f in gguf_files if 'f16' not in f]
           if gguf_files:
               upload_to_huggingface(
                   gguf_files[0],
-                  'rigour-labs/rigour-deep-v1-gguf',
-                  version='1', tier='deep',
+                  f'rigour-labs/rigour-{tier}-v{version}-gguf',
+                  version=version, tier=tier,
               )
           else:
               print('ERROR: No quantized GGUF found')
@@ -561,7 +740,55 @@ jobs:
       - name: Upload GGUF artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gguf-model-${{ github.run_id }}
-          path: rlaif/models/rigour-v1/*.gguf
+          name: gguf-${{ matrix.tier }}-${{ github.run_id }}
+          path: rlaif/models/rigour-${{ matrix.tier }}-v${{ env.MODEL_VERSION }}/*.gguf
           if-no-files-found: warn
           retention-days: 30
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 5: Evaluate Model + Regression Gate
+  # ═══════════════════════════════════════════════════════════════
+  evaluate-model:
+    name: Evaluate ${{ matrix.tier }} Model
+    needs: export-gguf
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (inputs.training_tiers == 'both' || inputs.training_tiers == matrix.tier || inputs.training_tiers == '')
+    strategy:
+      matrix:
+        tier: [deep, lite]
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install huggingface_hub llama-cpp-python
+
+      - name: Run evaluation + regression gate
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TIER: ${{ matrix.tier }}
+          VERSION: ${{ env.MODEL_VERSION }}
+        run: |
+          python scripts/eval_model.py \
+            --tier "$TIER" \
+            --version "$VERSION" \
+            --min-accuracy 0.6 \
+            --regression-threshold 0.05
+
+      - name: Upload eval results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-${{ matrix.tier }}-${{ github.run_id }}
+          path: eval_results.json
+          if-no-files-found: warn
+          retention-days: 90
