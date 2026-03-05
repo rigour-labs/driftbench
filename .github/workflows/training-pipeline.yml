@@ -21,21 +21,9 @@ on:
           - single
         default: 'multi'
       teachers:
-        description: 'Comma-separated teachers as provider:model (e.g., "anthropic:claude-sonnet-4-6,openai:gpt-4o"). Used with multi/tournament strategy.'
+        description: 'Comma-separated teachers as provider:model (e.g., "anthropic:claude-sonnet-4-6"). For single strategy, pass just one.'
         required: false
         default: 'anthropic:claude-sonnet-4-6,openai:gpt-4o,together_ai:meta-llama/Llama-3.3-70B-Instruct-Turbo'
-      model_provider:
-        description: 'Single teacher provider — only used when teacher_strategy=single'
-        required: false
-        default: 'anthropic'
-      model_name:
-        description: 'Single teacher model — only used when teacher_strategy=single'
-        required: false
-        default: 'claude-sonnet-4-6'
-      api_base:
-        description: 'Custom API base URL (for self-hosted / proxy endpoints, leave empty for default)'
-        required: false
-        default: ''
       training_tiers:
         description: 'Which model tiers to train: "both", "deep", or "lite"'
         required: false
@@ -127,11 +115,11 @@ jobs:
 
           # ─── Build teacher list based on strategy ───
           if [ "$STRATEGY" = "single" ]; then
-            # Single teacher mode — uses model_provider + model_name inputs
-            PROVIDER="${{ inputs.model_provider || 'anthropic' }}"
-            MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-6' }}"
-            TEACHERS=("${PROVIDER}:${MODEL_NAME}")
-            echo "Strategy: SINGLE teacher → $PROVIDER/$MODEL_NAME"
+            # Single teacher mode — just use first entry from teachers input
+            TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6' }}"
+            IFS=',' read -ra TEACHERS <<< "$TEACHERS_INPUT"
+            TEACHERS=("${TEACHERS[0]}")
+            echo "Strategy: SINGLE teacher → ${TEACHERS[0]}"
 
           elif [ "$STRATEGY" = "tournament" ]; then
             # Tournament mode (Option C) — pick best teacher per category
