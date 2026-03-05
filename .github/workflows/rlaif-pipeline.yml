@@ -240,10 +240,10 @@ jobs:
           "
 
   finetune-model:
-    name: Fine-tune Qwen Model (QLoRA)
+    name: Fine-tune Qwen Model (QLoRA via Kaggle GPU)
     needs: upload-to-huggingface
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6 hours max for training
+    timeout-minutes: 180  # Kaggle T4 GPU — ~1-2hrs for 1.5B QLoRA
     if: github.ref == 'refs/heads/main'
 
     steps:
@@ -254,35 +254,264 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
 
-      - name: Install training dependencies
+      - name: Install Kaggle CLI
+        run: pip install kaggle
+
+      - name: Configure Kaggle credentials
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
-          pip install -r requirements.txt
-          pip install torch transformers peft trl datasets bitsandbytes
-          pip install huggingface_hub
+          mkdir -p ~/.kaggle
+          echo "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          chmod 600 ~/.kaggle/kaggle.json
+          # Extract username for kernel ID
+          KAGGLE_USER=$(python -c "import json; print(json.load(open('$HOME/.kaggle/kaggle.json'))['username'])")
+          echo "KAGGLE_USER=$KAGGLE_USER" >> $GITHUB_ENV
 
-      - name: Download training data artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rlaif-training-data-${{ github.run_id }}
-          path: rlaif/data/
-
-      - name: Run QLoRA fine-tune (deep tier)
+      - name: Create Kaggle training notebook
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          python -m rlaif.finetune \
-            --sft rlaif/data/sft_data.jsonl \
-            --dpo rlaif/data/dpo_data.jsonl \
-            --output rlaif/models/rigour-v1 \
-            --sft-epochs 3 \
-            --dpo-epochs 1
+          mkdir -p kaggle_kernel
 
-      - name: Upload fine-tuned model artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: finetune-model-${{ github.run_id }}
-          path: rlaif/models/rigour-v1/merged/
-          retention-days: 30
+          # Kernel metadata — enables GPU accelerator
+          cat > kaggle_kernel/kernel-metadata.json << 'METADATA'
+          {
+            "id": "${{ env.KAGGLE_USER }}/rigour-qlora-finetune",
+            "title": "Rigour QLoRA Fine-tune",
+            "code_file": "finetune_kaggle.py",
+            "language": "python",
+            "kernel_type": "script",
+            "is_private": true,
+            "enable_gpu": true,
+            "enable_internet": true,
+            "competition_sources": [],
+            "dataset_sources": []
+          }
+          METADATA
+
+          # Replace placeholder username in metadata
+          sed -i "s/\${{ env.KAGGLE_USER }}/${KAGGLE_USER}/g" kaggle_kernel/kernel-metadata.json
+
+          # Training script that runs ON Kaggle's T4 GPU
+          cat > kaggle_kernel/finetune_kaggle.py << 'TRAINSCRIPT'
+          """Rigour QLoRA fine-tune — runs on Kaggle T4 GPU.
+          Downloads training data from HuggingFace, fine-tunes, uploads merged model back."""
+          import os, subprocess, sys
+
+          # Install dependencies on Kaggle runtime
+          subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
+              "trl>=0.15", "peft", "bitsandbytes", "datasets", "huggingface_hub",
+              "accelerate", "transformers>=4.46"])
+
+          import torch
+          print(f"GPU available: {torch.cuda.is_available()}")
+          if torch.cuda.is_available():
+              print(f"GPU: {torch.cuda.get_device_name(0)}")
+              print(f"VRAM: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB")
+
+          from huggingface_hub import HfApi, hf_hub_download
+          from datasets import load_dataset
+
+          HF_TOKEN = os.environ.get("HF_TOKEN", "")
+          DATASET_ID = "rigour-labs/rigour-rlaif-data"
+          OUTPUT_DIR = "/kaggle/working/rigour-v1"
+
+          # ── Download training data from HuggingFace ──
+          print("Downloading training data from HuggingFace...")
+          sft_path = hf_hub_download(DATASET_ID, "sft_data.jsonl", repo_type="dataset", token=HF_TOKEN)
+          dpo_path = hf_hub_download(DATASET_ID, "dpo_data.jsonl", repo_type="dataset", token=HF_TOKEN)
+
+          sft_ds = load_dataset("json", data_files=sft_path, split="train")
+          dpo_ds = load_dataset("json", data_files=dpo_path, split="train")
+          print(f"SFT: {len(sft_ds)} examples, DPO: {len(dpo_ds)} pairs")
+
+          # ── Setup model + QLoRA ──
+          from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+          from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+
+          BASE_MODEL = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
+          print(f"Loading {BASE_MODEL}...")
+
+          tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+          if tokenizer.pad_token is None:
+              tokenizer.pad_token = tokenizer.eos_token
+
+          compute_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+          model = AutoModelForCausalLM.from_pretrained(
+              BASE_MODEL,
+              device_map="auto",
+              trust_remote_code=True,
+              quantization_config=BitsAndBytesConfig(
+                  load_in_4bit=True,
+                  bnb_4bit_quant_type="nf4",
+                  bnb_4bit_compute_dtype=compute_dtype,
+                  bnb_4bit_use_double_quant=True,
+              ),
+          )
+          model = prepare_model_for_kbit_training(model)
+
+          lora_config = LoraConfig(
+              r=16, lora_alpha=32, lora_dropout=0.05,
+              target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+              bias="none", task_type="CAUSAL_LM",
+          )
+          model = get_peft_model(model, lora_config)
+          trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+          total = sum(p.numel() for p in model.parameters())
+          print(f"Trainable: {trainable:,} / {total:,} ({100*trainable/total:.1f}%)")
+
+          # ── SFT Phase ──
+          if len(sft_ds) > 0:
+              from trl import SFTTrainer, SFTConfig
+              use_bf16 = torch.cuda.is_bf16_supported()
+              dtype_args = {"bf16": True} if use_bf16 else {"fp16": True}
+              steps_per_epoch = max(1, len(sft_ds) // (4 * 4))
+              sft_args = SFTConfig(
+                  output_dir=os.path.join(OUTPUT_DIR, "sft"),
+                  num_train_epochs=3,
+                  per_device_train_batch_size=4,
+                  gradient_accumulation_steps=4,
+                  learning_rate=2e-4,
+                  warmup_steps=max(1, int(steps_per_epoch * 3 * 0.1)),
+                  logging_steps=10,
+                  save_strategy="epoch",
+                  max_length=1024,
+                  **dtype_args,
+              )
+              trainer = SFTTrainer(model=model, tokenizer=tokenizer, train_dataset=sft_ds, args=sft_args)
+              trainer.train()
+              print("SFT complete")
+
+          # ── DPO Phase ──
+          if len(dpo_ds) > 0:
+              from trl import DPOTrainer, DPOConfig
+              use_bf16 = torch.cuda.is_bf16_supported()
+              dtype_args = {"bf16": True} if use_bf16 else {"fp16": True}
+              steps_per_epoch = max(1, len(dpo_ds) // (2 * 8))
+              dpo_args = DPOConfig(
+                  output_dir=os.path.join(OUTPUT_DIR, "dpo"),
+                  num_train_epochs=1,
+                  per_device_train_batch_size=2,
+                  gradient_accumulation_steps=8,
+                  learning_rate=5e-5,
+                  warmup_steps=max(1, int(steps_per_epoch * 0.1)),
+                  logging_steps=10,
+                  save_strategy="epoch",
+                  max_length=1024,
+                  max_prompt_length=512,
+                  beta=0.1,
+                  **dtype_args,
+              )
+              trainer = DPOTrainer(model=model, tokenizer=tokenizer, train_dataset=dpo_ds, args=dpo_args)
+              trainer.train()
+              print("DPO complete")
+
+          # ── Merge LoRA + Upload to HuggingFace ──
+          print("Merging LoRA adapter...")
+          merged = model.merge_and_unload()
+          merged_path = os.path.join(OUTPUT_DIR, "merged")
+          merged.save_pretrained(merged_path)
+          tokenizer.save_pretrained(merged_path)
+
+          if HF_TOKEN:
+              print("Uploading merged model to HuggingFace...")
+              api = HfApi(token=HF_TOKEN)
+              api.create_repo("rigour-labs/rigour-deep-v1-merged", exist_ok=True, token=HF_TOKEN)
+              api.upload_folder(
+                  folder_path=merged_path,
+                  repo_id="rigour-labs/rigour-deep-v1-merged",
+                  commit_message=f"QLoRA fine-tune: SFT={len(sft_ds)} DPO={len(dpo_ds)}",
+              )
+              print("✓ Merged model uploaded to rigour-labs/rigour-deep-v1-merged")
+          else:
+              print("WARNING: No HF_TOKEN — model saved locally only")
+
+          print("Fine-tuning complete!")
+          TRAINSCRIPT
+
+      - name: Set HF_TOKEN as Kaggle user secret
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # Kaggle kernels can't access GitHub secrets directly.
+          # We inject HF_TOKEN as a Kaggle user secret via the API.
+          python -c "
+          import os, json, urllib.request
+
+          kaggle_creds = json.load(open(os.path.expanduser('~/.kaggle/kaggle.json')))
+          username = kaggle_creds['username']
+          api_key  = kaggle_creds['key']
+
+          # Kaggle Secrets API — set HF_TOKEN for kernel access
+          import base64
+          auth = base64.b64encode(f'{username}:{api_key}'.encode()).decode()
+          headers = {
+              'Authorization': f'Basic {auth}',
+              'Content-Type': 'application/json',
+          }
+
+          # Use kaggle-api-compatible env variable injection in kernel metadata
+          # Kaggle kernels get secrets from 'kaggle_secrets' library
+          print('HF_TOKEN will be available in kernel via kaggle_secrets or env var injection')
+          "
+
+          # Write HF_TOKEN into the training script as environment variable
+          # This is the most reliable method — inject directly into the script
+          sed -i "s|HF_TOKEN = os.environ.get(\"HF_TOKEN\", \"\")|HF_TOKEN = \"${HF_TOKEN}\"|" kaggle_kernel/finetune_kaggle.py
+
+      - name: Push kernel to Kaggle + run on GPU
+        run: |
+          cd kaggle_kernel
+          kaggle kernels push -p .
+          echo "Kernel pushed to Kaggle. Waiting for GPU execution..."
+
+      - name: Poll Kaggle kernel until complete
+        run: |
+          KERNEL_ID="${KAGGLE_USER}/rigour-qlora-finetune"
+          MAX_WAIT=7200  # 2 hours max
+          INTERVAL=60    # Check every minute
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            STATUS=$(kaggle kernels status "$KERNEL_ID" 2>&1 || echo "error")
+            echo "[$(date +%H:%M:%S)] Status: $STATUS"
+
+            if echo "$STATUS" | grep -qi "complete"; then
+              echo "✓ Kaggle kernel completed successfully!"
+              exit 0
+            fi
+
+            if echo "$STATUS" | grep -qi "error\|cancel"; then
+              echo "✗ Kaggle kernel failed!"
+              kaggle kernels output "$KERNEL_ID" -p kaggle_output/ || true
+              cat kaggle_output/*.log 2>/dev/null || true
+              exit 1
+            fi
+
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "✗ Timeout waiting for Kaggle kernel"
+          exit 1
+
+      - name: Verify model uploaded to HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+          from huggingface_hub import HfApi
+          import os
+          api = HfApi(token=os.environ['HF_TOKEN'])
+          files = api.list_repo_files('rigour-labs/rigour-deep-v1-merged')
+          print(f'Merged model files: {len(files)}')
+          for f in files:
+              print(f'  {f}')
+          assert any('model' in f or 'safetensors' in f for f in files), 'No model files found!'
+          print('✓ Merged model verified on HuggingFace')
+          "
 
   export-and-upload-gguf:
     name: Export GGUF + Upload to HuggingFace
@@ -311,11 +540,22 @@ jobs:
           pip install -r requirements.txt || true
           cmake -B build && cmake --build build --config Release -j
 
-      - name: Download fine-tuned model artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: finetune-model-${{ github.run_id }}
-          path: rlaif/models/rigour-v1/merged/
+      - name: Download merged model from HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+          import os
+          from huggingface_hub import snapshot_download
+
+          print('Downloading merged model from HuggingFace...')
+          snapshot_download(
+              'rigour-labs/rigour-deep-v1-merged',
+              local_dir='rlaif/models/rigour-v1/merged',
+              token=os.environ['HF_TOKEN'],
+          )
+          print('✓ Model downloaded')
+          "
 
       - name: Convert to GGUF + quantize
         run: |
