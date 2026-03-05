@@ -1,62 +1,47 @@
 {
-  "_comment": "Public repos for RLAIF training data. Separate from DriftBench eval repos to prevent data leakage.",
+  "_comment": "Trending vibe-coded repos for RLAIF training. Built with AI assistance — rich source of real drift patterns.",
   "_eval_repos_DO_NOT_ADD": ["lodash/lodash", "pallets/flask", "django/django", "tiangolo/fastapi", "shadcn-ui/ui", "TanStack/query"],
-  "_selection_criteria": "All repos: MIT/Apache-2.0 licensed, actively maintained, strict typing, meaningful architecture, security-relevant code, good signal-to-noise ratio.",
+  "_selection_criteria": "Trending 2024-2025 vibe-coded projects: AI-assisted development, modern stacks, real production code, active maintenance, MIT/Apache-2.0 licensed.",
   "_categories": {
-    "ts_frameworks": "express, koa, nest, fastify, hono (5)",
-    "ts_libraries": "trpc, biome, prisma, drizzle, date-fns, mermaid, chart.js, d3 (8)",
-    "ts_testing": "jest, vitest (2)",
-    "py_frameworks": "starlette, litestar, uvicorn (3)",
-    "py_libraries": "requests, httpx, aiohttp, sqlalchemy, pydantic, celery, redis-py (7)",
-    "py_testing": "pytest (1)",
-    "go_frameworks": "gin, fiber, echo, chi (4)",
-    "go_infra": "traefik (1)",
-    "go_testing": "testify (1)",
-    "rust_async": "tokio, axum (2)"
+    "ts_ai_apps": "lobehub/lobe-chat, ItzCrazyKns/Perplexica, FlowiseAI/Flowise, mckaywrigley/chatbot-ui, rashadphz/farfalle (5)",
+    "ts_saas_tools": "calcom/cal.com, twentyhq/twenty, makeplane/plane, formbricks/formbricks, documenso/documenso (5)",
+    "ts_infra_modern": "triggerdotdev/trigger.dev, payloadcms/payload, Infisical/infisical, maybe-finance/maybe (4)",
+    "ts_ai_sdk": "vercel/ai, continuedev/continue (2)",
+    "py_ai_agents": "crewAIInc/crewAI, pydantic/pydantic-ai, BerriAI/litellm, agno-agi/agno (4)",
+    "py_llm_tools": "langchain-ai/langchain, run-llama/llama_index, openai/openai-python (3)",
+    "py_ai_apps": "assafelovic/gpt-researcher, Yidadaa/ChatGPT-Next-Web (2)"
   },
   "repos": [
-    "expressjs/express",
-    "koajs/koa",
-    "nestjs/nest",
-    "fastify/fastify",
-    "honojs/hono",
+    "lobehub/lobe-chat",
+    "ItzCrazyKns/Perplexica",
+    "FlowiseAI/Flowise",
+    "mckaywrigley/chatbot-ui",
+    "rashadphz/farfalle",
 
-    "trpc/trpc",
-    "biomejs/biome",
-    "prisma/prisma",
-    "drizzle-team/drizzle-orm",
-    "date-fns/date-fns",
-    "mermaid-js/mermaid",
-    "chartjs/Chart.js",
-    "d3/d3",
+    "calcom/cal.com",
+    "twentyhq/twenty",
+    "makeplane/plane",
+    "formbricks/formbricks",
+    "documenso/documenso",
 
-    "jestjs/jest",
-    "vitest-dev/vitest",
+    "triggerdotdev/trigger.dev",
+    "payloadcms/payload",
+    "Infisical/infisical",
+    "maybe-finance/maybe",
 
-    "encode/starlette",
-    "litestar-org/litestar",
-    "encode/uvicorn",
+    "vercel/ai",
+    "continuedev/continue",
 
-    "psf/requests",
-    "encode/httpx",
-    "aio-libs/aiohttp",
-    "sqlalchemy/sqlalchemy",
-    "pydantic/pydantic",
-    "celery/celery",
-    "redis/redis-py",
+    "crewAIInc/crewAI",
+    "pydantic/pydantic-ai",
+    "BerriAI/litellm",
+    "agno-agi/agno",
 
-    "pytest-dev/pytest",
+    "langchain-ai/langchain",
+    "run-llama/llama_index",
+    "openai/openai-python",
 
-    "gin-gonic/gin",
-    "gofiber/fiber",
-    "labstack/echo",
-    "go-chi/chi",
-
-    "traefik/traefik",
-
-    "stretchr/testify",
-
-    "tokio-rs/tokio",
-    "tokio-rs/axum"
+    "assafelovic/gpt-researcher",
+    "Yidadaa/ChatGPT-Next-Web"
   ]
 }

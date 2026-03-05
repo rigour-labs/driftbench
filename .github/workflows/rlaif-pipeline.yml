@@ -302,8 +302,8 @@ jobs:
       - name: Create Kaggle training notebook
         run: |
           mkdir -p kaggle_kernel
+          KAGGLE_USER="${{ secrets.KAGGLE_USERNAME }}"
 
-          # Kernel metadata — note: id uses KAGGLE_USER, replaced by sed below
           cat > kaggle_kernel/kernel-metadata.json << METADATA
           {
             "id": "${KAGGLE_USER}/rigour-qlora-finetune",
