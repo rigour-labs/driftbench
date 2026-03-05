@@ -191,11 +191,6 @@ jobs:
 
             COMMON_ARGS="--provider $PROVIDER --model-name $MODEL_NAME --output rlaif/data --workspace .rlaif_repos"
 
-            API_BASE="${{ inputs.api_base || '' }}"
-            if [ -n "$API_BASE" ]; then
-              COMMON_ARGS="$COMMON_ARGS --api-base $API_BASE"
-            fi
-
             # Enable batch for providers that support it
             BATCH_FLAG=""
             if [ "$USE_BATCH" = "true" ]; then
@@ -411,24 +406,39 @@ jobs:
     timeout-minutes: 240
     if: >-
       github.ref == 'refs/heads/main' &&
-      inputs.skip_finetune != true &&
-      (inputs.training_tiers == 'both' || inputs.training_tiers == matrix.tier || inputs.training_tiers == '')
+      inputs.skip_finetune != true
 
     steps:
+      - name: Check tier filter
+        id: tier-check
+        run: |
+          TIERS="${{ inputs.training_tiers }}"
+          TIER="${{ matrix.tier }}"
+          if [ "$TIERS" = "both" ] || [ "$TIERS" = "" ] || [ "$TIERS" = "$TIER" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping $TIER tier (training_tiers=$TIERS)"
+          fi
+
       - name: Checkout repository
+        if: steps.tier-check.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Python
+        if: steps.tier-check.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install training dependencies
+        if: steps.tier-check.outputs.skip != 'true'
         run: |
           pip install torch transformers peft trl datasets \
                       bitsandbytes huggingface_hub accelerate
 
       - name: Download training data from HuggingFace
+        if: steps.tier-check.outputs.skip != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
@@ -445,6 +455,7 @@ jobs:
           "
 
       - name: Run QLoRA fine-tuning
+        if: steps.tier-check.outputs.skip != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
@@ -608,6 +619,7 @@ jobs:
           "
 
       - name: Verify model on HuggingFace
+        if: steps.tier-check.outputs.skip != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
@@ -637,26 +649,41 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     if: >-
-      github.ref == 'refs/heads/main' &&
-      (inputs.training_tiers == 'both' || inputs.training_tiers == matrix.tier || inputs.training_tiers == '')
+      github.ref == 'refs/heads/main'
     strategy:
       matrix:
         tier: [deep, lite]
       fail-fast: false
 
     steps:
+      - name: Check tier filter
+        id: tier-check
+        run: |
+          TIERS="${{ inputs.training_tiers }}"
+          TIER="${{ matrix.tier }}"
+          if [ "$TIERS" = "both" ] || [ "$TIERS" = "" ] || [ "$TIERS" = "$TIER" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping $TIER tier (training_tiers=$TIERS)"
+          fi
+
       - name: Checkout repository
+        if: steps.tier-check.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Python
+        if: steps.tier-check.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
+        if: steps.tier-check.outputs.skip != 'true'
         run: pip install huggingface_hub transformers torch
 
       - name: Clone llama.cpp and build
+        if: steps.tier-check.outputs.skip != 'true'
         run: |
           git clone --depth 1 https://github.com/ggerganov/llama.cpp
           cd llama.cpp
@@ -665,6 +692,7 @@ jobs:
           cmake --build build --config Release -j || { echo "ERROR: cmake build failed"; exit 1; }
 
       - name: Download merged model from HuggingFace
+        if: steps.tier-check.outputs.skip != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
@@ -683,6 +711,7 @@ jobs:
           "
 
       - name: Convert to GGUF + quantize
+        if: steps.tier-check.outputs.skip != 'true'
         env:
           TIER: ${{ matrix.tier }}
           VERSION: ${{ env.MODEL_VERSION }}
@@ -701,6 +730,7 @@ jobs:
             $TIER_FLAG
 
       - name: Upload GGUF to HuggingFace
+        if: steps.tier-check.outputs.skip != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
@@ -726,6 +756,7 @@ jobs:
           "
 
       - name: Upload GGUF artifact
+        if: steps.tier-check.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: gguf-${{ matrix.tier }}-${{ github.run_id }}
@@ -742,26 +773,41 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
-      github.ref == 'refs/heads/main' &&
-      (inputs.training_tiers == 'both' || inputs.training_tiers == matrix.tier || inputs.training_tiers == '')
+      github.ref == 'refs/heads/main'
     strategy:
       matrix:
         tier: [deep, lite]
       fail-fast: false
 
     steps:
+      - name: Check tier filter
+        id: tier-check
+        run: |
+          TIERS="${{ inputs.training_tiers }}"
+          TIER="${{ matrix.tier }}"
+          if [ "$TIERS" = "both" ] || [ "$TIERS" = "" ] || [ "$TIERS" = "$TIER" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping $TIER tier (training_tiers=$TIERS)"
+          fi
+
       - name: Checkout repository
+        if: steps.tier-check.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Python
+        if: steps.tier-check.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
+        if: steps.tier-check.outputs.skip != 'true'
         run: pip install huggingface_hub llama-cpp-python
 
       - name: Run evaluation + regression gate
+        if: steps.tier-check.outputs.skip != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
@@ -774,6 +820,7 @@ jobs:
             --regression-threshold 0.05
 
       - name: Upload eval results
+        if: steps.tier-check.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: eval-${{ matrix.tier }}-${{ github.run_id }}
