@@ -1,0 +1,133 @@
+name: Discover Vibe-Coded Repos
+
+on:
+  # Weekly: Wednesday midnight UTC
+  schedule:
+    - cron: '0 0 * * 3'
+
+  workflow_dispatch:
+    inputs:
+      min_score:
+        description: 'Minimum AI-signal score (0-100) to qualify'
+        required: false
+        default: '30'
+      max_candidates:
+        description: 'Maximum repos to discover per run'
+        required: false
+        default: '10'
+      since_days:
+        description: 'Look-back period in days'
+        required: false
+        default: '90'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  discover:
+    name: Discover & Score Repos
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run discovery
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          MIN_SCORE="${{ inputs.min_score || '30' }}"
+          MAX_CANDIDATES="${{ inputs.max_candidates || '10' }}"
+          SINCE_DAYS="${{ inputs.since_days || '90' }}"
+
+          python scripts/discover_repos.py \
+            --min-score "$MIN_SCORE" \
+            --max-candidates "$MAX_CANDIDATES" \
+            --since-days "$SINCE_DAYS" \
+            --update-training \
+            --repo-root .
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if git diff --quiet rlaif/repos_training.json; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No new repos discovered"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            ADDED=$(git diff rlaif/repos_training.json | grep '^+' | grep -v '^+++' | grep -v '^+  "_' | grep '/' | wc -l | tr -d ' ')
+            echo "repos_added=$ADDED" >> $GITHUB_OUTPUT
+            echo "Discovered $ADDED new repos"
+          fi
+
+      - name: Create PR with new repos
+        if: steps.check-changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          BRANCH="auto/discover-repos-$(date +%Y%m%d)"
+          ADDED="${{ steps.check-changes.outputs.repos_added }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add rlaif/repos_training.json results/candidates.json
+          git commit -m "feat: add ${ADDED} new vibe-coded repos (auto-discovered)"
+
+          git push origin "$BRANCH"
+
+          # Build PR body from candidates.json
+          BODY=$(python3 -c "
+          import json
+          with open('results/candidates.json') as f:
+              data = json.load(f)
+          candidates = data['candidates']
+          summary = data['summary']
+
+          lines = ['## Auto-Discovered Vibe-Coded Repos', '']
+          lines.append(f'Searched {summary[\"total_searched\"]} candidates, {summary[\"qualified\"]} qualified, returning top {summary[\"returned\"]}.')
+          lines.append('')
+          lines.append('| Repo | Score | Stars | Language | Key Evidence |')
+          lines.append('|------|-------|-------|----------|-------------|')
+
+          for c in candidates:
+              evidence = '; '.join(c.get('evidence', [])[:2])
+              stars = f\"{c.get('stars', 0):,}\"
+              lines.append(f'| [{c[\"repo\"]}](https://github.com/{c[\"repo\"]}) | {c[\"score\"]} | {stars} | {c.get(\"language\", \"?\")} | {evidence[:60]} |')
+
+          lines.append('')
+          lines.append('### How this works')
+          lines.append('The discovery script searches GitHub for repos with AI co-authorship signals:')
+          lines.append('- \`Co-Authored-By: Claude/Cursor/Copilot\` in commit history')
+          lines.append('- \`.cursorrules\` config files')
+          lines.append('- AI-related topic tags')
+          lines.append('- AI tool mentions in commit messages')
+          lines.append('')
+          lines.append('Each repo is scored 0-100 and filtered for quality (stars, license, activity).')
+          lines.append('')
+          lines.append('> Review the repos above before merging. Remove any that don\\'t fit.')
+          print('\\n'.join(lines))
+          ")
+
+          gh pr create \
+            --title "feat: add ${ADDED} new vibe-coded repos (auto-discovered)" \
+            --body "$BODY" \
+            --base main \
+            --head "$BRANCH"
