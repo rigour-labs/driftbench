@@ -244,11 +244,11 @@ The RLAIF pipeline generates DPO training data for fine-tuning Rigour's local Qw
 
 | Tier | Base Model | Use Case | CLI Flag |
 |------|-----------|----------|----------|
-| **deep** (default) | Qwen3.5-0.8B | Fast CPU inference via hybrid GDN+MoE | *(none — default)* |
-| **pro** | Qwen2.5-Coder-1.5B-Instruct | Higher capacity, code-specialized pretrain | `--pro` |
+| **deep** (default) | Qwen2.5-Coder-1.5B-Instruct | Full power, code-specialized pretrain + QLoRA, company-hosted | *(none — default)* |
+| **lite** | Qwen3.5-0.8B | Lightweight, runs on any CPU, ships as default sidecar | `--lite` |
 | **legacy** | Qwen2.5-Coder-0.5B-Instruct | Previous default, kept for reproducibility | `--legacy` |
 
-The default tier uses Qwen3.5-0.8B, which provides ~3× faster CPU inference than the previous Qwen2.5-Coder-0.5B. No Qwen3.5-Coder variant exists yet; RLAIF fine-tuning handles code specialization.
+**Two product versions:** The **deep** model (Qwen2.5-Coder-1.5B) is the full-power version — code-specialized pretrain + QLoRA fine-tuning gives the best detection accuracy. Companies host this for their team. The **lite** model (Qwen3.5-0.8B) is the lightweight version that ships as the default sidecar in the Rigour CLI — runs on any laptop CPU with ~3× faster inference. Both models are trained via the same RLAIF pipeline.
 
 ### Pipeline Stages
 
@@ -290,11 +290,11 @@ python -m rlaif.generate --no-retry --repo "expressjs/express"
 # Format DPO pairs for fine-tuning
 python -m rlaif.format_dpo --db rlaif/data/training_data.db
 
-# Fine-tune Qwen3.5-0.8B via QLoRA (default)
+# Fine-tune Qwen2.5-Coder-1.5B via QLoRA (default — best quality)
 python -m rlaif.finetune --sft rlaif/data/sft_data.jsonl --dpo rlaif/data/dpo_data.jsonl
 
-# Fine-tune pro model (Qwen2.5-Coder-1.5B)
-python -m rlaif.finetune --pro --output rlaif/models/rigour-v1-pro
+# Fine-tune lite model (Qwen3.5-0.8B, lightweight sidecar)
+python -m rlaif.finetune --lite --output rlaif/models/rigour-v1-lite
 
 # Fine-tune legacy model (Qwen2.5-Coder-0.5B, for reproducibility)
 python -m rlaif.finetune --legacy --output rlaif/models/rigour-v1-legacy
@@ -355,9 +355,9 @@ The key must be a valid LiteLLM model string (e.g., `anthropic/claude-sonnet-4`,
 - [ ] Support for multi-file changes
 - [x] CI/CD integration for automated benchmarking (GitHub Actions weekly pipeline)
 - [ ] Public API for running benchmarks
-- [x] QLoRA fine-tune script for Qwen model training (Qwen3.5-0.8B default)
+- [x] QLoRA fine-tune script for Qwen model training (Qwen2.5-Coder-1.5B default)
 - [x] GGUF export + HuggingFace upload
-- [x] Qwen3.5-0.8B as default base model (~3× faster CPU inference)
+- [x] Qwen3.5-0.8B as lite tier (lightweight sidecar for individual devs)
 - [x] Anthropic Batch API for 50% cost savings on RLAIF
 - [x] Pass@2 retry pipeline for 15–20% more training data
 - [x] Parallel benchmark runner with isolated workspaces
@@ -381,7 +381,7 @@ The key must be a valid LiteLLM model string (e.g., `anthropic/claude-sonnet-4`,
 | `rigour check` | Validate changes against configured gates |
 | `rigour check --json` | Machine-readable JSON output (used by DriftBench) |
 | `rigour check --ci` | CI mode with appropriate exit codes |
-| `rigour check --deep` | Deep LLM-powered analysis (uses local Qwen3.5-0.8B model) |
+| `rigour check --deep` | Deep LLM-powered analysis (uses local Qwen2.5-Coder-1.5B model) |
 | `rigour init` | Set up Rigour in a project |
 | `rigour explain` | Detailed explanation of last check results |
 | `rigour run` | Supervisor loop for iterative refinement |

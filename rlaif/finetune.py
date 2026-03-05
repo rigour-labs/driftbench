@@ -4,15 +4,15 @@ Takes SFT + DPO training data from HuggingFace (or local JSONL)
 and fine-tunes Qwen using QLoRA + trl DPOTrainer.
 
 Supports three tiers:
-  - deep:    Qwen3.5-0.8B          (default, hybrid GDN+MoE, ~3x faster CPU)
-  - pro:     Qwen2.5-Coder-1.5B    (higher capacity, code-specialized pretrain)
+  - deep:    Qwen2.5-Coder-1.5B    (full power, code-specialized pretrain + QLoRA, company-hosted)
+  - lite:    Qwen3.5-0.8B          (lightweight, runs on any CPU, ships as default sidecar)
   - legacy:  Qwen2.5-Coder-0.5B    (previous default, kept for reproducibility)
 
 Requirements:
     pip install torch transformers peft trl datasets bitsandbytes
 
 Usage:
-    # Fine-tune with DPO (recommended — uses Qwen3.5-0.8B by default)
+    # Fine-tune with DPO (recommended — uses Qwen2.5-Coder-1.5B by default)
     python -m rlaif.finetune \
         --sft rlaif/data/sft_data.jsonl \
         --dpo rlaif/data/dpo_data.jsonl \
@@ -23,8 +23,8 @@ Usage:
         --hf-dataset rigour-labs/rigour-rlaif-data \
         --output rlaif/models/rigour-v1
 
-    # Pro model (1.5B, code-specialized)
-    python -m rlaif.finetune --pro --output rlaif/models/rigour-v1-pro
+    # Lite model (Qwen3.5-0.8B, lightweight for any CPU)
+    python -m rlaif.finetune --lite --output rlaif/models/rigour-v1-lite
 
     # Legacy model (previous Qwen2.5-Coder-0.5B for reproducibility)
     python -m rlaif.finetune --legacy --output rlaif/models/rigour-v1-legacy
@@ -43,11 +43,11 @@ logging.basicConfig(
 logger = logging.getLogger("rlaif.finetune")
 
 # Base models (same as rigour-core/src/inference/types.ts)
-# Qwen 3.5 is the new default — hybrid GDN+MoE gives ~3x faster CPU inference
-# No Qwen3.5-Coder variant exists yet; RLAIF fine-tuning handles code specialization
+# Qwen2.5-Coder-1.5B is the default — code-specialized pretrain + QLoRA = best quality
+# Qwen3.5-0.8B available as "lite" tier — lightweight sidecar for individual devs
 BASE_MODELS = {
-    "deep": "Qwen/Qwen3.5-0.8B",                     # NEW default: faster CPU, March 2026
-    "pro": "Qwen/Qwen2.5-Coder-1.5B-Instruct",       # Higher capacity, code pretrain
+    "deep": "Qwen/Qwen2.5-Coder-1.5B-Instruct",      # Full: code pretrain + QLoRA, company-hosted
+    "lite": "Qwen/Qwen3.5-0.8B",                      # Lite: runs on any CPU, default sidecar
     "legacy": "Qwen/Qwen2.5-Coder-0.5B-Instruct",    # Previous default, reproducibility
 }
 
@@ -236,8 +236,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Output directory for fine-tuned model",
     )
     p.add_argument(
-        "--pro", action="store_true",
-        help="Use Qwen2.5-Coder-1.5B (higher capacity, code pretrain)",
+        "--lite", action="store_true",
+        help="Use Qwen3.5-0.8B (lightweight, runs on any CPU)",
     )
     p.add_argument(
         "--legacy", action="store_true",
@@ -263,7 +263,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def main():
     args = _build_parser().parse_args()
 
-    tier = "legacy" if args.legacy else ("pro" if args.pro else "deep")
+    tier = "legacy" if args.legacy else ("lite" if args.lite else "deep")
     base_model = BASE_MODELS[tier]
     logger.info(f"Tier: {tier} | Base model: {base_model}")
 

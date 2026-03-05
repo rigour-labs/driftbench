@@ -19,8 +19,8 @@ Usage:
         --output rlaif/models/rigour-v1 \
         --upload rigour-labs/rigour-deep-v1-gguf
 
-    # Pro model (1.5B)
-    python -m rlaif.export_gguf --model rlaif/models/rigour-v1-pro/merged --pro
+    # Lite model (Qwen3.5-0.8B, lightweight)
+    python -m rlaif.export_gguf --model rlaif/models/rigour-v1-lite/merged --lite
 
     # Legacy model (Qwen2.5-Coder-0.5B, for reproducibility)
     python -m rlaif.export_gguf --model rlaif/models/rigour-v1-legacy/merged --legacy
@@ -43,8 +43,8 @@ logger = logging.getLogger("rlaif.export_gguf")
 
 # Output filenames must match rigour-core types.ts convention
 GGUF_FILENAMES = {
-    "deep": "rigour-deep-v{version}-q4_k_m.gguf",       # Qwen3.5-0.8B (default)
-    "pro": "rigour-pro-v{version}-q4_k_m.gguf",          # Qwen2.5-Coder-1.5B
+    "deep": "rigour-deep-v{version}-q4_k_m.gguf",       # Qwen2.5-Coder-1.5B (full, company-hosted)
+    "lite": "rigour-lite-v{version}-q4_k_m.gguf",        # Qwen3.5-0.8B (lightweight sidecar)
     "legacy": "rigour-legacy-v{version}-q4_k_m.gguf",    # Qwen2.5-Coder-0.5B
 }
 
@@ -171,8 +171,8 @@ def _build_model_card(
     size_mb = os.path.getsize(gguf_path) / (1024 * 1024)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     base_map = {
-        "deep": ("Qwen3.5-0.8B", "Qwen/Qwen3.5-0.8B", "qwen3"),
-        "pro": ("Qwen2.5-Coder-1.5B", "Qwen/Qwen2.5-Coder-1.5B-Instruct", "qwen2"),
+        "deep": ("Qwen2.5-Coder-1.5B", "Qwen/Qwen2.5-Coder-1.5B-Instruct", "qwen2"),
+        "lite": ("Qwen3.5-0.8B", "Qwen/Qwen3.5-0.8B", "qwen3"),
         "legacy": ("Qwen2.5-Coder-0.5B", "Qwen/Qwen2.5-Coder-0.5B-Instruct", "qwen2"),
     }
     base_name, base_id, tag = base_map.get(tier, base_map["deep"])
@@ -223,7 +223,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Output directory for GGUF files",
     )
     p.add_argument(
-        "--pro", action="store_true", help="Pro tier (Qwen2.5-Coder-1.5B)",
+        "--lite", action="store_true", help="Lite tier (Qwen3.5-0.8B, lightweight sidecar)",
     )
     p.add_argument(
         "--legacy", action="store_true",
@@ -250,7 +250,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main():
     args = _build_parser().parse_args()
-    tier = "legacy" if args.legacy else ("pro" if args.pro else "deep")
+    tier = "legacy" if args.legacy else ("lite" if args.lite else "deep")
     os.makedirs(args.output, exist_ok=True)
 
     # Step 1: Convert HF -> GGUF f16
