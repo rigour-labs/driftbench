@@ -48,7 +48,7 @@ permissions:
   contents: read
 
 env:
-  PYTHON_VERSION: '3.11'
+  PYTHON_VERSION: '3.12'
 
 jobs:
   # ═══════════════════════════════════════════════════════════════
@@ -183,23 +183,7 @@ jobs:
           echo "Has data:   $HAS_DATA"
 
           if [ -f rlaif/data/category_stats.json ]; then
-            python3 -c '
-          import json, sys
-          try:
-              with open("rlaif/data/category_stats.json") as f:
-                  stats = json.load(f)
-              print(f"Verified:   {stats[\"total_verified\"]}")
-              print(f"Dropped:    {stats[\"total_dropped\"]}")
-              retry_total = sum(s.get("retry_verified", 0) for s in stats.get("categories", {}).values())
-              if retry_total > 0:
-                  print(f"Pass@2 recovered: {retry_total}")
-              print()
-              print("Per-category breakdown:")
-              for cat, s in sorted(stats["categories"].items(), key=lambda x: x[1]["total"], reverse=True):
-                  print(f"  {cat:30s}  verified={s[\"verified\"]:4d}  dropped={s[\"dropped\"]:4d}  rate={s[\"verification_rate\"]}%")
-          except Exception as e:
-              print(f"Error reading stats: {e}", file=sys.stderr)
-          '
+            python3 scripts/print_stats.py rlaif/data/category_stats.json
           fi
 
       - name: Upload training data artifact
@@ -312,10 +296,8 @@ jobs:
     runs-on: ${{ vars.GPU_RUNNER_LABEL || 'ubuntu-latest' }}
     timeout-minutes: 240
     if: >-
-      always() &&
       github.ref == 'refs/heads/main' &&
-      inputs.skip_finetune != true &&
-      needs.upload-to-huggingface.result != 'failure'
+      inputs.skip_finetune != true
 
     steps:
       - name: Checkout repository
@@ -357,7 +339,7 @@ jobs:
           print(f'GPU available: {torch.cuda.is_available()}')
           if torch.cuda.is_available():
               print(f'GPU: {torch.cuda.get_device_name(0)}')
-              print(f'VRAM: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB')
+              print(f'VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB')
           else:
               print('WARNING: No GPU — training will be slow on CPU')
 
@@ -510,10 +492,7 @@ jobs:
     needs: finetune-model
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: >-
-      always() &&
-      github.ref == 'refs/heads/main' &&
-      needs.finetune-model.result == 'success'
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository

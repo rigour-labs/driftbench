@@ -26,7 +26,7 @@ permissions:
   contents: write
 
 env:
-  PYTHON_VERSION: '3.11'
+  PYTHON_VERSION: '3.12'
 
 jobs:
   evaluate:
@@ -95,24 +95,7 @@ jobs:
           if [ -f results/leaderboard.json ]; then
             echo "DriftBench Leaderboard"
             echo "======================"
-            python3 -c '
-          import json, sys
-          try:
-              with open("results/leaderboard.json") as f:
-                  data = json.load(f)
-              print(f"Generated: {data[\"generated_at\"]}")
-              print(f"Scenarios: {data.get(\"total_scenarios\", \"?\")}")
-              print()
-              for m in data.get("models", []):
-                  acc = m.get("overall_accuracy", 0)
-                  oc = m.get("overconfident_errors", 0)
-                  ece = m.get("calibration_ece", 0)
-                  print(f"  #{m[\"rank\"]} {m[\"display_name\"]}: {acc:.1%} (overconfident: {oc}, ECE: {ece:.3f})")
-                  for cat, d in sorted(m.get("by_category", {}).items()):
-                      print(f"      {cat}: {d[\"accuracy\"]:.1%} ({d[\"correct\"]}/{d[\"total\"]})")
-          except Exception as e:
-              print(f"Error reading leaderboard: {e}", file=sys.stderr)
-          '
+            python3 scripts/print_leaderboard.py results/leaderboard.json
           else
             echo "No leaderboard.json found"
           fi
