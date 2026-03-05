@@ -17,9 +17,9 @@ on:
         required: false
         default: 'anthropic'
       model_name:
-        description: 'Model name (e.g., claude-sonnet-4-20250514, gpt-4o, deepseek-chat)'
+        description: 'Model name (e.g., claude-sonnet-4-6, gpt-4o, deepseek-chat)'
         required: false
-        default: 'claude-sonnet-4-20250514'
+        default: 'claude-sonnet-4-6'
       api_base:
         description: 'Custom API base URL (for self-hosted / proxy endpoints, leave empty for default)'
         required: false
@@ -78,7 +78,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           PROVIDER="${{ inputs.model_provider || 'anthropic' }}"
-          MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-20250514' }}"
+          MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-6' }}"
           API_BASE="${{ inputs.api_base || '' }}"
           REPOS_INPUT="${{ inputs.repos || 'all' }}"
           USE_BATCH="${{ inputs.use_batch_api || 'true' }}"
