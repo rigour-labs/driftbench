@@ -48,7 +48,7 @@ jobs:
 
       - name: Run discovery
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set -e
           MIN_SCORE="${{ inputs.min_score || '30' }}"
@@ -78,7 +78,7 @@ jobs:
       - name: Create PR with new repos
         if: steps.check-changes.outputs.has_changes == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set -e
           BRANCH="auto/discover-repos-$(date +%Y%m%d)"
