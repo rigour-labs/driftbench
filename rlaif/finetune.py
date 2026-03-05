@@ -1,13 +1,18 @@
 """QLoRA fine-tune script for Rigour deep analysis model.
 
 Takes SFT + DPO training data from HuggingFace (or local JSONL)
-and fine-tunes Qwen2.5-Coder using QLoRA + trl DPOTrainer.
+and fine-tunes Qwen using QLoRA + trl DPOTrainer.
+
+Supports three tiers:
+  - deep:    Qwen3.5-0.8B          (default, hybrid GDN+MoE, ~3x faster CPU)
+  - pro:     Qwen2.5-Coder-1.5B    (higher capacity, code-specialized pretrain)
+  - legacy:  Qwen2.5-Coder-0.5B    (previous default, kept for reproducibility)
 
 Requirements:
     pip install torch transformers peft trl datasets bitsandbytes
 
 Usage:
-    # Fine-tune with DPO (recommended)
+    # Fine-tune with DPO (recommended — uses Qwen3.5-0.8B by default)
     python -m rlaif.finetune \
         --sft rlaif/data/sft_data.jsonl \
         --dpo rlaif/data/dpo_data.jsonl \
@@ -18,8 +23,11 @@ Usage:
         --hf-dataset rigour-labs/rigour-rlaif-data \
         --output rlaif/models/rigour-v1
 
-    # Pro model (1.5B instead of 0.5B)
+    # Pro model (1.5B, code-specialized)
     python -m rlaif.finetune --pro --output rlaif/models/rigour-v1-pro
+
+    # Legacy model (previous Qwen2.5-Coder-0.5B for reproducibility)
+    python -m rlaif.finetune --legacy --output rlaif/models/rigour-v1-legacy
 """
 
 import os
@@ -35,9 +43,12 @@ logging.basicConfig(
 logger = logging.getLogger("rlaif.finetune")
 
 # Base models (same as rigour-core/src/inference/types.ts)
+# Qwen 3.5 is the new default — hybrid GDN+MoE gives ~3x faster CPU inference
+# No Qwen3.5-Coder variant exists yet; RLAIF fine-tuning handles code specialization
 BASE_MODELS = {
-    "deep": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
-    "pro": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "deep": "Qwen/Qwen3.5-0.8B",                     # NEW default: faster CPU, March 2026
+    "pro": "Qwen/Qwen2.5-Coder-1.5B-Instruct",       # Higher capacity, code pretrain
+    "legacy": "Qwen/Qwen2.5-Coder-0.5B-Instruct",    # Previous default, reproducibility
 }
 
 # QLoRA defaults tuned for code quality analysis
@@ -147,7 +158,7 @@ def run_sft(model, tokenizer, sft_dataset, output_dir: str, epochs: int):
         logging_steps=10,
         save_strategy="epoch",
         bf16=True,
-        max_seq_length=1024,
+        max_length=1024,  # trl >= 0.15 renamed max_seq_length → max_length
     )
 
     trainer = SFTTrainer(
@@ -226,7 +237,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--pro", action="store_true",
-        help="Use 1.5B pro model instead of 0.5B",
+        help="Use Qwen2.5-Coder-1.5B (higher capacity, code pretrain)",
+    )
+    p.add_argument(
+        "--legacy", action="store_true",
+        help="Use previous Qwen2.5-Coder-0.5B (for reproducibility)",
     )
     p.add_argument(
         "--no-4bit", action="store_true",
@@ -248,7 +263,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def main():
     args = _build_parser().parse_args()
 
-    tier = "pro" if args.pro else "deep"
+    tier = "legacy" if args.legacy else ("pro" if args.pro else "deep")
     base_model = BASE_MODELS[tier]
     logger.info(f"Tier: {tier} | Base model: {base_model}")
 

@@ -19,8 +19,11 @@ Usage:
         --output rlaif/models/rigour-v1 \
         --upload rigour-labs/rigour-deep-v1-gguf
 
-    # Pro model
+    # Pro model (1.5B)
     python -m rlaif.export_gguf --model rlaif/models/rigour-v1-pro/merged --pro
+
+    # Legacy model (Qwen2.5-Coder-0.5B, for reproducibility)
+    python -m rlaif.export_gguf --model rlaif/models/rigour-v1-legacy/merged --legacy
 """
 
 import os
@@ -40,8 +43,9 @@ logger = logging.getLogger("rlaif.export_gguf")
 
 # Output filenames must match rigour-core types.ts convention
 GGUF_FILENAMES = {
-    "deep": "rigour-deep-v{version}-q4_k_m.gguf",
-    "pro": "rigour-pro-v{version}-q4_k_m.gguf",
+    "deep": "rigour-deep-v{version}-q4_k_m.gguf",       # Qwen3.5-0.8B (default)
+    "pro": "rigour-pro-v{version}-q4_k_m.gguf",          # Qwen2.5-Coder-1.5B
+    "legacy": "rigour-legacy-v{version}-q4_k_m.gguf",    # Qwen2.5-Coder-0.5B
 }
 
 QUANTIZATION = "q4_k_m"  # Same quant level as stock Qwen models
@@ -166,7 +170,12 @@ def _build_model_card(
 ) -> str:
     size_mb = os.path.getsize(gguf_path) / (1024 * 1024)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    base = "Qwen2.5-Coder-0.5B" if tier == "deep" else "Qwen2.5-Coder-1.5B"
+    base_map = {
+        "deep": ("Qwen3.5-0.8B", "Qwen/Qwen3.5-0.8B", "qwen3"),
+        "pro": ("Qwen2.5-Coder-1.5B", "Qwen/Qwen2.5-Coder-1.5B-Instruct", "qwen2"),
+        "legacy": ("Qwen2.5-Coder-0.5B", "Qwen/Qwen2.5-Coder-0.5B-Instruct", "qwen2"),
+    }
+    base_name, base_id, tag = base_map.get(tier, base_map["deep"])
     return f"""---
 language: en
 license: apache-2.0
@@ -174,18 +183,18 @@ tags:
   - rigour
   - code-quality
   - gguf
-  - qwen2
-base_model: Qwen/{base}-Instruct
+  - {tag}
+base_model: {base_id}
 ---
 
 # Rigour Deep Analysis Model ({tier} v{version})
 
-Fine-tuned {base} for code quality analysis.
+Fine-tuned {base_name} for code quality analysis.
 Trained via RLAIF: strong teacher labels + structural verification + DPO.
 
 | Property | Value |
 |---|---|
-| Base | {base}-Instruct |
+| Base | {base_name} |
 | Quant | Q4_K_M |
 | Size | {size_mb:.0f}MB |
 | Tier | {tier} |
@@ -214,7 +223,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Output directory for GGUF files",
     )
     p.add_argument(
-        "--pro", action="store_true", help="Pro tier (1.5B)",
+        "--pro", action="store_true", help="Pro tier (Qwen2.5-Coder-1.5B)",
+    )
+    p.add_argument(
+        "--legacy", action="store_true",
+        help="Legacy tier (Qwen2.5-Coder-0.5B, for reproducibility)",
     )
     p.add_argument(
         "--version", type=str, default="1",
@@ -237,7 +250,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main():
     args = _build_parser().parse_args()
-    tier = "pro" if args.pro else "deep"
+    tier = "legacy" if args.legacy else ("pro" if args.pro else "deep")
     os.makedirs(args.output, exist_ok=True)
 
     # Step 1: Convert HF -> GGUF f16

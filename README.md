@@ -240,6 +240,16 @@ This repository contains **two separate systems** that share some infrastructure
 
 The RLAIF pipeline generates DPO training data for fine-tuning Rigour's local Qwen model, which powers the `rigour check --deep` analysis mode.
 
+### Model Tiers
+
+| Tier | Base Model | Use Case | CLI Flag |
+|------|-----------|----------|----------|
+| **deep** (default) | Qwen3.5-0.8B | Fast CPU inference via hybrid GDN+MoE | *(none — default)* |
+| **pro** | Qwen2.5-Coder-1.5B-Instruct | Higher capacity, code-specialized pretrain | `--pro` |
+| **legacy** | Qwen2.5-Coder-0.5B-Instruct | Previous default, kept for reproducibility | `--legacy` |
+
+The default tier uses Qwen3.5-0.8B, which provides ~3× faster CPU inference than the previous Qwen2.5-Coder-0.5B. No Qwen3.5-Coder variant exists yet; RLAIF fine-tuning handles code specialization.
+
 ### Pipeline Stages
 
 1. **Clone & Extract** — Clone public repos and extract AST facts (classes, functions, imports, metrics) using `rlaif/facts.py`
@@ -280,11 +290,20 @@ python -m rlaif.generate --no-retry --repo "expressjs/express"
 # Format DPO pairs for fine-tuning
 python -m rlaif.format_dpo --db rlaif/data/training_data.db
 
-# Fine-tune Qwen via QLoRA
+# Fine-tune Qwen3.5-0.8B via QLoRA (default)
 python -m rlaif.finetune --sft rlaif/data/sft_data.jsonl --dpo rlaif/data/dpo_data.jsonl
+
+# Fine-tune pro model (Qwen2.5-Coder-1.5B)
+python -m rlaif.finetune --pro --output rlaif/models/rigour-v1-pro
+
+# Fine-tune legacy model (Qwen2.5-Coder-0.5B, for reproducibility)
+python -m rlaif.finetune --legacy --output rlaif/models/rigour-v1-legacy
 
 # Export to GGUF for local inference
 python -m rlaif.export_gguf --model rlaif/models/rigour-v1/merged --output rlaif/models/rigour-v1
+
+# Export + upload to HuggingFace
+python -m rlaif.export_gguf --model rlaif/models/rigour-v1/merged --output rlaif/models/rigour-v1 --upload rigour-labs/rigour-deep-v1-gguf
 ```
 
 Supported providers: Anthropic, OpenAI, DeepSeek, Groq, Together AI, Fireworks, Mistral, Gemini, Ollama, and any OpenAI SDK-compatible endpoint. The full pipeline runs weekly via GitHub Actions (`.github/workflows/rlaif-pipeline.yml`).
@@ -336,8 +355,9 @@ The key must be a valid LiteLLM model string (e.g., `anthropic/claude-sonnet-4`,
 - [ ] Support for multi-file changes
 - [x] CI/CD integration for automated benchmarking (GitHub Actions weekly pipeline)
 - [ ] Public API for running benchmarks
-- [x] QLoRA fine-tune script for Qwen model training
+- [x] QLoRA fine-tune script for Qwen model training (Qwen3.5-0.8B default)
 - [x] GGUF export + HuggingFace upload
+- [x] Qwen3.5-0.8B as default base model (~3× faster CPU inference)
 - [x] Anthropic Batch API for 50% cost savings on RLAIF
 - [x] Pass@2 retry pipeline for 15–20% more training data
 - [x] Parallel benchmark runner with isolated workspaces
@@ -361,7 +381,7 @@ The key must be a valid LiteLLM model string (e.g., `anthropic/claude-sonnet-4`,
 | `rigour check` | Validate changes against configured gates |
 | `rigour check --json` | Machine-readable JSON output (used by DriftBench) |
 | `rigour check --ci` | CI mode with appropriate exit codes |
-| `rigour check --deep` | Deep LLM-powered analysis (uses local Qwen model) |
+| `rigour check --deep` | Deep LLM-powered analysis (uses local Qwen3.5-0.8B model) |
 | `rigour init` | Set up Rigour in a project |
 | `rigour explain` | Detailed explanation of last check results |
 | `rigour run` | Supervisor loop for iterative refinement |
