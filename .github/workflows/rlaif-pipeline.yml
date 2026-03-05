@@ -45,10 +45,17 @@ env:
   NODE_VERSION: '20'
 
 jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # Job 1: Generate RLAIF Training Data
+  # ═══════════════════════════════════════════════════════════════
   generate-training-data:
     name: Generate RLAIF Training Data
     runs-on: ubuntu-latest
-    timeout-minutes: 180  # 3 hours max
+    timeout-minutes: 180
+    outputs:
+      has_training_data: ${{ steps.check-data.outputs.has_data }}
+      sft_count: ${{ steps.check-data.outputs.sft_count }}
+      dpo_count: ${{ steps.check-data.outputs.dpo_count }}
 
     steps:
       - name: Checkout repository
@@ -89,13 +96,11 @@ jobs:
             COMMON_ARGS="$COMMON_ARGS --api-base $API_BASE"
           fi
 
-          # Batch mode flag (50% cheaper via Anthropic Batch API)
           BATCH_FLAG=""
           if [ "$USE_BATCH" = "true" ] && [ "$PROVIDER" = "anthropic" ]; then
             BATCH_FLAG="--batch"
           fi
 
-          # Pass@2 retry flag (15-20% more verified data)
           RETRY_FLAG=""
           if [ "$ENABLE_RETRY" = "false" ]; then
             RETRY_FLAG="--no-retry"
@@ -134,16 +139,39 @@ jobs:
             --output rlaif/data \
             --max-dpo-pairs 10000
 
-      - name: Show training data stats
+      - name: Check training data output
+        id: check-data
         run: |
+          # Check if training data files exist and have content
+          SFT_COUNT=0
+          DPO_COUNT=0
+          HAS_DATA="false"
+
+          if [ -f rlaif/data/sft_data.jsonl ]; then
+            SFT_COUNT=$(wc -l < rlaif/data/sft_data.jsonl | tr -d ' ')
+          fi
+          if [ -f rlaif/data/dpo_data.jsonl ]; then
+            DPO_COUNT=$(wc -l < rlaif/data/dpo_data.jsonl | tr -d ' ')
+          fi
+
+          if [ "$SFT_COUNT" -gt 0 ] || [ "$DPO_COUNT" -gt 0 ]; then
+            HAS_DATA="true"
+          fi
+
+          echo "sft_count=$SFT_COUNT" >> $GITHUB_OUTPUT
+          echo "dpo_count=$DPO_COUNT" >> $GITHUB_OUTPUT
+          echo "has_data=$HAS_DATA" >> $GITHUB_OUTPUT
+
           echo "=== Training Data Statistics ==="
+          echo "SFT pairs:  $SFT_COUNT"
+          echo "DPO pairs:  $DPO_COUNT"
+          echo "Has data:   $HAS_DATA"
+
           if [ -f rlaif/data/category_stats.json ]; then
             python -c "
           import json
           with open('rlaif/data/category_stats.json') as f:
               stats = json.load(f)
-          print(f'SFT pairs:  {stats[\"sft_pairs\"]}')
-          print(f'DPO pairs:  {stats[\"dpo_pairs\"]}')
           print(f'Verified:   {stats[\"total_verified\"]}')
           print(f'Dropped:    {stats[\"total_dropped\"]}')
           retry_total = sum(s.get('retry_verified', 0) for s in stats.get('categories', {}).values())
@@ -166,6 +194,7 @@ jobs:
             rlaif/data/category_stats.json
             rlaif/data/generate_summary.json
             rlaif/data/README.md
+          if-no-files-found: warn
           retention-days: 90
 
       - name: Upload SQLite DB artifact
@@ -173,13 +202,19 @@ jobs:
         with:
           name: rlaif-database-${{ github.run_id }}
           path: rlaif/data/training_data.db
+          if-no-files-found: warn
           retention-days: 90
 
+  # ═══════════════════════════════════════════════════════════════
+  # Job 2: Upload to HuggingFace Datasets
+  # ═══════════════════════════════════════════════════════════════
   upload-to-huggingface:
     name: Upload to HuggingFace Datasets
     needs: generate-training-data
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      needs.generate-training-data.outputs.has_training_data == 'true'
 
     steps:
       - name: Checkout repository
@@ -210,13 +245,11 @@ jobs:
           api = HfApi(token=os.environ['HF_TOKEN'])
           repo_id = 'rigour-labs/rigour-rlaif-data'
 
-          # Create dataset repo if it doesn't exist
           try:
               create_repo(repo_id, repo_type='dataset', token=os.environ['HF_TOKEN'], exist_ok=True)
           except Exception as e:
               print(f'Repo creation note: {e}')
 
-          # Upload all training files
           files_to_upload = [
               'rlaif/data/sft_data.jsonl',
               'rlaif/data/dpo_data.jsonl',
@@ -224,6 +257,7 @@ jobs:
               'rlaif/data/README.md',
           ]
 
+          uploaded = 0
           for filepath in files_to_upload:
               if os.path.exists(filepath):
                   filename = os.path.basename(filepath)
@@ -234,16 +268,23 @@ jobs:
                       repo_id=repo_id,
                       repo_type='dataset',
                   )
-                  print(f'  ✓ {filename} uploaded')
+                  uploaded += 1
+                  print(f'  done')
 
-          print(f'\\nDataset available at: https://huggingface.co/datasets/{repo_id}')
+          if uploaded == 0:
+              print('WARNING: No files uploaded')
+              exit(1)
+          print(f'Dataset: https://huggingface.co/datasets/{repo_id}')
           "
 
+  # ═══════════════════════════════════════════════════════════════
+  # Job 3: Fine-tune Qwen Model (QLoRA via Kaggle GPU)
+  # ═══════════════════════════════════════════════════════════════
   finetune-model:
     name: Fine-tune Qwen Model (QLoRA via Kaggle GPU)
     needs: upload-to-huggingface
     runs-on: ubuntu-latest
-    timeout-minutes: 180  # Kaggle T4 GPU — ~1-2hrs for 1.5B QLoRA
+    timeout-minutes: 180
     if: github.ref == 'refs/heads/main'
 
     steps:
@@ -265,20 +306,17 @@ jobs:
           mkdir -p ~/.kaggle
           echo "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
           chmod 600 ~/.kaggle/kaggle.json
-          # Extract username for kernel ID
           KAGGLE_USER=$(python -c "import json; print(json.load(open('$HOME/.kaggle/kaggle.json'))['username'])")
           echo "KAGGLE_USER=$KAGGLE_USER" >> $GITHUB_ENV
 
       - name: Create Kaggle training notebook
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           mkdir -p kaggle_kernel
 
-          # Kernel metadata — enables GPU accelerator
-          cat > kaggle_kernel/kernel-metadata.json << 'METADATA'
+          # Kernel metadata — note: id uses KAGGLE_USER, replaced by sed below
+          cat > kaggle_kernel/kernel-metadata.json << METADATA
           {
-            "id": "${{ env.KAGGLE_USER }}/rigour-qlora-finetune",
+            "id": "${KAGGLE_USER}/rigour-qlora-finetune",
             "title": "Rigour QLoRA Fine-tune",
             "code_file": "finetune_kaggle.py",
             "language": "python",
@@ -290,9 +328,6 @@ jobs:
             "dataset_sources": []
           }
           METADATA
-
-          # Replace placeholder username in metadata
-          sed -i "s/\${{ env.KAGGLE_USER }}/${KAGGLE_USER}/g" kaggle_kernel/kernel-metadata.json
 
           # Training script that runs ON Kaggle's T4 GPU
           cat > kaggle_kernel/finetune_kaggle.py << 'TRAINSCRIPT'
@@ -318,7 +353,7 @@ jobs:
           DATASET_ID = "rigour-labs/rigour-rlaif-data"
           OUTPUT_DIR = "/kaggle/working/rigour-v1"
 
-          # ── Download training data from HuggingFace ──
+          # Download training data from HuggingFace
           print("Downloading training data from HuggingFace...")
           sft_path = hf_hub_download(DATASET_ID, "sft_data.jsonl", repo_type="dataset", token=HF_TOKEN)
           dpo_path = hf_hub_download(DATASET_ID, "dpo_data.jsonl", repo_type="dataset", token=HF_TOKEN)
@@ -327,7 +362,11 @@ jobs:
           dpo_ds = load_dataset("json", data_files=dpo_path, split="train")
           print(f"SFT: {len(sft_ds)} examples, DPO: {len(dpo_ds)} pairs")
 
-          # ── Setup model + QLoRA ──
+          if len(sft_ds) == 0 and len(dpo_ds) == 0:
+              print("No training data — skipping fine-tuning")
+              sys.exit(0)
+
+          # Setup model + QLoRA
           from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
           from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
@@ -362,7 +401,7 @@ jobs:
           total = sum(p.numel() for p in model.parameters())
           print(f"Trainable: {trainable:,} / {total:,} ({100*trainable/total:.1f}%)")
 
-          # ── SFT Phase ──
+          # SFT Phase
           if len(sft_ds) > 0:
               from trl import SFTTrainer, SFTConfig
               use_bf16 = torch.cuda.is_bf16_supported()
@@ -384,7 +423,7 @@ jobs:
               trainer.train()
               print("SFT complete")
 
-          # ── DPO Phase ──
+          # DPO Phase
           if len(dpo_ds) > 0:
               from trl import DPOTrainer, DPOConfig
               use_bf16 = torch.cuda.is_bf16_supported()
@@ -408,7 +447,7 @@ jobs:
               trainer.train()
               print("DPO complete")
 
-          # ── Merge LoRA + Upload to HuggingFace ──
+          # Merge LoRA + Upload to HuggingFace
           print("Merging LoRA adapter...")
           merged = model.merge_and_unload()
           merged_path = os.path.join(OUTPUT_DIR, "merged")
@@ -424,41 +463,19 @@ jobs:
                   repo_id="rigour-labs/rigour-deep-v1-merged",
                   commit_message=f"QLoRA fine-tune: SFT={len(sft_ds)} DPO={len(dpo_ds)}",
               )
-              print("✓ Merged model uploaded to rigour-labs/rigour-deep-v1-merged")
+              print("Merged model uploaded to rigour-labs/rigour-deep-v1-merged")
           else:
               print("WARNING: No HF_TOKEN — model saved locally only")
 
           print("Fine-tuning complete!")
           TRAINSCRIPT
 
-      - name: Set HF_TOKEN as Kaggle user secret
+      - name: Inject HF_TOKEN into training script
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           # Kaggle kernels can't access GitHub secrets directly.
-          # We inject HF_TOKEN as a Kaggle user secret via the API.
-          python -c "
-          import os, json, urllib.request
-
-          kaggle_creds = json.load(open(os.path.expanduser('~/.kaggle/kaggle.json')))
-          username = kaggle_creds['username']
-          api_key  = kaggle_creds['key']
-
-          # Kaggle Secrets API — set HF_TOKEN for kernel access
-          import base64
-          auth = base64.b64encode(f'{username}:{api_key}'.encode()).decode()
-          headers = {
-              'Authorization': f'Basic {auth}',
-              'Content-Type': 'application/json',
-          }
-
-          # Use kaggle-api-compatible env variable injection in kernel metadata
-          # Kaggle kernels get secrets from 'kaggle_secrets' library
-          print('HF_TOKEN will be available in kernel via kaggle_secrets or env var injection')
-          "
-
-          # Write HF_TOKEN into the training script as environment variable
-          # This is the most reliable method — inject directly into the script
+          # Inject HF_TOKEN directly into the script before pushing.
           sed -i "s|HF_TOKEN = os.environ.get(\"HF_TOKEN\", \"\")|HF_TOKEN = \"${HF_TOKEN}\"|" kaggle_kernel/finetune_kaggle.py
 
       - name: Push kernel to Kaggle + run on GPU
@@ -470,8 +487,8 @@ jobs:
       - name: Poll Kaggle kernel until complete
         run: |
           KERNEL_ID="${KAGGLE_USER}/rigour-qlora-finetune"
-          MAX_WAIT=7200  # 2 hours max
-          INTERVAL=60    # Check every minute
+          MAX_WAIT=7200
+          INTERVAL=60
           ELAPSED=0
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
@@ -479,12 +496,12 @@ jobs:
             echo "[$(date +%H:%M:%S)] Status: $STATUS"
 
             if echo "$STATUS" | grep -qi "complete"; then
-              echo "✓ Kaggle kernel completed successfully!"
+              echo "Kaggle kernel completed successfully!"
               exit 0
             fi
 
             if echo "$STATUS" | grep -qi "error\|cancel"; then
-              echo "✗ Kaggle kernel failed!"
+              echo "Kaggle kernel failed!"
               kaggle kernels output "$KERNEL_ID" -p kaggle_output/ || true
               cat kaggle_output/*.log 2>/dev/null || true
               exit 1
@@ -494,7 +511,7 @@ jobs:
             ELAPSED=$((ELAPSED + INTERVAL))
           done
 
-          echo "✗ Timeout waiting for Kaggle kernel"
+          echo "Timeout waiting for Kaggle kernel"
           exit 1
 
       - name: Verify model uploaded to HuggingFace
@@ -510,9 +527,12 @@ jobs:
           for f in files:
               print(f'  {f}')
           assert any('model' in f or 'safetensors' in f for f in files), 'No model files found!'
-          print('✓ Merged model verified on HuggingFace')
+          print('Merged model verified on HuggingFace')
           "
 
+  # ═══════════════════════════════════════════════════════════════
+  # Job 4: Export GGUF + Upload to HuggingFace
+  # ═══════════════════════════════════════════════════════════════
   export-and-upload-gguf:
     name: Export GGUF + Upload to HuggingFace
     needs: finetune-model
@@ -554,7 +574,7 @@ jobs:
               local_dir='rlaif/models/rigour-v1/merged',
               token=os.environ['HF_TOKEN'],
           )
-          print('✓ Model downloaded')
+          print('Model downloaded')
           "
 
       - name: Convert to GGUF + quantize
@@ -590,8 +610,12 @@ jobs:
         with:
           name: gguf-model-${{ github.run_id }}
           path: rlaif/models/rigour-v1/*.gguf
+          if-no-files-found: warn
           retention-days: 30
 
+  # ═══════════════════════════════════════════════════════════════
+  # Job 5: Validate with DriftBench (manual trigger only)
+  # ═══════════════════════════════════════════════════════════════
   run-driftbench-eval:
     name: Validate with DriftBench
     needs: generate-training-data
@@ -644,4 +668,70 @@ jobs:
         with:
           name: driftbench-results-${{ github.run_id }}
           path: results/
+          if-no-files-found: warn
           retention-days: 90
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 6: Publish DriftBench to Kaggle Community Benchmarks
+  # ═══════════════════════════════════════════════════════════════
+  publish-kaggle-benchmark:
+    name: Publish DriftBench to Kaggle Benchmarks
+    needs: generate-training-data
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Kaggle CLI
+        run: pip install kaggle
+
+      - name: Configure Kaggle credentials
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          mkdir -p ~/.kaggle
+          echo "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          chmod 600 ~/.kaggle/kaggle.json
+
+      - name: Export DriftBench dataset
+        run: |
+          python -m kaggle_benchmark.export_dataset
+
+      - name: Upload dataset to Kaggle
+        run: |
+          cd kaggle_benchmark
+          # Create temp upload dir with just data + metadata
+          UPLOAD_DIR=$(mktemp -d)
+          cp driftbench_dataset.jsonl "$UPLOAD_DIR/"
+          cp dataset-metadata.json "$UPLOAD_DIR/"
+
+          cd "$UPLOAD_DIR"
+          SCENARIOS=$(wc -l < driftbench_dataset.jsonl | tr -d ' ')
+
+          if kaggle datasets status rigourlabs/driftbench-scenarios 2>/dev/null; then
+            echo "Dataset exists — creating new version..."
+            kaggle datasets version -p . -m "Update: $SCENARIOS scenarios" --dir-mode zip
+          else
+            echo "Creating new dataset..."
+            kaggle datasets create -p . --dir-mode zip
+          fi
+
+          # Update metadata (subtitle, description)
+          kaggle datasets metadata -p . rigourlabs/driftbench-scenarios 2>/dev/null || true
+
+          rm -rf "$UPLOAD_DIR"
+          echo "Dataset uploaded: https://www.kaggle.com/datasets/rigourlabs/driftbench-scenarios"
+
+      - name: Push benchmark notebook to Kaggle
+        run: |
+          cd kaggle_benchmark
+          kaggle kernels push -p .
+          echo "Notebook pushed: https://www.kaggle.com/code/rigourlabs/driftbench-code-drift-detection-benchmark"

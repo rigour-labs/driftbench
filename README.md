@@ -273,7 +273,7 @@ For weekly scheduled runs where latency doesn't matter, submit all prompts to th
 python -m rlaif.generate --provider deepseek --model-name deepseek-chat --repo "expressjs/express"
 
 # Live mode — Anthropic teacher, all repos in repos_training.json
-python -m rlaif.generate --provider anthropic --model-name claude-sonnet-4-20250514
+python -m rlaif.generate --provider anthropic --model-name claude-sonnet-4-6
 
 # Batch mode — 50% cheaper, Anthropic only, async submit
 python -m rlaif.generate --batch --repo "expressjs/express"

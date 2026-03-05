@@ -33,7 +33,7 @@ PROVIDER_KEY_ENV_MAP = {
 
 # Defaults from env vars
 DEFAULT_PROVIDER = os.environ.get("MODEL_PROVIDER", "anthropic")
-DEFAULT_MODEL_NAME = os.environ.get("MODEL_NAME", "claude-sonnet-4-20250514")
+DEFAULT_MODEL_NAME = os.environ.get("MODEL_NAME", "claude-sonnet-4-6")
 DEFAULT_API_KEY = os.environ.get("API_KEY", "")
 DEFAULT_API_BASE = os.environ.get("API_BASE", "")
 DEFAULT_TEACHER_MODEL = f"{DEFAULT_PROVIDER}/{DEFAULT_MODEL_NAME}"

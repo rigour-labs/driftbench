@@ -1,0 +1,21 @@
+{
+    "id": "rigourlabs/driftbench-code-drift-detection-benchmark",
+    "title": "DriftBench Code Drift Detection Benchmark",
+    "code_file": "driftbench_notebook.py",
+    "language": "python",
+    "kernel_type": "script",
+    "is_private": false,
+    "enable_gpu": false,
+    "enable_internet": true,
+    "competition_sources": [],
+    "dataset_sources": [
+        "rigourlabs/driftbench-scenarios"
+    ],
+    "keywords": [
+        "benchmark",
+        "classification",
+        "nlp",
+        "programming",
+        "python"
+    ]
+}

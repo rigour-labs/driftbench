@@ -1,0 +1,24 @@
+{
+    "title": "DriftBench Code Drift Detection",
+    "id": "rigourlabs/driftbench-scenarios",
+    "subtitle": "54 code patches with ground-truth drift labels for LLM evaluation",
+    "description": "DriftBench is a benchmark for evaluating whether AI models can detect code drift — when a code patch subtly violates the original intent, project conventions, or introduces quality issues while appearing functional.\n\nThe dataset contains 54 scenarios (27 golden + 27 drift) across real-world TypeScript and Python repositories. Each scenario includes:\n\n- **intent**: The original coding task description\n- **patch**: A unified diff (git patch)\n- **has_drift**: Ground truth boolean label\n- **drift_type**: Category of drift (security, logic, stale, architecture, pattern, standard)\n- **category**: Drift category for classification tasks\n\nDrift categories covered:\n- **security_drift**: Disabled protections, exposed secrets, unsafe operations\n- **logic_drift**: Incorrect control flow, wrong variable scope, missing error handling\n- **stale_drift**: Using deprecated/legacy patterns (var instead of const, CommonJS instead of ESM)\n- **architecture_drift**: Circular imports, wrong abstraction layer, coupling violations\n- **pattern_drift**: Inconsistent with project conventions\n- **standard_drift**: Naming violations, incorrect exports\n\nPart of the Rigour project: https://github.com/AashishNandakumar/rigour",
+    "licenses": [
+        {
+            "name": "MIT"
+        }
+    ],
+    "keywords": [
+        "benchmark",
+        "classification",
+        "nlp",
+        "software",
+        "programming"
+    ],
+    "resources": [
+        {
+            "path": "driftbench_dataset.jsonl",
+            "description": "DriftBench evaluation scenarios. Each row is a JSON object with task_id, scenario_id, name, repository, category, intent, patch (unified diff), has_drift (boolean), drift_type, and expected_gate fields."
+        }
+    ]
+}

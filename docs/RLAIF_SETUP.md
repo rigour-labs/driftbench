@@ -59,7 +59,7 @@ Only add the ones you plan to use:
 Go to **Actions → RLAIF Training Data Pipeline → Run workflow**:
 - **repos**: Start with a single repo like `expressjs/express`
 - **model_provider**: `anthropic` (or whichever you set up)
-- **model_name**: `claude-sonnet-4-20250514`
+- **model_name**: `claude-sonnet-4-6`
 - Click **Run workflow**
 
 ### Local test run

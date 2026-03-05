@@ -377,7 +377,18 @@ def main():
     verified, dropped, retry_verified = load_training_data(args.db)
 
     if not verified and not retry_verified:
-        logger.error("No verified findings in database. Need more training data.")
+        logger.warning("No verified findings in database — creating empty output files.")
+        # Always create output files so downstream pipeline steps don't fail.
+        # The artifact upload + HuggingFace upload need these files to exist.
+        sft_pairs = []
+        dpo_pairs = []
+        stats = build_category_stats(verified, dropped, retry_verified)
+        export_for_huggingface(sft_pairs, dpo_pairs, args.output, stats)
+        logger.warning(
+            f"Empty training data exported ({len(dropped)} dropped). "
+            f"Check verifier — teacher model findings aren't passing "
+            f"structural verification."
+        )
         return
 
     # Build pairs — SFT includes both pass@1 and pass@2 verified

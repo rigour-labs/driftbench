@@ -103,6 +103,7 @@ def collect_batch(
 ):
     """Poll + collect results from a submitted batch, store in DB.
 
+    Verifies ALL findings against AST facts before storing.
     When enable_retry=True, runs Pass@2 retry on findings that fail
     structural verification (using live API calls for retries).
     """
@@ -124,35 +125,42 @@ def collect_batch(
         f"Batch {batch_id}: {len(findings)} findings from {ok} responses"
     )
 
-    # Build basic examples (unverified by default in batch mode)
-    examples = _build_examples(findings, batch_id)
-
-    # If retry is enabled, verify + retry rejected findings
-    if enable_retry and findings:
-        retry_examples = _batch_verify_and_retry(
-            findings, batch_id, output_dir,
-        )
-        examples.extend(retry_examples)
+    # Verify ALL findings and build examples with correct verified status.
+    # Previous bug: _build_examples marked ALL as verified=False, and
+    # _batch_verify_and_retry skipped verified ones without updating them.
+    examples = _verify_and_build_examples(
+        findings, batch_id, output_dir, enable_retry,
+    )
 
     save_examples(db_conn, examples)
     remove_completed_batch(output_dir, batch_id)
-    logger.info(f"Stored {len(examples)} batch findings")
+    verified = sum(1 for ex in examples if ex.verified)
+    dropped = sum(1 for ex in examples if not ex.verified)
+    logger.info(
+        f"Stored {len(examples)} batch findings "
+        f"({verified} verified, {dropped} dropped)"
+    )
 
 
-def _batch_verify_and_retry(
+def _verify_and_build_examples(
     findings: List[Dict],
     batch_id: str,
     output_dir: str,
+    enable_retry: bool = True,
     max_retries: int = 50,
-    model: str = "",
 ) -> list:
-    """Verify batch findings and retry rejected ones via live API.
+    """Verify ALL batch findings against AST facts and build examples.
 
-    Batch mode skips verification by default. This function:
-    1. Groups findings by repo, clones repos to get facts
-    2. Runs structural verification on each finding
-    3. Retries rejected findings (Pass@2) via live API
-    4. Returns additional TrainingExample objects for retry results
+    This replaces the old _build_examples + _batch_verify_and_retry split
+    which had a critical bug: _build_examples marked everything as
+    verified=False, and _batch_verify_and_retry skipped verified findings
+    assuming they were already correct.
+
+    Now:
+    1. Groups findings by repo, clones repos, extracts facts
+    2. Verifies EVERY finding — marks verified=True/False correctly
+    3. Optionally retries rejected findings (Pass@2) via live API
+    4. Returns complete list of TrainingExample objects
     """
     from .generate import TrainingExample, clone_repo
     from .facts import extract_repo_facts, facts_to_prompt
@@ -161,53 +169,86 @@ def _batch_verify_and_retry(
 
     # Group findings by repo (extracted from custom_id)
     by_repo: Dict[str, list] = {}
+    orphan_findings: list = []
     for f in findings:
         bid = f.get("_batch_id", "")
         repo = _repo_from_custom_id(bid) if bid else ""
         if repo:
             by_repo.setdefault(repo, []).append(f)
+        else:
+            orphan_findings.append(f)
 
-    retry_examples: list = []
+    examples: list = []
     now = datetime.now(timezone.utc).isoformat()
     retry_count = 0
+    total_verified = 0
+    total_dropped = 0
 
     for repo, repo_findings in by_repo.items():
         try:
             repo_path = clone_repo(repo, ".rlaif_repos")
             facts = extract_repo_facts(repo_path)
             if not facts:
+                # No facts — can't verify, mark all as unverified
+                for f in repo_findings:
+                    examples.append(TrainingExample(
+                        repo=repo, scan_id=f"batch_{batch_id}",
+                        file_path=f.get("file", ""), finding=f,
+                        verified=False,
+                        verification_notes="no_facts_available",
+                        teacher_model=f"batch:{batch_id}",
+                        timestamp=now, facts_hash="",
+                    ))
+                    total_dropped += 1
                 continue
+
             facts_by_path = {f.path: f for f in facts}
             facts_prompt = facts_to_prompt(facts)
 
             for finding in repo_findings:
-                if retry_count >= max_retries:
-                    break
                 verified, notes = verify_finding(finding, facts_by_path)
-                if verified:
-                    continue  # Already good, handled by _build_examples
 
-                # Skip non-retryable rejections
+                if verified:
+                    # Pass@1 verified — store with correct status
+                    examples.append(TrainingExample(
+                        repo=repo, scan_id=f"batch_{batch_id}",
+                        file_path=finding.get("file", ""), finding=finding,
+                        verified=True,
+                        verification_notes=notes,
+                        teacher_model=f"batch:{batch_id}",
+                        timestamp=now, facts_hash="",
+                    ))
+                    total_verified += 1
+                    continue
+
+                # Not verified — store as dropped first
+                examples.append(TrainingExample(
+                    repo=repo, scan_id=f"batch_{batch_id}",
+                    file_path=finding.get("file", ""), finding=finding,
+                    verified=False,
+                    verification_notes=notes,
+                    teacher_model=f"batch:{batch_id}",
+                    timestamp=now, facts_hash="",
+                ))
+                total_dropped += 1
+
+                # Pass@2 retry (if enabled and retryable)
+                if not enable_retry or retry_count >= max_retries:
+                    continue
                 if "confidence floor" in notes.lower():
                     continue
 
-                # Pass@2: retry via live API
-                retry_kwargs = {
-                    "finding": finding,
-                    "rejection_reason": notes,
-                    "facts_prompt": facts_prompt,
-                }
-                if model:
-                    retry_kwargs["model"] = model
-                corrected = call_teacher_retry(**retry_kwargs)
+                corrected = call_teacher_retry(
+                    finding=finding,
+                    rejection_reason=notes,
+                    facts_prompt=facts_prompt,
+                )
                 retry_count += 1
 
                 if not corrected:
-                    retry_examples.append(TrainingExample(
-                        repo=repo,
-                        scan_id=f"batch_{batch_id}",
-                        file_path=finding.get("file", ""),
-                        finding=finding,
+                    examples.append(TrainingExample(
+                        repo=repo, scan_id=f"batch_{batch_id}",
+                        file_path=finding.get("file", ""), finding=finding,
                         verified=False,
                         verification_notes="pass2:teacher_gave_up",
                         teacher_model=f"batch:{batch_id}",
@@ -217,11 +258,9 @@ def _batch_verify_and_retry(
 
                 for cf in corrected[:1]:
                     v2, n2 = verify_finding(cf, facts_by_path)
-                    retry_examples.append(TrainingExample(
-                        repo=repo,
-                        scan_id=f"batch_{batch_id}",
-                        file_path=cf.get("file", ""),
-                        finding=cf,
+                    examples.append(TrainingExample(
+                        repo=repo, scan_id=f"batch_{batch_id}",
+                        file_path=cf.get("file", ""), finding=cf,
                         verified=v2,
                         verification_notes=(
                             f"pass2:verified_retry|{n2}" if v2
@@ -230,36 +269,41 @@ def _batch_verify_and_retry(
                         teacher_model=f"batch:{batch_id}",
                         timestamp=now, facts_hash="",
                     ))
+                    if v2:
+                        total_verified += 1
+                    else:
+                        total_dropped += 1
 
                 time.sleep(0.5)  # Rate limit
 
         except Exception as e:
-            logger.warning(f"Batch retry failed for {repo}: {e}")
+            logger.warning(f"Verification failed for {repo}: {e}")
+            # Store unverified on error
+            for f in repo_findings:
+                examples.append(TrainingExample(
+                    repo=repo, scan_id=f"batch_{batch_id}",
+                    file_path=f.get("file", ""), finding=f,
+                    verified=False,
+                    verification_notes=f"verification_error:{e}",
+                    teacher_model=f"batch:{batch_id}",
+                    timestamp=now, facts_hash="",
+                ))
+                total_dropped += 1
 
-    v = sum(1 for ex in retry_examples if ex.verified)
-    d = sum(1 for ex in retry_examples if not ex.verified)
-    logger.info(f"Batch Pass@2: {v} recovered, {d} permanently rejected")
-    return retry_examples
-
-
-def _build_examples(findings: List[Dict], batch_id: str) -> list:
-    """Convert batch findings to TrainingExample objects."""
-    from .generate import TrainingExample
-
-    examples = []
-    now = datetime.now(timezone.utc).isoformat()
-    for f in findings:
-        bid = f.get("_batch_id", "")
-        repo = _repo_from_custom_id(bid) if bid else ""
+    # Handle orphan findings (no repo identified)
+    for f in orphan_findings:
         examples.append(TrainingExample(
-            repo=repo,
-            scan_id=f"batch_{batch_id}",
-            file_path=f.get("file", ""),
-            finding=f,
+            repo="", scan_id=f"batch_{batch_id}",
+            file_path=f.get("file", ""), finding=f,
             verified=False,
-            verification_notes="batch_mode:unverified",
+            verification_notes="orphan:no_repo_identified",
             teacher_model=f"batch:{batch_id}",
-            timestamp=now,
-            facts_hash="",
+            timestamp=now, facts_hash="",
         ))
+        total_dropped += 1
+
+    logger.info(
+        f"Batch verification: {total_verified} verified, "
+        f"{total_dropped} dropped ({retry_count} retries used)"
+    )
     return examples

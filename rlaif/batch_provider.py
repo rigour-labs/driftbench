@@ -60,7 +60,7 @@ def _get_client():
 
 def create_batch(
     prompts: List[Dict[str, str]],
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "claude-sonnet-4-6",
     system_prompt: str = "",
     max_tokens: int = 4096,
     temperature: float = 0.1,

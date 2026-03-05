@@ -61,7 +61,7 @@ Works with any OpenAI SDK-compatible provider via `--provider` + `--model-name`:
 
 | Provider | Example |
 |---|---|
-| Anthropic | `--provider anthropic --model-name claude-sonnet-4-20250514` |
+| Anthropic | `--provider anthropic --model-name claude-sonnet-4-6` |
 | OpenAI | `--provider openai --model-name gpt-4o` |
 | DeepSeek | `--provider deepseek --model-name deepseek-chat` |
 | Groq | `--provider groq --model-name llama-3.1-70b-versatile` |
