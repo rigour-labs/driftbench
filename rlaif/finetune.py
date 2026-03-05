@@ -110,14 +110,25 @@ def _setup_model_and_tokenizer(base_model: str, use_4bit: bool):
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    load_kwargs = {"device_map": "auto", "trust_remote_code": True}
+    import torch
+    has_gpu = torch.cuda.is_available()
+
+    load_kwargs = {"trust_remote_code": True}
+    if has_gpu:
+        load_kwargs["device_map"] = "auto"
+    else:
+        load_kwargs["device_map"] = "cpu"
+        if use_4bit:
+            logger.warning("4-bit quantization requires GPU — disabling on CPU")
+            use_4bit = False
+
     if use_4bit:
         from transformers import BitsAndBytesConfig
-        import torch
+        compute_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
         load_kwargs["quantization_config"] = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_compute_dtype=compute_dtype,
             bnb_4bit_use_double_quant=True,
         )
 
@@ -142,11 +153,36 @@ def _setup_model_and_tokenizer(base_model: str, use_4bit: bool):
     return model, tokenizer
 
 
+def _detect_dtype():
+    """Auto-detect best training dtype for available hardware."""
+    import torch
+    if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+        logger.info("Using bf16 (CUDA GPU detected)")
+        return {"bf16": True}
+    elif torch.cuda.is_available():
+        logger.info("Using fp16 (CUDA GPU without bf16 support)")
+        return {"fp16": True}
+    else:
+        logger.info("Using fp32 + CPU (no GPU detected)")
+        return {"fp16": False, "use_cpu": True}
+
+
+def _compute_warmup_steps(dataset_size: int, batch_size: int, grad_accum: int,
+                          epochs: int, ratio: float = 0.1) -> int:
+    """Convert warmup_ratio to warmup_steps (trl >= v5.2 deprecation)."""
+    steps_per_epoch = max(1, dataset_size // (batch_size * grad_accum))
+    total_steps = steps_per_epoch * epochs
+    return max(1, int(total_steps * ratio))
+
+
 def run_sft(model, tokenizer, sft_dataset, output_dir: str, epochs: int):
     """Run supervised fine-tuning phase."""
     from trl import SFTTrainer, SFTConfig
 
     logger.info(f"Starting SFT training ({len(sft_dataset)} examples)")
+
+    dtype_kwargs = _detect_dtype()
+    warmup = _compute_warmup_steps(len(sft_dataset), 4, 4, epochs)
 
     training_args = SFTConfig(
         output_dir=os.path.join(output_dir, "sft"),
@@ -154,10 +190,10 @@ def run_sft(model, tokenizer, sft_dataset, output_dir: str, epochs: int):
         per_device_train_batch_size=4,
         gradient_accumulation_steps=4,
         learning_rate=2e-4,
-        warmup_ratio=0.1,
+        warmup_steps=warmup,
         logging_steps=10,
         save_strategy="epoch",
-        bf16=True,
+        **dtype_kwargs,
         max_length=1024,  # trl >= 0.15 renamed max_seq_length → max_length
     )
 
@@ -178,16 +214,19 @@ def run_dpo(model, tokenizer, dpo_dataset, output_dir: str, epochs: int):
 
     logger.info(f"Starting DPO training ({len(dpo_dataset)} pairs)")
 
+    dtype_kwargs = _detect_dtype()
+    warmup = _compute_warmup_steps(len(dpo_dataset), 2, 8, epochs)
+
     training_args = DPOConfig(
         output_dir=os.path.join(output_dir, "dpo"),
         num_train_epochs=epochs,
         per_device_train_batch_size=2,
         gradient_accumulation_steps=8,
         learning_rate=5e-5,
-        warmup_ratio=0.1,
+        warmup_steps=warmup,
         logging_steps=10,
         save_strategy="epoch",
-        bf16=True,
+        **dtype_kwargs,
         max_length=1024,
         max_prompt_length=512,
         beta=0.1,

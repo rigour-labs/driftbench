@@ -1,35 +1,62 @@
 {
   "_comment": "Public repos for RLAIF training data. Separate from DriftBench eval repos to prevent data leakage.",
+  "_eval_repos_DO_NOT_ADD": ["lodash/lodash", "pallets/flask", "django/django", "tiangolo/fastapi", "shadcn-ui/ui", "TanStack/query"],
+  "_selection_criteria": "All repos: MIT/Apache-2.0 licensed, actively maintained, strict typing, meaningful architecture, security-relevant code, good signal-to-noise ratio.",
+  "_categories": {
+    "ts_frameworks": "express, koa, nest, fastify, hono (5)",
+    "ts_libraries": "trpc, biome, prisma, drizzle, date-fns, mermaid, chart.js, d3 (8)",
+    "ts_testing": "jest, vitest (2)",
+    "py_frameworks": "starlette, litestar, uvicorn (3)",
+    "py_libraries": "requests, httpx, aiohttp, sqlalchemy, pydantic, celery, redis-py (7)",
+    "py_testing": "pytest (1)",
+    "go_frameworks": "gin, fiber, echo, chi (4)",
+    "go_infra": "traefik (1)",
+    "go_testing": "testify (1)",
+    "rust_async": "tokio, axum (2)"
+  },
   "repos": [
     "expressjs/express",
     "koajs/koa",
     "nestjs/nest",
     "fastify/fastify",
-    "gin-gonic/gin",
-    "gofiber/fiber",
-    "gorilla/mux",
-    "labstack/echo",
-    "spring-projects/spring-boot",
-    "rails/rails",
-    "encode/starlette",
-    "encode/httpx",
-    "psf/requests",
-    "aio-libs/aiohttp",
-    "sqlalchemy/sqlalchemy",
+    "honojs/hono",
+
+    "trpc/trpc",
+    "biomejs/biome",
     "prisma/prisma",
     "drizzle-team/drizzle-orm",
-    "jestjs/jest",
-    "vitest-dev/vitest",
-    "pytest-dev/pytest",
-    "stretchr/testify",
+    "date-fns/date-fns",
+    "mermaid-js/mermaid",
     "chartjs/Chart.js",
     "d3/d3",
-    "mermaid-js/mermaid",
-    "date-fns/date-fns",
-    "moment/moment",
-    "redis/redis-py",
-    "celery/celery",
+
+    "jestjs/jest",
+    "vitest-dev/vitest",
+
+    "encode/starlette",
+    "litestar-org/litestar",
     "encode/uvicorn",
-    "tiangolo/typer"
+
+    "psf/requests",
+    "encode/httpx",
+    "aio-libs/aiohttp",
+    "sqlalchemy/sqlalchemy",
+    "pydantic/pydantic",
+    "celery/celery",
+    "redis/redis-py",
+
+    "pytest-dev/pytest",
+
+    "gin-gonic/gin",
+    "gofiber/fiber",
+    "labstack/echo",
+    "go-chi/chi",
+
+    "traefik/traefik",
+
+    "stretchr/testify",
+
+    "tokio-rs/tokio",
+    "tokio-rs/axum"
   ]
 }

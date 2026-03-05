@@ -130,7 +130,7 @@ driftbench/
 │   ├── format_dpo.py            # DPO/SFT formatter with retry weighting
 │   ├── finetune.py              # QLoRA fine-tune (SFT + DPO)
 │   ├── export_gguf.py           # GGUF export + HuggingFace upload
-│   └── repos_training.json      # 30 curated training repos (no eval overlap)
+│   └── repos_training.json      # 34 curated training repos (no eval overlap)
 ├── reporting/
 │   └── aggregator.py            # Results aggregation and leaderboard generation
 ├── scripts/
@@ -381,7 +381,7 @@ The key must be a valid LiteLLM model string (e.g., `anthropic/claude-sonnet-4`,
 | `rigour check` | Validate changes against configured gates |
 | `rigour check --json` | Machine-readable JSON output (used by DriftBench) |
 | `rigour check --ci` | CI mode with appropriate exit codes |
-| `rigour check --deep` | Deep LLM-powered analysis (uses local Qwen2.5-Coder-1.5B model) |
+| `rigour check --deep` | Deep LLM-powered analysis (lite: Qwen3.5-0.8B, or `--pro` for full: Qwen2.5-Coder-1.5B) |
 | `rigour init` | Set up Rigour in a project |
 | `rigour explain` | Detailed explanation of last check results |
 | `rigour run` | Supervisor loop for iterative refinement |

@@ -390,7 +390,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           PROVIDER="${{ inputs.model_provider || 'anthropic' }}"
-          MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-20250514' }}"
+          MODEL_NAME="${{ inputs.model_name || 'claude-sonnet-4-6' }}"
           python scripts/run_full_benchmark.py \
             --model "${PROVIDER}/${MODEL_NAME}" \
             -p 4 \
