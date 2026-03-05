@@ -302,12 +302,20 @@ jobs:
       - name: Configure Kaggle credentials
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
         run: |
           mkdir -p ~/.kaggle
-          echo "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          # Support both full JSON and bare key formats
+          if echo "$KAGGLE_API_TOKEN" | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'username' in d" 2>/dev/null; then
+            echo "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          else
+            USER="${KAGGLE_USERNAME:-rigourlabs}"
+            printf '{"username":"%s","key":"%s"}\n' "$USER" "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          fi
           chmod 600 ~/.kaggle/kaggle.json
-          KAGGLE_USER=$(python -c "import json; print(json.load(open('$HOME/.kaggle/kaggle.json'))['username'])")
+          KAGGLE_USER=$(python3 -c "import json; print(json.load(open('$HOME/.kaggle/kaggle.json'))['username'])")
           echo "KAGGLE_USER=$KAGGLE_USER" >> $GITHUB_ENV
+          echo "Kaggle auth: $KAGGLE_USER"
 
       - name: Create Kaggle training notebook
         run: |
@@ -696,10 +704,21 @@ jobs:
       - name: Configure Kaggle credentials
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
         run: |
           mkdir -p ~/.kaggle
-          echo "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          # Support two formats for KAGGLE_API_TOKEN:
+          # 1. Full JSON: {"username": "...", "key": "..."}
+          # 2. Just the API key string (KGAT_...)
+          if echo "$KAGGLE_API_TOKEN" | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'username' in d" 2>/dev/null; then
+            echo "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          else
+            # Token is just the key — build JSON with username
+            USER="${KAGGLE_USERNAME:-rigourlabs}"
+            printf '{"username":"%s","key":"%s"}\n' "$USER" "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          fi
           chmod 600 ~/.kaggle/kaggle.json
+          python3 -c "import json; d=json.load(open('$HOME/.kaggle/kaggle.json')); print(f'Kaggle auth: {d[\"username\"]}')"
 
       - name: Export DriftBench dataset
         run: |
