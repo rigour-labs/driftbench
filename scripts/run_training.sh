@@ -55,6 +55,25 @@ if [ -z "${HF_TOKEN:-}" ]; then
   exit 1
 fi
 
+echo "Installing dependencies..."
+# Check if CUDA torch is already present — don't overwrite it
+HAS_CUDA_TORCH=$(python3 -c "
+try:
+    import torch
+    print('yes' if torch.cuda.is_available() else 'no')
+except ImportError:
+    print('no')
+" 2>/dev/null || echo "no")
+
+if [ "$HAS_CUDA_TORCH" = "yes" ]; then
+  echo "  CUDA torch already installed, skipping torch"
+  pip install -q transformers peft trl datasets bitsandbytes huggingface_hub accelerate 2>&1 | tail -1
+else
+  echo "  Installing all packages including torch"
+  pip install -q torch transformers peft trl datasets bitsandbytes huggingface_hub accelerate 2>&1 | tail -1
+fi
+echo "  Dependencies ready"
+
 echo "Checking GPU..."
 python3 -c "
 import torch
@@ -66,10 +85,7 @@ if torch.cuda.is_available():
     print(f'  VRAM={props.total_memory / 1e9:.1f} GB')
 else:
     print('  WARNING: No GPU — training will be very slow')
-" || {
-  echo "ERROR: torch not installed. Run: pip install torch"
-  exit 1
-}
+"
 
 # ─── Resolve version ──────────────────────────────────────────
 if [ -z "$VERSION" ]; then
