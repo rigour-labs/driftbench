@@ -23,7 +23,7 @@ on:
       teachers:
         description: 'Comma-separated teachers as provider:model (e.g., "anthropic:claude-sonnet-4-6"). For single strategy, pass just one.'
         required: false
-        default: 'anthropic:claude-sonnet-4-6,openai:gpt-4o,together_ai:meta-llama/Llama-3.3-70B-Instruct-Turbo'
+        default: 'anthropic:claude-sonnet-4-6,openai:gpt-5.4,together_ai:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8'
       training_tiers:
         description: 'Which model tiers to train: "both", "deep", or "lite"'
         required: false
@@ -42,6 +42,10 @@ on:
           - finetune
           - export
         default: 'generate'
+      model_version:
+        description: 'Override model version (default: current run number). Use when start_from=export to point to existing model, e.g. "5" for v5'
+        required: false
+        default: ''
       use_batch_api:
         description: 'Use Batch API where available (50% cheaper, async)'
         required: false
@@ -58,7 +62,6 @@ permissions:
 
 env:
   PYTHON_VERSION: '3.12'
-  MODEL_VERSION: ${{ github.run_number }}
 
 jobs:
   # ═══════════════════════════════════════════════════════════════
@@ -124,7 +127,7 @@ jobs:
             # Tournament mode (Option C) — pick best teacher per category
             # Downloads teacher_scores.json from HF and routes accordingly
             echo "Strategy: TOURNAMENT — routing best teacher per category"
-            TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6,openai:gpt-4o,together_ai:meta-llama/Llama-3.3-70B-Instruct-Turbo' }}"
+            TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6,openai:gpt-5.4,together_ai:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8' }}"
             IFS=',' read -ra TEACHERS <<< "$TEACHERS_INPUT"
 
             # Download historical teacher scores for routing
@@ -176,7 +179,7 @@ jobs:
           else
             # Multi mode (Option A, default) — all teachers run on everything
             echo "Strategy: MULTI — all teachers generate data (union)"
-            TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6,openai:gpt-4o,together_ai:meta-llama/Llama-3.3-70B-Instruct-Turbo' }}"
+            TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6,openai:gpt-5.4,together_ai:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8' }}"
             IFS=',' read -ra TEACHERS <<< "$TEACHERS_INPUT"
           fi
 
@@ -280,7 +283,7 @@ jobs:
           python scripts/update_metrics_history.py \
             --stats rlaif/data/category_stats.json \
             --db rlaif/data/training_data.db \
-            --run-number "${{ env.MODEL_VERSION }}" \
+            --run-number "${{ github.run_number }}" \
             --hf-repo rigour-labs/rigour-rlaif-data || {
             echo "WARNING: Metrics history update failed (non-fatal)"
           }
@@ -405,6 +408,8 @@ jobs:
     # Fallback: runs-on ubuntu-latest (CPU-only, slower but works)
     runs-on: ${{ vars.GPU_RUNNER_LABEL || 'ubuntu-latest' }}
     timeout-minutes: 240
+    outputs:
+      model_version: ${{ steps.resolve-version.outputs.version }}
 
     steps:
       - name: Check tier filter
@@ -418,6 +423,32 @@ jobs:
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Skipping $TIER tier (training_tiers=$TIERS)"
           fi
+
+      - name: Resolve model version
+        id: resolve-version
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -n "${{ inputs.model_version }}" ]; then
+            VERSION="${{ inputs.model_version }}"
+            echo "Using override version: v${VERSION}"
+          else
+            VERSION=$(python3 -c "
+          import os, json
+          try:
+              from huggingface_hub import hf_hub_download
+              path = hf_hub_download('rigour-labs/rigour-rlaif-data', 'latest_version.json',
+                                     repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
+              with open(path) as f:
+                  data = json.load(f)
+              current = data.get('version', 0)
+              print(current + 1)
+          except Exception:
+              print(1)
+          " 2>/dev/null || echo "1")
+            echo "Next version: v${VERSION}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Checkout repository
         if: steps.tier-check.outputs.skip != 'true'
@@ -457,7 +488,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
-          VERSION: ${{ env.MODEL_VERSION }}
+          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
         run: |
           python -c "
           import os, sys, torch
@@ -640,7 +671,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
-          VERSION: ${{ env.MODEL_VERSION }}
+          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
         run: |
           python -c "
           from huggingface_hub import HfApi
@@ -655,6 +686,32 @@ jobs:
               print(f'  {f}')
           assert any('model' in f or 'safetensors' in f for f in files), 'No model files found!'
           print(f'Model verified: {repo_id}')
+          "
+
+      - name: Update latest version on HuggingFace
+        if: steps.tier-check.outputs.skip != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
+        run: |
+          python -c "
+          import os, json, tempfile
+          from huggingface_hub import HfApi
+          version = int(os.environ.get('VERSION', '1'))
+          api = HfApi(token=os.environ['HF_TOKEN'])
+          repo_id = 'rigour-labs/rigour-rlaif-data'
+          data = {'version': version, 'updated_by': 'training-pipeline'}
+          tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
+          json.dump(data, tmp, indent=2)
+          tmp.close()
+          api.upload_file(
+              path_or_fileobj=tmp.name,
+              path_in_repo='latest_version.json',
+              repo_id=repo_id,
+              repo_type='dataset',
+          )
+          print(f'Updated latest_version.json → v{version}')
+          os.unlink(tmp.name)
           "
 
   # ═══════════════════════════════════════════════════════════════
@@ -687,6 +744,32 @@ jobs:
             echo "Skipping $TIER tier (training_tiers=$TIERS)"
           fi
 
+      - name: Resolve model version
+        id: resolve-version
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -n "${{ inputs.model_version }}" ]; then
+            VERSION="${{ inputs.model_version }}"
+          elif [ -n "${{ needs.finetune-model.outputs.model_version }}" ]; then
+            VERSION="${{ needs.finetune-model.outputs.model_version }}"
+          else
+            VERSION=$(pip install -q huggingface_hub > /dev/null 2>&1 && python3 -c "
+          import os, json
+          try:
+              from huggingface_hub import hf_hub_download
+              path = hf_hub_download('rigour-labs/rigour-rlaif-data', 'latest_version.json',
+                                     repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
+              with open(path) as f:
+                  data = json.load(f)
+              print(data.get('version', 1))
+          except Exception:
+              print(1)
+          " 2>/dev/null || echo "1")
+          fi
+          echo "Resolved model version: v${VERSION}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Checkout repository
         if: steps.tier-check.outputs.skip != 'true'
         uses: actions/checkout@v4
@@ -715,7 +798,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
-          VERSION: ${{ env.MODEL_VERSION }}
+          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
         run: |
           python -c "
           import os
@@ -733,7 +816,7 @@ jobs:
         if: steps.tier-check.outputs.skip != 'true'
         env:
           TIER: ${{ matrix.tier }}
-          VERSION: ${{ env.MODEL_VERSION }}
+          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
         run: |
           python -c "
           import os, json, torch
@@ -779,7 +862,7 @@ jobs:
         if: steps.tier-check.outputs.skip != 'true'
         env:
           TIER: ${{ matrix.tier }}
-          VERSION: ${{ env.MODEL_VERSION }}
+          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
         run: |
           TIER_FLAG=""
           if [ "$TIER" = "lite" ]; then
@@ -799,7 +882,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
-          VERSION: ${{ env.MODEL_VERSION }}
+          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
         run: |
           python -c "
           import os, glob
@@ -825,7 +908,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gguf-${{ matrix.tier }}-${{ github.run_id }}
-          path: rlaif/models/rigour-${{ matrix.tier }}-v${{ env.MODEL_VERSION }}/*.gguf
+          path: rlaif/models/rigour-${{ matrix.tier }}-v${{ steps.resolve-version.outputs.version }}/*.gguf
           if-no-files-found: warn
           retention-days: 30
 
@@ -838,7 +921,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
-      github.ref == 'refs/heads/main'
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      (needs.export-gguf.result == 'success' || needs.export-gguf.result == 'skipped')
     strategy:
       matrix:
         tier: [deep, lite]
@@ -856,6 +941,32 @@ jobs:
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Skipping $TIER tier (training_tiers=$TIERS)"
           fi
+
+      - name: Resolve model version
+        id: resolve-version
+        if: steps.tier-check.outputs.skip != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install -q huggingface_hub > /dev/null 2>&1
+          if [ -n "${{ inputs.model_version }}" ]; then
+            VERSION="${{ inputs.model_version }}"
+          else
+            VERSION=$(python3 -c "
+          import os, json
+          try:
+              from huggingface_hub import hf_hub_download
+              path = hf_hub_download('rigour-labs/rigour-rlaif-data', 'latest_version.json',
+                                     repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
+              with open(path) as f:
+                  data = json.load(f)
+              print(data.get('version', 1))
+          except Exception:
+              print(1)
+          " 2>/dev/null || echo "1")
+          fi
+          echo "Resolved model version: v${VERSION}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Checkout repository
         if: steps.tier-check.outputs.skip != 'true'
@@ -876,7 +987,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TIER: ${{ matrix.tier }}
-          VERSION: ${{ env.MODEL_VERSION }}
+          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
         run: |
           python scripts/eval_model.py \
             --tier "$TIER" \

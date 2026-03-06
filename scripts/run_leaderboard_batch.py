@@ -295,15 +295,41 @@ def call_openai_batch(
         time.sleep(30)
 
     # Collect results
+    logger.info(
+        f"OpenAI batch {batch.id} finished: status={batch.status} "
+        f"output_file_id={batch.output_file_id} error_file_id={batch.error_file_id} "
+        f"counts={batch.request_counts}"
+    )
+
+    # Handle batch errors — if all requests failed, output_file_id is None
+    if batch.error_file_id:
+        try:
+            error_content = client.files.content(batch.error_file_id)
+            logger.error(f"OpenAI batch errors:\n{error_content.text[:2000]}")
+        except Exception as e:
+            logger.error(f"Could not retrieve error file: {e}")
+
+    if not batch.output_file_id:
+        raise RuntimeError(
+            f"OpenAI batch {batch.id} completed but output_file_id is None. "
+            f"All {batch.request_counts.total} requests may have failed. "
+            f"Check error_file_id={batch.error_file_id} for details."
+        )
+
     output = client.files.content(batch.output_file_id)
     results_map = {}
     for line in output.text.strip().split("\n"):
         entry = json.loads(line)
         cid = entry["custom_id"]
-        text = entry["response"]["body"]["choices"][0]["message"]["content"]
+        resp = entry.get("response", {})
+        if resp.get("status_code") != 200:
+            error_body = resp.get("body", {}).get("error", {})
+            logger.warning(f"Batch entry {cid} failed: {error_body.get('message', 'unknown error')}")
+            continue
+        text = resp["body"]["choices"][0]["message"]["content"]
         results_map[cid] = text
 
-    logger.info(f"OpenAI batch complete: {len(results_map)} results")
+    logger.info(f"OpenAI batch complete: {len(results_map)}/{len(requests)} results")
     return results_map
 
 
