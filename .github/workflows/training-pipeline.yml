@@ -463,8 +463,10 @@ jobs:
       - name: Install training dependencies
         if: steps.tier-check.outputs.skip != 'true'
         run: |
-          pip install torch transformers peft trl datasets \
-                      bitsandbytes huggingface_hub accelerate
+          # Preserve system CUDA torch if available (Lightning.ai pre-installs it)
+          python -c "import torch; print(f'torch={torch.__version__} CUDA={torch.cuda.is_available()}')" 2>/dev/null \
+            && pip install transformers peft trl datasets bitsandbytes huggingface_hub accelerate \
+            || pip install torch transformers peft trl datasets bitsandbytes huggingface_hub accelerate
 
       - name: Download training data from HuggingFace
         if: steps.tier-check.outputs.skip != 'true'
@@ -569,7 +571,12 @@ jobs:
 
       - name: Install dependencies
         if: steps.tier-check.outputs.skip != 'true'
-        run: pip install huggingface_hub transformers torch bitsandbytes accelerate peft
+        run: |
+          # Don't reinstall torch — Lightning.ai has CUDA torch pre-installed.
+          # pip install torch would overwrite it with CPU-only version.
+          python -c "import torch; print(f'torch={torch.__version__} CUDA={torch.cuda.is_available()}')" 2>/dev/null \
+            && pip install huggingface_hub transformers bitsandbytes accelerate peft \
+            || pip install huggingface_hub transformers torch bitsandbytes accelerate peft
 
       - name: Clone llama.cpp and build
         if: steps.tier-check.outputs.skip != 'true'
