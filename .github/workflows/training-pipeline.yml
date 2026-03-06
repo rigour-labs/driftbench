@@ -663,7 +663,7 @@ jobs:
   export-gguf:
     name: Export GGUF (${{ matrix.tier }}) + Upload
     needs: finetune-model
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.GPU_RUNNER_LABEL || 'ubuntu-latest' }}
     timeout-minutes: 60
     if: >-
       always() &&
