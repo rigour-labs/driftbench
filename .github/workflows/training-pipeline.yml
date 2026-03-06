@@ -591,12 +591,31 @@ jobs:
               trainer.train()
               print('DPO complete')
 
-          # Merge LoRA + Upload (versioned)
-          print('Merging LoRA adapter...')
-          merged = model.merge_and_unload()
+          # Save LoRA adapter, then reload base in fp16 and merge cleanly
+          # (QLoRA weights can't be converted to GGUF directly)
+          print('Saving LoRA adapter...')
+          adapter_path = os.path.join(OUTPUT_DIR, 'adapter')
+          model.save_pretrained(adapter_path)
+          tokenizer.save_pretrained(adapter_path)
+
+          # Free GPU memory
+          del model
+          if torch.cuda.is_available():
+              torch.cuda.empty_cache()
+
+          print(f'Reloading {BASE_MODEL} in fp16 on CPU for clean merge...')
+          from peft import PeftModel
+          base_model = AutoModelForCausalLM.from_pretrained(
+              BASE_MODEL, torch_dtype=torch.float16, device_map='cpu',
+              trust_remote_code=True,
+          )
+          merged = PeftModel.from_pretrained(base_model, adapter_path)
+          merged = merged.merge_and_unload()
+
           merged_path = os.path.join(OUTPUT_DIR, 'merged')
           merged.save_pretrained(merged_path)
           tokenizer.save_pretrained(merged_path)
+          print('Merged model saved in fp16')
 
           REPO_ID = f'rigour-labs/rigour-{TIER}-v{VERSION}-merged'
           if HF_TOKEN:
