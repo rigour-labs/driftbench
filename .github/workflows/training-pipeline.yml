@@ -787,9 +787,10 @@ jobs:
       - name: Clone llama.cpp and build
         if: steps.tier-check.outputs.skip != 'true'
         run: |
+          rm -rf llama.cpp
           git clone --depth 1 https://github.com/ggerganov/llama.cpp
           cd llama.cpp
-          pip install -r requirements.txt || true
+          pip install -r requirements.txt || pip install -e . || true
           cmake -B build || { echo "ERROR: cmake configure failed"; exit 1; }
           cmake --build build --config Release -j || { echo "ERROR: cmake build failed"; exit 1; }
 
