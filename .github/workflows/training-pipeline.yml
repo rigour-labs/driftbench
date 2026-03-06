@@ -574,12 +574,18 @@ jobs:
       - name: Clone llama.cpp and build
         if: steps.tier-check.outputs.skip != 'true'
         run: |
-          rm -rf llama.cpp
-          git clone --depth 1 https://github.com/ggerganov/llama.cpp
+          # Clean any broken previous clone (Lightning.ai has persistent workspace)
+          if [ -d llama.cpp ]; then
+            chmod -R u+w llama.cpp 2>/dev/null || true
+            rm -rf llama.cpp
+          fi
+          # Clone into temp dir first, then move (avoids partial clone issues)
+          git clone --depth 1 https://github.com/ggerganov/llama.cpp llama_cpp_fresh
+          mv llama_cpp_fresh llama.cpp
           cd llama.cpp
-          pip install -r requirements.txt || pip install -e . || true
+          pip install -r requirements.txt 2>/dev/null || pip install gguf || true
           cmake -B build || { echo "ERROR: cmake configure failed"; exit 1; }
-          cmake --build build --config Release -j || { echo "ERROR: cmake build failed"; exit 1; }
+          cmake --build build --config Release -j$(nproc) || { echo "ERROR: cmake build failed"; exit 1; }
 
       - name: Download merged model from HuggingFace
         if: steps.tier-check.outputs.skip != 'true'
