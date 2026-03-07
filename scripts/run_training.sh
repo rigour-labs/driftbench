@@ -67,6 +67,9 @@ except ImportError:
 
 if [ "$HAS_CUDA_TORCH" = "yes" ]; then
   echo "  CUDA torch already installed, skipping torch"
+  # Uninstall torchvision if present — it causes version mismatch crashes
+  # (torchvision::nms operator error). We don't need it for fine-tuning.
+  pip uninstall -y torchvision torchaudio 2>/dev/null || true
   pip install -q transformers peft trl datasets bitsandbytes huggingface_hub accelerate 2>&1 | tail -1
 else
   echo "  Installing all packages including torch"
