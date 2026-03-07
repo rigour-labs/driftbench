@@ -108,8 +108,9 @@ def train_sft(model, tokenizer, sft_ds, cfg, output_dir: str):
 
     from trl import SFTTrainer, SFTConfig
 
-    use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
-    dtype_args = {"bf16": True} if use_bf16 else ({"fp16": True} if torch.cuda.is_available() else {})
+    # Some Lightning.ai GPUs report bf16 support but fail during training.
+    # Use fp16 universally — it works on all CUDA GPUs and QLoRA handles the precision.
+    dtype_args = {"fp16": True} if torch.cuda.is_available() else {}
     steps_per_epoch = max(1, len(sft_ds) // (cfg["sft_batch"] * cfg["sft_grad_accum"]))
 
     sft_args = SFTConfig(
@@ -138,8 +139,9 @@ def train_dpo(model, tokenizer, dpo_ds, cfg, output_dir: str):
     from trl import DPOTrainer, DPOConfig
 
     tokenizer.padding_side = "left"  # Required by DPOTrainer
-    use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
-    dtype_args = {"bf16": True} if use_bf16 else ({"fp16": True} if torch.cuda.is_available() else {})
+    # Some Lightning.ai GPUs report bf16 support but fail during training.
+    # Use fp16 universally — it works on all CUDA GPUs and QLoRA handles the precision.
+    dtype_args = {"fp16": True} if torch.cuda.is_available() else {}
     steps_per_epoch = max(1, len(dpo_ds) // (cfg["dpo_batch"] * cfg["dpo_grad_accum"]))
 
     dpo_args = DPOConfig(
