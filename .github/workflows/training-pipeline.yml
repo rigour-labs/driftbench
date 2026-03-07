@@ -1,4 +1,4 @@
-name: Training Pipeline (Batch API + Lightning.ai GPU)
+name: Generate Training Data (RLAIF)
 
 on:
   # Weekly schedule: Sunday 11 PM IST = Sunday 5:30 PM UTC
@@ -12,7 +12,7 @@ on:
         required: false
         default: 'all'
       teacher_strategy:
-        description: 'Teacher selection: "multi" = all 3 teachers (Option A), "tournament" = best teacher per category (Option C), "single" = one teacher only'
+        description: 'Teacher selection: "multi" = all 3 teachers, "tournament" = best per category, "single" = one teacher'
         required: false
         type: choice
         options:
@@ -21,31 +21,9 @@ on:
           - single
         default: 'multi'
       teachers:
-        description: 'Comma-separated teachers as provider:model (e.g., "anthropic:claude-sonnet-4-6"). For single strategy, pass just one.'
+        description: 'Comma-separated teachers as provider:model'
         required: false
         default: 'anthropic:claude-sonnet-4-6,openai:gpt-5.4,together_ai:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8'
-      training_tiers:
-        description: 'Which model tiers to train: "both", "deep", or "lite"'
-        required: false
-        type: choice
-        options:
-          - both
-          - deep
-          - lite
-        default: 'both'
-      start_from:
-        description: 'Start pipeline from this stage (skip earlier stages). "generate" = full run, "finetune" = skip data gen, "export" = skip data gen + finetune'
-        required: false
-        type: choice
-        options:
-          - generate
-          - finetune
-          - export
-        default: 'generate'
-      model_version:
-        description: 'Override model version (default: current run number). Use when start_from=export to point to existing model, e.g. "5" for v5'
-        required: false
-        default: ''
       use_batch_api:
         description: 'Use Batch API where available (50% cheaper, async)'
         required: false
@@ -56,6 +34,10 @@ on:
         required: false
         type: boolean
         default: true
+
+# Fine-tuning + GGUF export + evaluation are done MANUALLY on Lightning.ai GPU.
+# See: docs/MANUAL_TRAINING.md
+# This workflow only generates training data (CPU) and uploads to HuggingFace.
 
 permissions:
   contents: read
@@ -93,7 +75,6 @@ jobs:
           pip install litellm huggingface_hub anthropic
 
       - name: Generate training data (multi-teacher)
-        if: ${{ inputs.start_from == 'generate' || inputs.start_from == '' }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -117,20 +98,16 @@ jobs:
 
           # ─── Build teacher list based on strategy ───
           if [ "$STRATEGY" = "single" ]; then
-            # Single teacher mode — just use first entry from teachers input
             TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6' }}"
             IFS=',' read -ra TEACHERS <<< "$TEACHERS_INPUT"
             TEACHERS=("${TEACHERS[0]}")
             echo "Strategy: SINGLE teacher → ${TEACHERS[0]}"
 
           elif [ "$STRATEGY" = "tournament" ]; then
-            # Tournament mode (Option C) — pick best teacher per category
-            # Downloads teacher_scores.json from HF and routes accordingly
             echo "Strategy: TOURNAMENT — routing best teacher per category"
             TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6,openai:gpt-5.4,together_ai:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8' }}"
             IFS=',' read -ra TEACHERS <<< "$TEACHERS_INPUT"
 
-            # Download historical teacher scores for routing
             python3 -c "
           import os, json
           os.makedirs('rlaif/data', exist_ok=True)
@@ -140,7 +117,6 @@ jobs:
                                      repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
               with open(path) as f:
                   history = json.load(f)
-              # Average teacher scores across last 4 runs
               recent = history.get('runs', [])[-4:]
               agg = {}
               for run in recent:
@@ -151,7 +127,6 @@ jobs:
                           if cat not in agg[teacher]:
                               agg[teacher][cat] = []
                           agg[teacher][cat].append(rate)
-              # Pick best teacher per category
               routing = {}
               categories = set()
               for t in agg:
@@ -177,7 +152,6 @@ jobs:
           "
 
           else
-            # Multi mode (Option A, default) — all teachers run on everything
             echo "Strategy: MULTI — all teachers generate data (union)"
             TEACHERS_INPUT="${{ inputs.teachers || 'anthropic:claude-sonnet-4-6,openai:gpt-5.4,together_ai:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8' }}"
             IFS=',' read -ra TEACHERS <<< "$TEACHERS_INPUT"
@@ -193,7 +167,6 @@ jobs:
 
             COMMON_ARGS="--provider $PROVIDER --model-name $MODEL_NAME --output rlaif/data --workspace .rlaif_repos"
 
-            # Batch API only implemented for Anthropic — others run live
             BATCH_FLAG=""
             if [ "$USE_BATCH" = "true" ] && [ "$PROVIDER" = "anthropic" ]; then
               BATCH_FLAG="--batch"
@@ -218,7 +191,7 @@ jobs:
           done
 
       - name: Collect batch results (poll until complete)
-        if: ${{ (inputs.start_from == 'generate' || inputs.start_from == '') && (inputs.use_batch_api != false) }}
+        if: ${{ inputs.use_batch_api != false }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -319,8 +292,7 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.ref == 'refs/heads/main' &&
-      needs.generate-training-data.outputs.has_training_data == 'true' &&
-      (inputs.start_from == 'generate' || inputs.start_from == '')
+      needs.generate-training-data.outputs.has_training_data == 'true'
 
     steps:
       - name: Checkout repository
@@ -386,383 +358,17 @@ jobs:
           print(f'Dataset: https://huggingface.co/datasets/{repo_id}')
           "
 
-  # ═══════════════════════════════════════════════════════════════
-  # Job 3: Fine-tune on Lightning.ai GPU (FREE 7-22 hrs/month)
-  # ═══════════════════════════════════════════════════════════════
-  finetune-model:
-    name: Fine-tune ${{ matrix.tier }} Model (QLoRA)
-    needs: upload-to-huggingface
-    if: >-
-      always() &&
-      github.ref == 'refs/heads/main' &&
-      inputs.start_from != 'export' &&
-      (needs.upload-to-huggingface.result == 'success' || inputs.start_from == 'finetune')
-    strategy:
-      matrix:
-        tier: [deep, lite]
-      fail-fast: false
-    # Lightning.ai GPU runner — set up via:
-    #   1. Create account at lightning.ai
-    #   2. Settings → CI/CD Runners → Connect to GitHub
-    #   3. Replace label below with your runner label
-    # Fallback: runs-on ubuntu-latest (CPU-only, slower but works)
-    runs-on: ${{ vars.GPU_RUNNER_LABEL || 'ubuntu-latest' }}
-    timeout-minutes: 240
-    outputs:
-      model_version: ${{ steps.resolve-version.outputs.version }}
-
-    steps:
-      - name: Check tier filter
-        id: tier-check
+      - name: Print next steps
         run: |
-          TIERS="${{ inputs.training_tiers }}"
-          TIER="${{ matrix.tier }}"
-          if [ "$TIERS" = "both" ] || [ "$TIERS" = "" ] || [ "$TIERS" = "$TIER" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
-          else
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "Skipping $TIER tier (training_tiers=$TIERS)"
-          fi
-
-      - name: Resolve model version
-        id: resolve-version
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          if [ -n "${{ inputs.model_version }}" ]; then
-            VERSION="${{ inputs.model_version }}"
-            echo "Using override version: v${VERSION}"
-          else
-            VERSION=$(python3 -c "
-          import os, json
-          try:
-              from huggingface_hub import hf_hub_download
-              path = hf_hub_download('rigour-labs/rigour-rlaif-data', 'latest_version.json',
-                                     repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
-              with open(path) as f:
-                  data = json.load(f)
-              current = data.get('version', 0)
-              print(current + 1)
-          except Exception:
-              print(1)
-          " 2>/dev/null || echo "1")
-            echo "Next version: v${VERSION}"
-          fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Checkout repository
-        if: steps.tier-check.outputs.skip != 'true'
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        if: steps.tier-check.outputs.skip != 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install training dependencies
-        if: steps.tier-check.outputs.skip != 'true'
-        run: |
-          # Preserve system CUDA torch if available (Lightning.ai pre-installs it)
-          python -c "import torch; print(f'torch={torch.__version__} CUDA={torch.cuda.is_available()}')" 2>/dev/null \
-            && pip install transformers peft trl datasets bitsandbytes huggingface_hub accelerate \
-            || pip install torch transformers peft trl datasets bitsandbytes huggingface_hub accelerate
-
-      - name: Download training data from HuggingFace
-        if: steps.tier-check.outputs.skip != 'true'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          python -c "
-          import os
-          from huggingface_hub import hf_hub_download
-          token = os.environ['HF_TOKEN']
-          for f in ['sft_data.jsonl', 'dpo_data.jsonl']:
-              try:
-                  path = hf_hub_download('rigour-labs/rigour-rlaif-data', f, repo_type='dataset', token=token)
-                  print(f'Downloaded {f}: {path}')
-              except Exception as e:
-                  print(f'Warning: {f} not found: {e}')
-          "
-
-      - name: Run QLoRA fine-tuning
-        if: steps.tier-check.outputs.skip != 'true'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          python scripts/finetune_model.py \
-            --tier "${{ matrix.tier }}" \
-            --version "${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}" \
-            --upload
-
-      - name: Update latest version on HuggingFace
-        if: steps.tier-check.outputs.skip != 'true'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          python scripts/update_version.py \
-            --version "${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}"
-
-  # ═══════════════════════════════════════════════════════════════
-  # Job 4: Export GGUF + Upload to HuggingFace
-  # ═══════════════════════════════════════════════════════════════
-  export-gguf:
-    name: Export GGUF (${{ matrix.tier }}) + Upload
-    needs: finetune-model
-    runs-on: ${{ vars.GPU_RUNNER_LABEL || 'ubuntu-latest' }}
-    timeout-minutes: 60
-    if: >-
-      always() &&
-      github.ref == 'refs/heads/main' &&
-      (needs.finetune-model.result == 'success' || inputs.start_from == 'export')
-    strategy:
-      matrix:
-        tier: [deep, lite]
-      fail-fast: false
-
-    steps:
-      - name: Check tier filter
-        id: tier-check
-        run: |
-          TIERS="${{ inputs.training_tiers }}"
-          TIER="${{ matrix.tier }}"
-          if [ "$TIERS" = "both" ] || [ "$TIERS" = "" ] || [ "$TIERS" = "$TIER" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
-          else
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "Skipping $TIER tier (training_tiers=$TIERS)"
-          fi
-
-      - name: Resolve model version
-        id: resolve-version
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          if [ -n "${{ inputs.model_version }}" ]; then
-            VERSION="${{ inputs.model_version }}"
-          elif [ -n "${{ needs.finetune-model.outputs.model_version }}" ]; then
-            VERSION="${{ needs.finetune-model.outputs.model_version }}"
-          else
-            VERSION=$(pip install -q huggingface_hub > /dev/null 2>&1 && python3 -c "
-          import os, json
-          try:
-              from huggingface_hub import hf_hub_download
-              path = hf_hub_download('rigour-labs/rigour-rlaif-data', 'latest_version.json',
-                                     repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
-              with open(path) as f:
-                  data = json.load(f)
-              print(data.get('version', 1))
-          except Exception:
-              print(1)
-          " 2>/dev/null || echo "1")
-          fi
-          echo "Resolved model version: v${VERSION}"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Checkout repository
-        if: steps.tier-check.outputs.skip != 'true'
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        if: steps.tier-check.outputs.skip != 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        if: steps.tier-check.outputs.skip != 'true'
-        run: |
-          # Don't reinstall torch — Lightning.ai has CUDA torch pre-installed.
-          # pip install torch would overwrite it with CPU-only version.
-          python -c "import torch; print(f'torch={torch.__version__} CUDA={torch.cuda.is_available()}')" 2>/dev/null \
-            && pip install huggingface_hub transformers bitsandbytes accelerate peft \
-            || pip install huggingface_hub transformers torch bitsandbytes accelerate peft
-
-      - name: Clone llama.cpp and build
-        if: steps.tier-check.outputs.skip != 'true'
-        run: |
-          # Clean any broken previous clone (Lightning.ai has persistent workspace)
-          if [ -d llama.cpp ]; then
-            chmod -R u+w llama.cpp 2>/dev/null || true
-            rm -rf llama.cpp
-          fi
-          # Clone into temp dir first, then move (avoids partial clone issues)
-          git clone --depth 1 https://github.com/ggerganov/llama.cpp llama_cpp_fresh
-          mv llama_cpp_fresh llama.cpp
-          cd llama.cpp
-          pip install -r requirements.txt 2>/dev/null || pip install gguf || true
-          cmake -B build || { echo "ERROR: cmake configure failed"; exit 1; }
-          cmake --build build --config Release -j$(nproc) || { echo "ERROR: cmake build failed"; exit 1; }
-
-      - name: Download merged model from HuggingFace
-        if: steps.tier-check.outputs.skip != 'true'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          TIER: ${{ matrix.tier }}
-          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
-        run: |
-          python -c "
-          import os
-          from huggingface_hub import snapshot_download
-          tier = os.environ.get('TIER', 'deep')
-          version = os.environ.get('VERSION', '1')
-          repo_id = f'rigour-labs/rigour-{tier}-v{version}-merged'
-          local_dir = f'rlaif/models/rigour-{tier}-v{version}/merged'
-          print(f'Downloading {repo_id}...')
-          snapshot_download(repo_id, local_dir=local_dir, token=os.environ['HF_TOKEN'])
-          print('Model downloaded')
-          "
-
-      - name: Dequantize model if needed (bitsandbytes → fp16)
-        if: steps.tier-check.outputs.skip != 'true'
-        run: |
-          TIER="${{ matrix.tier }}"
-          VERSION="${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}"
-          python scripts/dequantize_model.py \
-            --model-dir "rlaif/models/rigour-${TIER}-v${VERSION}/merged"
-
-      - name: Convert to GGUF + quantize
-        if: steps.tier-check.outputs.skip != 'true'
-        env:
-          TIER: ${{ matrix.tier }}
-          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
-        run: |
-          TIER_FLAG=""
-          if [ "$TIER" = "lite" ]; then
-            TIER_FLAG="--lite"
-          elif [ "$TIER" = "legacy" ]; then
-            TIER_FLAG="--legacy"
-          fi
-          python -m rlaif.export_gguf \
-            --model "rlaif/models/rigour-${TIER}-v${VERSION}/merged" \
-            --output "rlaif/models/rigour-${TIER}-v${VERSION}" \
-            --llama-cpp-path llama.cpp \
-            --version "$VERSION" \
-            $TIER_FLAG
-
-      - name: Upload GGUF to HuggingFace
-        if: steps.tier-check.outputs.skip != 'true'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          TIER: ${{ matrix.tier }}
-          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
-        run: |
-          python -c "
-          import os, glob
-          from rlaif.export_gguf import upload_to_huggingface
-          tier = os.environ.get('TIER', 'deep')
-          version = os.environ.get('VERSION', '1')
-          pattern = f'rlaif/models/rigour-{tier}-v{version}/*.gguf'
-          gguf_files = glob.glob(pattern)
-          gguf_files = [f for f in gguf_files if 'f16' not in f]
-          if gguf_files:
-              upload_to_huggingface(
-                  gguf_files[0],
-                  f'rigour-labs/rigour-{tier}-v{version}-gguf',
-                  version=version, tier=tier,
-              )
-          else:
-              print('ERROR: No quantized GGUF found')
-              exit(1)
-          "
-
-      - name: Upload GGUF artifact
-        if: steps.tier-check.outputs.skip != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: gguf-${{ matrix.tier }}-${{ github.run_id }}
-          path: rlaif/models/rigour-${{ matrix.tier }}-v${{ steps.resolve-version.outputs.version }}/*.gguf
-          if-no-files-found: warn
-          retention-days: 30
-
-  # ═══════════════════════════════════════════════════════════════
-  # Job 5: Evaluate Model + Regression Gate
-  # ═══════════════════════════════════════════════════════════════
-  evaluate-model:
-    name: Evaluate ${{ matrix.tier }} Model
-    needs: export-gguf
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    if: >-
-      always() &&
-      github.ref == 'refs/heads/main' &&
-      (needs.export-gguf.result == 'success' || needs.export-gguf.result == 'skipped')
-    strategy:
-      matrix:
-        tier: [deep, lite]
-      fail-fast: false
-
-    steps:
-      - name: Check tier filter
-        id: tier-check
-        run: |
-          TIERS="${{ inputs.training_tiers }}"
-          TIER="${{ matrix.tier }}"
-          if [ "$TIERS" = "both" ] || [ "$TIERS" = "" ] || [ "$TIERS" = "$TIER" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
-          else
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "Skipping $TIER tier (training_tiers=$TIERS)"
-          fi
-
-      - name: Resolve model version
-        id: resolve-version
-        if: steps.tier-check.outputs.skip != 'true'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          pip install -q huggingface_hub > /dev/null 2>&1
-          if [ -n "${{ inputs.model_version }}" ]; then
-            VERSION="${{ inputs.model_version }}"
-          else
-            VERSION=$(python3 -c "
-          import os, json
-          try:
-              from huggingface_hub import hf_hub_download
-              path = hf_hub_download('rigour-labs/rigour-rlaif-data', 'latest_version.json',
-                                     repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
-              with open(path) as f:
-                  data = json.load(f)
-              print(data.get('version', 1))
-          except Exception:
-              print(1)
-          " 2>/dev/null || echo "1")
-          fi
-          echo "Resolved model version: v${VERSION}"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Checkout repository
-        if: steps.tier-check.outputs.skip != 'true'
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        if: steps.tier-check.outputs.skip != 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        if: steps.tier-check.outputs.skip != 'true'
-        run: pip install huggingface_hub llama-cpp-python
-
-      - name: Run evaluation + regression gate
-        if: steps.tier-check.outputs.skip != 'true'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          TIER: ${{ matrix.tier }}
-          VERSION: ${{ steps.resolve-version.outputs.version || inputs.model_version || github.run_number }}
-        run: |
-          python scripts/eval_model.py \
-            --tier "$TIER" \
-            --version "$VERSION" \
-            --min-accuracy 0.6 \
-            --regression-threshold 0.05
-
-      - name: Upload eval results
-        if: steps.tier-check.outputs.skip != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: eval-${{ matrix.tier }}-${{ github.run_id }}
-          path: eval_results.json
-          if-no-files-found: warn
-          retention-days: 90
+          echo ""
+          echo "════════════════════════════════════════════════════════"
+          echo "  Training data uploaded to HuggingFace!"
+          echo "════════════════════════════════════════════════════════"
+          echo ""
+          echo "  Next: Run fine-tuning manually on Lightning.ai GPU:"
+          echo ""
+          echo "    cd driftbench"
+          echo "    ./scripts/run_training.sh --version X.Y.Z"
+          echo ""
+          echo "  See docs/MANUAL_TRAINING.md for full guide."
+          echo "════════════════════════════════════════════════════════"
