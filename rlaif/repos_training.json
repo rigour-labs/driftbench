@@ -1,7 +1,7 @@
 {
-  "_comment": "Trending vibe-coded repos for RLAIF training. Built with AI assistance — rich source of real drift patterns.",
+  "_comment": "High-quality training repos for RLAIF governance model. Mix of AI-signal (vibe-coded) and enterprise (production-grade) repos for diverse drift patterns.",
   "_eval_repos_DO_NOT_ADD": ["lodash/lodash", "pallets/flask", "django/django", "tiangolo/fastapi", "shadcn-ui/ui", "TanStack/query"],
-  "_selection_criteria": "Trending 2024-2025 vibe-coded projects: AI-assisted development, modern stacks, real production code, active maintenance, MIT/Apache-2.0 licensed.",
+  "_selection_criteria": "Two tracks: (A) vibe-coded repos with AI co-authorship for real AI-drift patterns, (B) enterprise repos for production governance patterns (auth, payments, APIs, infra). All repos: 200+ stars, active, CI/CD, tests, permissive license.",
   "_categories": {
     "ts_ai_apps": "lobehub/lobe-chat, ItzCrazyKns/Perplexica, FlowiseAI/Flowise, mckaywrigley/chatbot-ui, rashadphz/farfalle (5)",
     "ts_saas_tools": "calcom/cal.com, twentyhq/twenty, makeplane/plane, formbricks/formbricks, documenso/documenso (5)",
@@ -9,7 +9,13 @@
     "ts_ai_sdk": "vercel/ai, continuedev/continue (2)",
     "py_ai_agents": "crewAIInc/crewAI, pydantic/pydantic-ai, BerriAI/litellm, agno-agi/agno (4)",
     "py_llm_tools": "langchain-ai/langchain, run-llama/llama_index, openai/openai-python (3)",
-    "py_ai_apps": "assafelovic/gpt-researcher, Yidadaa/ChatGPT-Next-Web (2)"
+    "py_ai_apps": "assafelovic/gpt-researcher, Yidadaa/ChatGPT-Next-Web (2)",
+    "enterprise_auth_security": "supertokens/supertokens-core, lucia-auth/lucia, casdoor/casdoor (3)",
+    "enterprise_api_backend": "trpc/trpc, hono-js/hono, encode/starlette (3)",
+    "enterprise_infra_devops": "containers/podman, grafana/k6, pulumi/pulumi (3)",
+    "enterprise_data_orm": "prisma/prisma, drizzle-team/drizzle-orm, sqlalchemy/sqlalchemy (3)",
+    "enterprise_payments_fintech": "medusajs/medusa, killbill/killbill (2)",
+    "enterprise_fullstack_saas": "supabase/supabase, appwrite/appwrite, nocodb/nocodb (3)"
   },
   "repos": [
     "lobehub/lobe-chat",
@@ -42,6 +48,29 @@
     "openai/openai-python",
 
     "assafelovic/gpt-researcher",
-    "Yidadaa/ChatGPT-Next-Web"
+    "Yidadaa/ChatGPT-Next-Web",
+
+    "supertokens/supertokens-core",
+    "lucia-auth/lucia",
+    "casdoor/casdoor",
+
+    "trpc/trpc",
+    "honojs/hono",
+    "encode/starlette",
+
+    "containers/podman",
+    "grafana/k6",
+    "pulumi/pulumi",
+
+    "prisma/prisma",
+    "drizzle-team/drizzle-orm",
+    "sqlalchemy/sqlalchemy",
+
+    "medusajs/medusa",
+    "killbill/killbill",
+
+    "supabase/supabase",
+    "appwrite/appwrite",
+    "nocodb/nocodb"
   ]
 }

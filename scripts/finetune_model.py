@@ -21,15 +21,15 @@ import torch
 TIER_CONFIG = {
     "deep": {
         "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
-        "sft_epochs": 3, "sft_batch": 4, "sft_grad_accum": 4,
+        "sft_epochs": 3, "sft_batch": 2, "sft_grad_accum": 8,
         "dpo_epochs": 1, "dpo_batch": 2, "dpo_grad_accum": 8,
-        "max_length": 1024, "lr_sft": 2e-4, "lr_dpo": 5e-5,
+        "max_length": 2048, "lr_sft": 2e-4, "lr_dpo": 5e-5,
     },
     "lite": {
         "base_model": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
-        "sft_epochs": 2, "sft_batch": 8, "sft_grad_accum": 2,
+        "sft_epochs": 2, "sft_batch": 4, "sft_grad_accum": 4,
         "dpo_epochs": 1, "dpo_batch": 4, "dpo_grad_accum": 4,
-        "max_length": 768, "lr_sft": 3e-4, "lr_dpo": 8e-5,
+        "max_length": 1536, "lr_sft": 3e-4, "lr_dpo": 8e-5,
     },
 }
 

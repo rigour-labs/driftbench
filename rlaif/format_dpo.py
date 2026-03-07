@@ -5,12 +5,10 @@ Reads the SQLite training database and outputs JSONL files for fine-tuning:
   - sft_data.jsonl:  Supervised fine-tuning pairs (facts → verified findings)
   - dpo_data.jsonl:  DPO preference pairs (chosen=verified, rejected=dropped)
 
-DPO pair format (compatible with HuggingFace trl library):
-{
-    "prompt": "<AST facts for the file>",
-    "chosen": "<finding that passed verification>",
-    "rejected": "<finding that failed verification>"
-}
+CRITICAL: The prompts here MUST match the inference prompts in
+  rigour/packages/rigour-core/src/deep/prompts.ts
+exactly. If the model is trained on different prompts than it sees at inference
+time, it won't generalize. Any changes to prompts.ts must be mirrored here.
 
 Usage:
     python -m rlaif.format_dpo --db rlaif/data/training_data.db --output rlaif/data/
@@ -21,9 +19,9 @@ import os
 import json
 import sqlite3
 import random
-import hashlib
 import argparse
 import logging
+import sys
 from typing import Dict, List, Tuple
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -31,6 +29,63 @@ from datetime import datetime, timezone
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("rlaif.format_dpo")
 
+
+# ─── System prompt: MUST match DEEP_SYSTEM_PROMPT in prompts.ts ──────────────
+# This is the exact system prompt the fine-tuned model sees at inference time.
+# If you change this, you MUST also update prompts.ts (and vice versa).
+
+SYSTEM_PROMPT = """You are an expert code reviewer and software architect performing deep quality analysis. You receive AST-extracted facts about a codebase and must identify quality issues, anti-patterns, and best practice violations.
+
+IMPORTANT RULES:
+1. ONLY report issues you can verify from the provided facts. Do NOT hallucinate files, classes, or functions.
+2. Every finding MUST reference a real file and entity from the facts.
+3. Be specific: include file paths, struct/class names, function names, line counts.
+4. Assign confidence scores honestly: 0.9+ only for certain issues, 0.5-0.7 for probable issues.
+5. Respond ONLY with valid JSON matching the schema below. No explanation text outside JSON.
+6. AIM for 5-15 findings per batch. Be thorough — report ALL issues you can identify, not just the most obvious ones.
+7. For Go code: treat structs as classes, receiver methods as class methods. Check Go idioms specifically.
+
+OUTPUT SCHEMA:
+{
+  "findings": [
+    {
+      "category": "string (see CATEGORIES below)",
+      "severity": "string (critical|high|medium|low|info)",
+      "file": "string (exact file path from facts)",
+      "line": "number or null",
+      "description": "string (what the issue is, referencing specific entities)",
+      "suggestion": "string (actionable fix recommendation)",
+      "confidence": "number 0.0-1.0"
+    }
+  ]
+}
+
+CATEGORIES:
+  SOLID Principles:
+    srp_violation, ocp_violation, lsp_violation, isp_violation, dip_violation
+  Design Patterns & Anti-patterns:
+    god_class, god_function, feature_envy, shotgun_surgery, long_params,
+    data_clump, inappropriate_intimacy, primitive_obsession, lazy_class,
+    speculative_generality, refused_bequest
+  DRY & Duplication:
+    dry_violation, copy_paste_code
+  Error Handling:
+    error_inconsistency, empty_catch, error_swallowing, missing_error_check, panic_in_library
+  Concurrency:
+    race_condition, goroutine_leak, missing_context, channel_misuse, mutex_scope
+  Testing:
+    test_quality, test_coupling, missing_test, test_duplication
+  Architecture:
+    architecture, circular_dependency, package_cohesion, api_design, missing_abstraction
+  Language Idioms:
+    language_idiom, naming_convention, dead_code, magic_number
+  Performance & Security:
+    performance, resource_leak, hardcoded_config
+  Code Smells:
+    code_smell, complex_conditional, long_file"""
+
+
+# ─── Data Loading ────────────────────────────────────────────────────────────
 
 def load_training_data(
     db_path: str,
@@ -72,8 +127,10 @@ def load_training_data(
     return verified, dropped, retry_verified
 
 
+# ─── Finding Formatting ─────────────────────────────────────────────────────
+
 def format_finding_as_json(row: Dict) -> str:
-    """Format a DB row as a finding JSON string."""
+    """Format a DB row as a finding JSON string (matches inference output schema)."""
     finding = {
         "category": row["category"],
         "severity": row["severity"],
@@ -86,39 +143,104 @@ def format_finding_as_json(row: Dict) -> str:
     return json.dumps(finding)
 
 
-def format_finding_context(row: Dict) -> str:
-    """Create a context/prompt string from the file path and category."""
-    return f"FILE: {row['file_path']} | CATEGORY: {row['category']} | REPO: {row['repo']}"
+def format_findings_array(rows: List[Dict]) -> str:
+    """Format multiple findings as a JSON findings array (matches inference output).
+
+    At inference time, the model produces {"findings": [...]}.
+    SFT training must teach this same format — not single findings.
+    """
+    findings = []
+    for row in rows:
+        findings.append({
+            "category": row["category"],
+            "severity": row["severity"],
+            "file": row["file_path"],
+            "line": None,
+            "description": row["description"],
+            "suggestion": row["suggestion"],
+            "confidence": row["confidence"],
+        })
+    return json.dumps({"findings": findings})
+
+
+def _get_facts_prompt(row: Dict) -> str:
+    """Get the AST facts prompt for a row. Falls back to minimal context."""
+    facts_prompt = row.get("facts_prompt") or ""
+    if facts_prompt:
+        return facts_prompt
+    # Fallback for older data without facts_prompt stored
+    return f"FILE: {row['file_path']} (repo: {row['repo']})"
+
+
+# ─── SFT Pair Building ──────────────────────────────────────────────────────
+
+def _group_by_facts_batch(rows: List[Dict]) -> List[List[Dict]]:
+    """Group findings by their facts_prompt (i.e., the batch they were in).
+
+    Findings with the same facts_prompt were analyzed together by the teacher.
+    Grouping them teaches the model to produce multi-finding output per batch.
+    """
+    groups: Dict[str, List[Dict]] = defaultdict(list)
+    for row in rows:
+        key = row.get("facts_prompt") or row.get("facts_hash") or row["file_path"]
+        groups[key].append(row)
+    return list(groups.values())
 
 
 def build_sft_pairs(verified: List[Dict]) -> List[Dict]:
+    """Build SFT pairs using the EXACT same prompt format as inference.
+
+    Key differences from old format:
+    1. System prompt matches DEEP_SYSTEM_PROMPT from prompts.ts
+    2. User prompt includes AST facts (not just file path)
+    3. Assistant response uses {"findings": [...]} array format
+    4. Findings are grouped by batch (model learns multi-finding output)
     """
-    Build SFT pairs: prompt = file context, completion = verified finding.
-    These teach the model what good findings look like.
-    """
+    # Group by the facts batch they came from
+    batches = _group_by_facts_batch(verified)
+
     pairs = []
-    for row in verified:
+    for batch in batches:
+        if not batch:
+            continue
+
+        # Use the facts prompt from the first finding (all share the same batch)
+        facts_prompt = _get_facts_prompt(batch[0])
+
+        # Build the user prompt matching buildAnalysisPrompt() in prompts.ts
+        user_prompt = (
+            f"ANALYSIS FOCUS:\n"
+            f"- SOLID principle violations (SRP, OCP, LSP, ISP, DIP)\n"
+            f"- Design pattern anti-patterns: god class/struct, god function, feature envy, shotgun surgery\n"
+            f"- DRY violations — duplicated logic, copy-paste code across files\n"
+            f"- Error handling: inconsistencies, empty catches, swallowed errors\n"
+            f"- Language-specific anti-patterns, naming convention violations, dead code\n"
+            f"- Architecture: layer violations, circular dependencies, package cohesion\n"
+            f"- Code smells: complex conditionals, magic numbers, long files\n"
+            f"\nAST-EXTRACTED FACTS:\n{facts_prompt}\n\n"
+            f"Analyze the codebase facts above. Identify ALL quality issues "
+            f"matching the analysis focus areas. Be thorough — check every file "
+            f"for every category. Return findings as JSON."
+        )
+
         pair = {
             "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a code quality analyzer. Given file facts, produce accurate findings."
-                },
-                {
-                    "role": "user",
-                    "content": f"Analyze this file for {row['category']} issues:\nFILE: {row['file_path']} (repo: {row['repo']})"
-                },
-                {
-                    "role": "assistant",
-                    "content": format_finding_as_json(row)
-                }
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+                {"role": "assistant", "content": format_findings_array(batch)},
             ]
         }
         pairs.append(pair)
 
-    logger.info(f"Built {len(pairs)} SFT pairs")
+    logger.info(
+        f"Built {len(pairs)} SFT pairs "
+        f"(from {len(verified)} findings across {len(pairs)} batches, "
+        f"avg {len(verified) / max(1, len(pairs)):.1f} findings/batch)"
+    )
     return pairs
 
+
+# ─── DPO Pair Building ──────────────────────────────────────────────────────
 
 def _group_by_category(rows: List[Dict]) -> Dict[str, List[Dict]]:
     grouped = defaultdict(list)
@@ -131,9 +253,17 @@ def _make_dpo_pair(
     category: str, chosen_row: Dict, dropped_row: Dict,
     weight: float = 1.0,
 ) -> Dict:
+    """Build a DPO pair with the real facts prompt as context.
+
+    The prompt includes AST facts so the model learns to evaluate
+    findings IN CONTEXT of the actual code structure — not in isolation.
+    """
+    facts_prompt = _get_facts_prompt(dropped_row)
+
     prompt = (
-        f"Analyze this codebase for {category} issues.\n"
-        f"File: {dropped_row['file_path']} (repo: {dropped_row['repo']})"
+        f"Analyze this codebase for quality issues.\n\n"
+        f"AST-EXTRACTED FACTS:\n{facts_prompt}\n\n"
+        f"Return findings as JSON."
     )
     pair = {
         "prompt": prompt,
@@ -213,6 +343,8 @@ def build_dpo_pairs(
     return pairs
 
 
+# ─── Stats & Export ──────────────────────────────────────────────────────────
+
 def build_category_stats(
     verified: List[Dict],
     dropped: List[Dict],
@@ -290,7 +422,7 @@ Training data for fine-tuning code quality analysis models.
 
 ## Stats
 
-- **SFT pairs**: {sft_count}
+- **SFT pairs**: {sft_count} (batched multi-finding format)
 - **DPO pairs**: {dpo_count}
 - **Verified**: {total_verified}, **Dropped**: {total_dropped}
 - **Rate**: {rate}%
@@ -300,6 +432,11 @@ Training data for fine-tuning code quality analysis models.
 | Category | Verified | Dropped | Rate |
 |----------|----------|---------|------|
 {cat_rows}
+
+## Format
+
+SFT data uses the same prompt format as inference (DEEP_SYSTEM_PROMPT +
+AST facts + multi-finding JSON output). DPO pairs include AST facts context.
 
 ## Usage with trl
 
@@ -355,6 +492,11 @@ def export_for_huggingface(
     logger.info(f"Wrote stats → {stats_path}")
 
 
+# ─── Main ────────────────────────────────────────────────────────────────────
+
+MIN_TRAINING_EXAMPLES = 50  # Fail hard if fewer verified findings than this
+
+
 def main():
     parser = argparse.ArgumentParser(description="Format RLAIF data for DPO training")
     parser.add_argument("--db", type=str, default="rlaif/data/training_data.db",
@@ -363,6 +505,8 @@ def main():
                         help="Output directory for JSONL files")
     parser.add_argument("--max-dpo-pairs", type=int, default=10000,
                         help="Maximum DPO pairs to generate")
+    parser.add_argument("--min-examples", type=int, default=MIN_TRAINING_EXAMPLES,
+                        help="Minimum verified findings required (fail if below)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     args = parser.parse_args()
 
@@ -371,28 +515,40 @@ def main():
     if not os.path.exists(args.db):
         logger.error(f"Database not found: {args.db}")
         logger.error("Run 'python -m rlaif.generate' first to create training data")
-        return
+        sys.exit(1)
 
-    # Load data (now 3-way split: pass@1 verified, dropped, pass@2 recovered)
+    # Load data (3-way split: pass@1 verified, dropped, pass@2 recovered)
     verified, dropped, retry_verified = load_training_data(args.db)
 
-    if not verified and not retry_verified:
-        logger.warning("No verified findings in database — creating empty output files.")
-        # Always create output files so downstream pipeline steps don't fail.
-        # The artifact upload + HuggingFace upload need these files to exist.
-        sft_pairs = []
-        dpo_pairs = []
-        stats = build_category_stats(verified, dropped, retry_verified)
-        export_for_huggingface(sft_pairs, dpo_pairs, args.output, stats)
-        logger.warning(
-            f"Empty training data exported ({len(dropped)} dropped). "
-            f"Check verifier — teacher model findings aren't passing "
-            f"structural verification."
-        )
-        return
-
-    # Build pairs — SFT includes both pass@1 and pass@2 verified
     all_verified = verified + retry_verified
+    total_findings = len(all_verified) + len(dropped)
+    verification_rate = len(all_verified) / max(1, total_findings) * 100
+
+    logger.info(
+        f"Verification rate: {verification_rate:.1f}% "
+        f"({len(all_verified)} verified / {total_findings} total)"
+    )
+
+    # Guard: fail hard if not enough training data
+    if len(all_verified) < args.min_examples:
+        logger.error(
+            f"INSUFFICIENT TRAINING DATA: {len(all_verified)} verified findings "
+            f"(minimum: {args.min_examples}). "
+            f"Verification rate: {verification_rate:.1f}%. "
+            f"Check: 1) teacher model producing findings? "
+            f"2) verifier thresholds too strict? "
+            f"3) training repos have enough code?"
+        )
+        sys.exit(1)
+
+    if verification_rate < 10:
+        logger.warning(
+            f"LOW VERIFICATION RATE: {verification_rate:.1f}%. "
+            f"Most teacher findings are being rejected. "
+            f"Consider relaxing verifier thresholds or improving teacher prompts."
+        )
+
+    # Build pairs — SFT uses batched multi-finding format
     sft_pairs = build_sft_pairs(all_verified)
     dpo_pairs = build_dpo_pairs(
         verified, dropped,

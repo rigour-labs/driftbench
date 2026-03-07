@@ -42,6 +42,7 @@ class TrainingExample:
     teacher_model: str
     timestamp: str
     facts_hash: str
+    facts_prompt: str = ""  # AST facts prompt text used during teacher call
 
 def clone_repo(
     repo: str, workspace: str, shallow: bool = True
@@ -95,6 +96,7 @@ def init_db(db_path: str) -> sqlite3.Connection:
             verification_notes TEXT,
             teacher_model TEXT NOT NULL,
             facts_hash TEXT,
+            facts_prompt TEXT,
             created_at TEXT NOT NULL,
             UNIQUE(scan_id, file_path, category, description)
         )
@@ -111,6 +113,13 @@ def init_db(db_path: str) -> sqlite3.Connection:
             created_at TEXT NOT NULL
         )
     """)
+    # Migrate: add facts_prompt column if missing (existing DBs)
+    try:
+        conn.execute("SELECT facts_prompt FROM training_data LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE training_data ADD COLUMN facts_prompt TEXT")
+        logger.info("Migrated DB: added facts_prompt column")
+
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_category "
         "ON training_data(category)"
@@ -138,8 +147,8 @@ def save_examples(
                 (scan_id, repo, file_path, category, severity,
                  confidence, description, suggestion, verified,
                  verification_notes, teacher_model, facts_hash,
-                 created_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                 facts_prompt, created_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (
                 ex.scan_id, ex.repo, ex.file_path,
                 ex.finding.get("category", ""),
@@ -149,7 +158,7 @@ def save_examples(
                 ex.finding.get("suggestion", ""),
                 1 if ex.verified else 0,
                 ex.verification_notes, ex.teacher_model,
-                ex.facts_hash, ex.timestamp,
+                ex.facts_hash, ex.facts_prompt, ex.timestamp,
             ))
         except Exception as e:
             logger.warning(f"Failed to save example: {e}")
@@ -191,7 +200,7 @@ def process_repo(
     )
     examples, verified_count, dropped_count = _verify_all(
         all_findings, facts_by_path, repo, scan_id,
-        teacher_model, facts_hash
+        teacher_model, facts_hash, facts_prompt_map,
     )
 
     # Pass@2: retry rejected findings
@@ -284,6 +293,7 @@ def _call_teacher_batched(
 def _verify_all(
     findings: list, facts_by_path: dict, repo: str,
     scan_id: str, teacher_model: str, facts_hash: str,
+    facts_prompt_map: Dict[str, str] = None,
 ):
     examples = []
     verified_count, dropped_count = 0, 0
@@ -293,14 +303,26 @@ def _verify_all(
             verified_count += 1
         else:
             dropped_count += 1
+        # Resolve the facts prompt for this finding's file
+        file_path = finding.get("file", "")
+        fp = ""
+        if facts_prompt_map:
+            fp = facts_prompt_map.get(file_path, "")
+            if not fp:
+                # Fallback: partial match
+                for path, prompt in facts_prompt_map.items():
+                    if path.endswith(file_path) or file_path.endswith(path):
+                        fp = prompt
+                        break
         examples.append(TrainingExample(
             repo=repo, scan_id=scan_id,
-            file_path=finding.get("file", ""),
+            file_path=file_path,
             finding=finding, verified=verified,
             verification_notes=notes,
             teacher_model=teacher_model,
             timestamp=datetime.now(timezone.utc).isoformat(),
             facts_hash=facts_hash,
+            facts_prompt=fp,
         ))
     return examples, verified_count, dropped_count
 
@@ -377,6 +399,7 @@ def _retry_rejected(
                 teacher_model=teacher_model,
                 timestamp=datetime.now(timezone.utc).isoformat(),
                 facts_hash=facts_hash,
+                facts_prompt=facts_prompt,
             ))
             dropped_count += 1
             continue
@@ -395,6 +418,7 @@ def _retry_rejected(
                     teacher_model=teacher_model,
                     timestamp=datetime.now(timezone.utc).isoformat(),
                     facts_hash=facts_hash,
+                    facts_prompt=facts_prompt,
                 ))
             else:
                 dropped_count += 1
@@ -407,6 +431,7 @@ def _retry_rejected(
                     teacher_model=teacher_model,
                     timestamp=datetime.now(timezone.utc).isoformat(),
                     facts_hash=facts_hash,
+                    facts_prompt=facts_prompt,
                 ))
 
         # Small delay between retries to avoid rate limits

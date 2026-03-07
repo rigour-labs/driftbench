@@ -195,6 +195,30 @@ print('Downloaded')
     # Dequantize if needed
     python scripts/dequantize_model.py --model-dir "$MERGED_DIR"
 
+    # Fix tokenizer config — transformers saves extra_special_tokens as a list
+    # but AutoTokenizer.from_pretrained() expects a dict. Patch it before GGUF export.
+    python3 -c "
+import json, os
+tc_path = os.path.join('${MERGED_DIR}', 'tokenizer_config.json')
+if os.path.exists(tc_path):
+    with open(tc_path) as f:
+        tc = json.load(f)
+    changed = False
+    if isinstance(tc.get('extra_special_tokens'), list):
+        # Convert list to dict: ['<|tok|>'] -> {'<|tok|>': '<|tok|>'}
+        tc['extra_special_tokens'] = {t: t for t in tc['extra_special_tokens']}
+        changed = True
+    if 'added_tokens_decoder' in tc and isinstance(tc['added_tokens_decoder'], list):
+        tc.pop('added_tokens_decoder')
+        changed = True
+    if changed:
+        with open(tc_path, 'w') as f:
+            json.dump(tc, f, indent=2, ensure_ascii=False)
+        print('  Fixed tokenizer_config.json (extra_special_tokens list -> dict)')
+    else:
+        print('  tokenizer_config.json OK')
+"
+
     # Export GGUF
     TIER_FLAG=""
     if [ "$t" = "lite" ]; then
