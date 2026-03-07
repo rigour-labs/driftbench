@@ -37,7 +37,7 @@ while [[ $# -gt 0 ]]; do
     --skip-export) SKIP_EXPORT=true; shift ;;
     --dry-run)     DRY_RUN=true; shift ;;
     -h|--help)
-      echo "Usage: $0 [--tier deep|lite|both] [--version N] [--skip-finetune] [--skip-export] [--dry-run]"
+      echo "Usage: $0 --version MAJOR.MINOR.PATCH [--tier deep|lite|both] [--skip-finetune] [--skip-export] [--dry-run]"
       exit 0 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
@@ -87,25 +87,36 @@ else:
     print('  WARNING: No GPU — training will be very slow')
 "
 
-# ─── Resolve version ──────────────────────────────────────────
+# ─── Resolve version (SemVer: MAJOR.MINOR.PATCH) ─────────────
+# MAJOR: training format change, base model change
+# MINOR: new repos, dataset update, hyperparameters
+# PATCH: bug fix, retrain same data
 if [ -z "$VERSION" ]; then
-  VERSION=$(python3 -c "
-import os, json
-try:
-    from huggingface_hub import hf_hub_download
-    path = hf_hub_download('rigour-labs/rigour-rlaif-data', 'latest_version.json',
-                           repo_type='dataset', token=os.environ.get('HF_TOKEN', ''))
-    with open(path) as f:
-        data = json.load(f)
-    current = data.get('version', 0)
-    print(current + 1)
-except Exception:
-    print(1)
-" 2>/dev/null || echo "1")
-  echo "Auto-resolved version: v${VERSION}"
-else
-  echo "Using version: v${VERSION}"
+  echo "ERROR: --version is required (SemVer format, e.g., 2.0.0)"
+  echo ""
+  echo "  To see current version:"
+  echo "    python scripts/update_version.py --bump patch --dry-run"
+  echo ""
+  echo "  Version guidelines:"
+  echo "    MAJOR (X.0.0): New training format, base model change, pipeline rewrite"
+  echo "    MINOR (0.X.0): New training repos, dataset expansion, hyperparameter tuning"
+  echo "    PATCH (0.0.X): Bug fix, retrain with same data/format"
+  echo ""
+  echo "  Examples:"
+  echo "    ./run_training.sh --version 2.0.0  # New aligned prompt format + enterprise repos"
+  echo "    ./run_training.sh --version 2.1.0  # Added 10 more repos, same format"
+  echo "    ./run_training.sh --version 2.0.1  # Fixed tokenizer bug, retrained"
+  exit 1
 fi
+
+# Validate SemVer format
+if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+  echo "ERROR: Version must be SemVer format (MAJOR.MINOR.PATCH), got: $VERSION"
+  echo "  Examples: 2.0.0, 2.1.0, 2.0.1"
+  exit 1
+fi
+
+echo "Version: v${VERSION}"
 
 # ─── Build tier list ──────────────────────────────────────────
 if [ "$TIER" = "both" ]; then
@@ -126,7 +137,7 @@ if [ "$DRY_RUN" = true ]; then
     if [ "$SKIP_FINETUNE" = false ]; then
       echo "  python scripts/finetune_model.py --tier $t --version $VERSION --upload"
     fi
-    echo "  python scripts/update_version.py --version $VERSION"
+    echo "  python scripts/update_version.py --version $VERSION --changelog 'describe what changed'"
     if [ "$SKIP_EXPORT" = false ]; then
       echo "  python scripts/dequantize_model.py --model-dir rlaif/models/rigour-${t}-v${VERSION}/merged"
       echo "  python -m rlaif.export_gguf --model rlaif/models/rigour-${t}-v${VERSION}/merged --output rlaif/models/rigour-${t}-v${VERSION} --llama-cpp-path llama.cpp --version $VERSION $([ $t = lite ] && echo --lite)"
@@ -147,7 +158,7 @@ if [ "$SKIP_FINETUNE" = false ]; then
 
   echo ""
   echo "Updating latest_version.json on HuggingFace..."
-  python scripts/update_version.py --version "$VERSION"
+  python scripts/update_version.py --version "$VERSION" --changelog "Training run v${VERSION}"
 else
   echo "Skipping finetune (--skip-finetune)"
 fi

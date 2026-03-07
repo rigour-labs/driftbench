@@ -211,7 +211,7 @@ def upload_to_hf(merged_path: str, tier: str, version: str, sft_count: int, dpo_
 def main():
     parser = argparse.ArgumentParser(description="Fine-tune Rigour model with QLoRA")
     parser.add_argument("--tier", required=True, choices=list(TIER_CONFIG.keys()), help="Model tier")
-    parser.add_argument("--version", required=True, help="Model version (e.g., 6)")
+    parser.add_argument("--version", required=True, help="Model version in SemVer (e.g., 2.0.0)")
     parser.add_argument("--output-dir", help="Override output directory")
     parser.add_argument("--upload", action="store_true", help="Upload to HuggingFace after training")
     parser.add_argument("--hf-token", default=os.environ.get("HF_TOKEN", ""), help="HuggingFace token")
