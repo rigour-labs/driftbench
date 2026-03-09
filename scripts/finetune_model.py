@@ -12,8 +12,13 @@ Environment variables:
 Can be tested locally (CPU, slow) or on GPU (Lightning.ai, fast).
 """
 import argparse
+import json
+import logging
 import os
 import sys
+import time
+from datetime import datetime, timezone
+
 import torch
 
 
@@ -43,6 +48,43 @@ MPS_OVERRIDES = {
 }
 
 DATASET_ID = "rigour-labs/rigour-rlaif-data"
+
+
+# ─── Persistent training log ──────────────────────────────────────────────
+# Writes status to a JSON file so you can check what happened after closing
+# the terminal. Check: cat rlaif/models/training-status.json
+def setup_logging(output_dir: str):
+    """Setup file + console logging so training output survives terminal close."""
+    os.makedirs(output_dir, exist_ok=True)
+    log_path = os.path.join(output_dir, "training.log")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.FileHandler(log_path),
+            logging.StreamHandler(sys.stdout),
+        ],
+    )
+    return logging.getLogger("rigour-train")
+
+
+STATUS_FILE = "rlaif/models/training-status.json"
+
+
+def write_status(status: dict):
+    """Write training status to a persistent JSON file."""
+    os.makedirs(os.path.dirname(STATUS_FILE), exist_ok=True)
+    status["updated_at"] = datetime.now(timezone.utc).isoformat()
+    with open(STATUS_FILE, "w") as f:
+        json.dump(status, f, indent=2)
+
+
+def read_status() -> dict:
+    """Read previous training status if it exists."""
+    if os.path.exists(STATUS_FILE):
+        with open(STATUS_FILE) as f:
+            return json.load(f)
+    return {}
 
 
 def get_device_type() -> str:
@@ -137,8 +179,10 @@ def load_model_and_tokenizer(base_model: str):
         model = model.to("mps")
 
     # torch.compile() — 20-40% speedup by fusing operations.
-    # Available on MPS since PyTorch 2.4+ and CUDA since 2.0+.
-    if device in ("cuda", "mps") and hasattr(torch, "compile"):
+    # CUDA only. MPS inductor backend hits INT_MAX tensor dim limits with
+    # attention matrices, causing "MPSGraph does not support tensor dims
+    # larger than INT_MAX" crashes. Disabled on MPS until PyTorch fixes this.
+    if device == "cuda" and hasattr(torch, "compile"):
         try:
             model = torch.compile(model)
             print("torch.compile() enabled")
@@ -171,6 +215,10 @@ def train_sft(model, tokenizer, sft_ds, cfg, output_dir: str):
     # Multiprocess data loading — use CPU cores for tokenization while GPU trains
     num_workers = 4 if device in ("cuda", "mps") else 0
 
+    total_steps = steps_per_epoch * cfg["sft_epochs"]
+    # Save checkpoint every ~25% of training — crash recovery for cloud runs
+    save_steps = max(50, total_steps // 4)
+
     sft_args = SFTConfig(
         output_dir=os.path.join(output_dir, "sft"),
         num_train_epochs=cfg["sft_epochs"],
@@ -179,15 +227,21 @@ def train_sft(model, tokenizer, sft_ds, cfg, output_dir: str):
         learning_rate=cfg["lr_sft"],
         warmup_steps=max(1, int(steps_per_epoch * cfg["sft_epochs"] * 0.1)),
         logging_steps=10,
-        save_strategy="no",  # Don't save intermediate — saves disk I/O
+        save_strategy="steps",
+        save_steps=save_steps,
+        save_total_limit=2,  # Keep only last 2 checkpoints to save disk
         max_length=cfg["max_length"],
-        packing=True,  # Pack short examples together — eliminates padding waste
+        dataset_text_field="text",  # Explicit field — avoids packing ambiguity
         dataloader_pin_memory=device != "mps",
         dataloader_num_workers=num_workers,
         **dtype_args,
     )
     trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=sft_ds, args=sft_args)
+
+    write_status({"phase": "sft", "status": "running", "total_steps": total_steps,
+                  "tier": cfg.get("_tier", ""), "device": device})
     trainer.train()
+    write_status({"phase": "sft", "status": "complete", "total_steps": total_steps})
     print("SFT complete")
 
 
@@ -208,6 +262,9 @@ def train_dpo(model, tokenizer, dpo_ds, cfg, output_dir: str):
 
     num_workers = 4 if device in ("cuda", "mps") else 0
 
+    total_steps = steps_per_epoch * cfg["dpo_epochs"]
+    save_steps = max(50, total_steps // 4)
+
     dpo_args = DPOConfig(
         output_dir=os.path.join(output_dir, "dpo"),
         num_train_epochs=cfg["dpo_epochs"],
@@ -216,7 +273,9 @@ def train_dpo(model, tokenizer, dpo_ds, cfg, output_dir: str):
         learning_rate=cfg["lr_dpo"],
         warmup_steps=max(1, int(steps_per_epoch * 0.1)),
         logging_steps=10,
-        save_strategy="no",
+        save_strategy="steps",
+        save_steps=save_steps,
+        save_total_limit=2,
         max_length=cfg["max_length"],
         beta=0.1,
         dataloader_pin_memory=device != "mps",
@@ -224,7 +283,10 @@ def train_dpo(model, tokenizer, dpo_ds, cfg, output_dir: str):
         **dtype_args,
     )
     trainer = DPOTrainer(model=model, processing_class=tokenizer, train_dataset=dpo_ds, args=dpo_args)
+
+    write_status({"phase": "dpo", "status": "running", "total_steps": total_steps})
     trainer.train()
+    write_status({"phase": "dpo", "status": "complete", "total_steps": total_steps})
     print("DPO complete")
 
 
@@ -290,6 +352,7 @@ def main():
     tier = args.tier
     version = args.version
     cfg = {**TIER_CONFIG[tier]}  # copy so we don't mutate the original
+    cfg["_tier"] = tier  # tag for status tracking
     device = get_device_type()
 
     # Apply MPS batch size overrides for Apple Silicon
@@ -301,30 +364,69 @@ def main():
     output_dir = args.output_dir or f"rlaif/models/rigour-{tier}-v{version}"
     hf_token = args.hf_token
 
-    print(f"Training tier={tier} version=v{version}")
+    # Setup persistent logging — survives terminal close
+    logger = setup_logging(output_dir)
+    start_time = time.time()
+
+    # Write initial status — check this file when you come back
+    write_status({
+        "tier": tier, "version": version, "device": device,
+        "phase": "starting", "status": "running",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "base_model": base_model,
+    })
+
+    logger.info(f"Training tier={tier} version=v{version}")
     print_gpu_info()
 
-    # Download data
-    sft_ds, dpo_ds = download_data(hf_token)
-    if len(sft_ds) == 0 and len(dpo_ds) == 0:
-        print("No training data — skipping")
-        sys.exit(0)
+    try:
+        # Download data
+        sft_ds, dpo_ds = download_data(hf_token)
+        if len(sft_ds) == 0 and len(dpo_ds) == 0:
+            write_status({"phase": "done", "status": "skipped", "reason": "no training data"})
+            print("No training data — skipping")
+            sys.exit(0)
 
-    # Load model
-    model, tokenizer = load_model_and_tokenizer(base_model)
+        write_status({"phase": "loading_model", "status": "running",
+                      "sft_examples": len(sft_ds), "dpo_pairs": len(dpo_ds)})
 
-    # Train
-    train_sft(model, tokenizer, sft_ds, cfg, output_dir)
-    train_dpo(model, tokenizer, dpo_ds, cfg, output_dir)
+        # Load model
+        model, tokenizer = load_model_and_tokenizer(base_model)
 
-    # Merge cleanly for GGUF export
-    merged_path = merge_and_save(model, tokenizer, base_model, output_dir)
+        # Train
+        train_sft(model, tokenizer, sft_ds, cfg, output_dir)
+        train_dpo(model, tokenizer, dpo_ds, cfg, output_dir)
 
-    # Upload
-    if args.upload and hf_token:
-        upload_to_hf(merged_path, tier, version, len(sft_ds), len(dpo_ds), hf_token)
+        # Merge cleanly for GGUF export
+        write_status({"phase": "merging", "status": "running"})
+        merged_path = merge_and_save(model, tokenizer, base_model, output_dir)
 
-    print(f"Fine-tuning complete! tier={tier} version=v{version}")
+        # Upload
+        if args.upload and hf_token:
+            write_status({"phase": "uploading", "status": "running"})
+            upload_to_hf(merged_path, tier, version, len(sft_ds), len(dpo_ds), hf_token)
+
+        elapsed = time.time() - start_time
+        write_status({
+            "tier": tier, "version": version, "device": device,
+            "phase": "done", "status": "success",
+            "elapsed_minutes": round(elapsed / 60, 1),
+            "sft_examples": len(sft_ds), "dpo_pairs": len(dpo_ds),
+            "merged_path": merged_path,
+            "uploaded": args.upload,
+        })
+        logger.info(f"Fine-tuning complete! tier={tier} version=v{version} ({elapsed/60:.1f} min)")
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+        write_status({
+            "tier": tier, "version": version, "device": device,
+            "phase": "error", "status": "failed",
+            "error": str(e), "error_type": type(e).__name__,
+            "elapsed_minutes": round(elapsed / 60, 1),
+        })
+        logger.error(f"Training FAILED after {elapsed/60:.1f} min: {e}", exc_info=True)
+        raise
 
 
 if __name__ == "__main__":

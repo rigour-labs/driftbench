@@ -11,6 +11,11 @@
 #   ./scripts/run_training.sh --tier lite         # Single tier
 #   ./scripts/run_training.sh --skip-finetune     # Skip to export (model already on HF)
 #   ./scripts/run_training.sh --dry-run           # Print what would run
+#   ./scripts/run_training.sh --status            # Check training status (after closing terminal)
+#
+# Cloud-safe: run with nohup so it survives terminal close:
+#   nohup ./scripts/run_training.sh --tier lite --version 1.0.0 > training.log 2>&1 &
+#   cat rlaif/models/training-status.json          # Check progress anytime
 #
 # Prerequisites:
 #   - Lightning.ai studio with GPU (T4/A10/etc.)
@@ -36,6 +41,23 @@ while [[ $# -gt 0 ]]; do
     --skip-finetune) SKIP_FINETUNE=true; shift ;;
     --skip-export) SKIP_EXPORT=true; shift ;;
     --dry-run)     DRY_RUN=true; shift ;;
+    --status)
+      STATUS_FILE="rlaif/models/training-status.json"
+      if [ -f "$STATUS_FILE" ]; then
+        echo "═══════════════════════════════════════════"
+        echo "  Training Status"
+        echo "═══════════════════════════════════════════"
+        python3 -c "
+import json
+with open('$STATUS_FILE') as f:
+    s = json.load(f)
+for k, v in s.items():
+    print(f'  {k}: {v}')
+"
+      else
+        echo "No training status found. Run training first."
+      fi
+      exit 0 ;;
     -h|--help)
       echo "Usage: $0 --version MAJOR.MINOR.PATCH [--tier deep|lite|both] [--skip-finetune] [--skip-export] [--dry-run]"
       exit 0 ;;
