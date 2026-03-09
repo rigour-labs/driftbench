@@ -30,6 +30,7 @@ TIER="both"
 VERSION=""
 SKIP_FINETUNE=false
 SKIP_EXPORT=false
+UPLOAD=false
 DRY_RUN=false
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -40,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     --version)     VERSION="$2"; shift 2 ;;
     --skip-finetune) SKIP_FINETUNE=true; shift ;;
     --skip-export) SKIP_EXPORT=true; shift ;;
+    --upload)      UPLOAD=true; shift ;;
     --dry-run)     DRY_RUN=true; shift ;;
     --status)
       STATUS_FILE="rlaif/models/training-status.json"
@@ -60,7 +62,7 @@ for k, v in s.items():
       fi
       exit 0 ;;
     -h|--help)
-      echo "Usage: $0 --version MAJOR.MINOR.PATCH [--tier deep|lite|both] [--skip-finetune] [--skip-export] [--dry-run]"
+      echo "Usage: $0 --version MAJOR.MINOR.PATCH [--tier deep|lite|both] [--upload] [--skip-finetune] [--skip-export] [--dry-run]"
       exit 0 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
@@ -182,7 +184,7 @@ if [ "$DRY_RUN" = true ]; then
   echo "[DRY RUN] Would run the following:"
   for t in "${TIERS[@]}"; do
     if [ "$SKIP_FINETUNE" = false ]; then
-      echo "  python scripts/finetune_model.py --tier $t --version $VERSION --upload"
+      echo "  python scripts/finetune_model.py --tier $t --version $VERSION $([ "$UPLOAD" = true ] && echo --upload)"
     fi
     echo "  python scripts/update_version.py --version $VERSION --changelog 'describe what changed'"
     if [ "$SKIP_EXPORT" = false ]; then
@@ -200,7 +202,11 @@ if [ "$SKIP_FINETUNE" = false ]; then
     echo "════════════════════════════════════════"
     echo "  FINETUNE: ${t} tier (v${VERSION})"
     echo "════════════════════════════════════════"
-    python scripts/finetune_model.py --tier "$t" --version "$VERSION" --upload
+    UPLOAD_FLAG=""
+    if [ "$UPLOAD" = true ]; then
+      UPLOAD_FLAG="--upload"
+    fi
+    python scripts/finetune_model.py --tier "$t" --version "$VERSION" $UPLOAD_FLAG
   done
 
   echo ""
