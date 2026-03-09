@@ -96,6 +96,25 @@ def get_device_type() -> str:
     return "cpu"
 
 
+def get_training_dtype_args(device: str) -> dict:
+    """Return the correct mixed-precision args for the Trainer.
+
+    CUDA + QLoRA: bnb_4bit_compute_dtype is bf16 when supported, so we must
+    use bf16=True (not fp16). fp16 enables GradScaler which calls
+    _amp_foreach_non_finite_check_and_unscale_ — not implemented for BFloat16.
+
+    MPS: fp16=True works (no GradScaler conflict, no quantization).
+    CPU: no mixed precision.
+    """
+    if device == "cuda":
+        if torch.cuda.is_bf16_supported():
+            return {"bf16": True}
+        return {"fp16": True}
+    if device == "mps":
+        return {"fp16": True}
+    return {}
+
+
 def print_gpu_info():
     device = get_device_type()
     print(f"Device: {device}")
@@ -211,11 +230,7 @@ def train_sft(model, tokenizer, sft_ds, cfg, output_dir: str):
     from trl import SFTTrainer, SFTConfig
 
     device = get_device_type()
-    dtype_args = {}
-    if device == "cuda":
-        dtype_args["fp16"] = True
-    elif device == "mps":
-        dtype_args["fp16"] = True  # MPS supports fp16 training
+    dtype_args = get_training_dtype_args(device)
     steps_per_epoch = max(1, len(sft_ds) // (cfg["sft_batch"] * cfg["sft_grad_accum"]))
 
     # Multiprocess data loading — use CPU cores for tokenization while GPU trains
@@ -261,9 +276,7 @@ def train_dpo(model, tokenizer, dpo_ds, cfg, output_dir: str):
 
     tokenizer.padding_side = "left"  # Required by DPOTrainer
     device = get_device_type()
-    dtype_args = {}
-    if device in ("cuda", "mps"):
-        dtype_args["fp16"] = True
+    dtype_args = get_training_dtype_args(device)
     steps_per_epoch = max(1, len(dpo_ds) // (cfg["dpo_batch"] * cfg["dpo_grad_accum"]))
 
     num_workers = 4 if device in ("cuda", "mps") else 0
