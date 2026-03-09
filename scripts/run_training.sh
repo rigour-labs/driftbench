@@ -55,7 +55,8 @@ for k, v in s.items():
     print(f'  {k}: {v}')
 "
       else
-        echo "No training status found. Run training first."
+        echo "No training status found. Training may not have started yet."
+        echo "Check: cat training.log"
       fi
       exit 0 ;;
     -h|--help)
