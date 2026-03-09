@@ -56,24 +56,35 @@ if [ -z "${HF_TOKEN:-}" ]; then
 fi
 
 echo "Installing dependencies..."
-# Check if CUDA torch is already present — don't overwrite it
-HAS_CUDA_TORCH=$(python3 -c "
+# Use python3 -m pip to ensure we install to the SAME Python that runs scripts
+PIP="python3 -m pip"
+
+# Detect platform: CUDA, MPS (Apple Silicon), or CPU
+DEVICE=$(python3 -c "
 try:
     import torch
-    print('yes' if torch.cuda.is_available() else 'no')
+    if torch.cuda.is_available():
+        print('cuda')
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        print('mps')
+    else:
+        print('cpu')
 except ImportError:
-    print('no')
-" 2>/dev/null || echo "no")
+    print('none')
+" 2>/dev/null || echo "none")
 
-if [ "$HAS_CUDA_TORCH" = "yes" ]; then
-  echo "  CUDA torch already installed, skipping torch"
-  # Uninstall torchvision if present — it causes version mismatch crashes
-  # (torchvision::nms operator error). We don't need it for fine-tuning.
-  pip uninstall -y torchvision torchaudio 2>/dev/null || true
-  pip install -q transformers peft trl datasets bitsandbytes huggingface_hub accelerate 2>&1 | tail -1
+CORE_DEPS="transformers peft trl datasets huggingface_hub accelerate"
+
+if [ "$DEVICE" = "cuda" ]; then
+  echo "  CUDA detected, skipping torch reinstall"
+  $PIP uninstall -y torchvision torchaudio 2>/dev/null || true
+  $PIP install -q $CORE_DEPS bitsandbytes 2>&1 | tail -1
+elif [ "$DEVICE" = "mps" ]; then
+  echo "  Apple Silicon (MPS) detected — using fp16 training (no QLoRA needed)"
+  $PIP install -q $CORE_DEPS 2>&1 | tail -1
 else
   echo "  Installing all packages including torch"
-  pip install -q torch transformers peft trl datasets bitsandbytes huggingface_hub accelerate 2>&1 | tail -1
+  $PIP install -q torch $CORE_DEPS 2>&1 | tail -1
 fi
 echo "  Dependencies ready"
 
@@ -82,10 +93,20 @@ python3 -c "
 import torch
 print(f'  torch={torch.__version__}')
 print(f'  CUDA={torch.cuda.is_available()}')
+mps = hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+print(f'  MPS={mps}')
 if torch.cuda.is_available():
     print(f'  GPU={torch.cuda.get_device_name(0)}')
     props = torch.cuda.get_device_properties(0)
     print(f'  VRAM={props.total_memory / 1e9:.1f} GB')
+elif mps:
+    print(f'  GPU=Apple Silicon (Metal Performance Shaders)')
+    import subprocess
+    try:
+        mem = subprocess.check_output(['sysctl', '-n', 'hw.memsize']).decode().strip()
+        print(f'  Unified Memory={int(mem) / 1e9:.0f} GB')
+    except Exception:
+        pass
 else:
     print('  WARNING: No GPU — training will be very slow')
 "

@@ -18,6 +18,8 @@ import torch
 
 
 # ─── Tier-specific configuration ───────────────────────────────────────────
+# MPS overrides: larger batches (unified memory fits it), lower grad_accum
+# to maximize GPU utilization on Apple Silicon.
 TIER_CONFIG = {
     "deep": {
         "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
@@ -33,14 +35,34 @@ TIER_CONFIG = {
     },
 }
 
+# MPS overrides — M4 Pro has 18-48GB unified memory shared with GPU.
+# 0.5B model in fp16 ≈ 1GB, 1.5B ≈ 3GB — tons of headroom for larger batches.
+MPS_OVERRIDES = {
+    "deep": {"sft_batch": 8, "sft_grad_accum": 2, "dpo_batch": 4, "dpo_grad_accum": 4},
+    "lite": {"sft_batch": 16, "sft_grad_accum": 1, "dpo_batch": 8, "dpo_grad_accum": 2},
+}
+
 DATASET_ID = "rigour-labs/rigour-rlaif-data"
 
 
-def print_gpu_info():
-    print(f"GPU available: {torch.cuda.is_available()}")
+def get_device_type() -> str:
+    """Detect best available device: cuda > mps > cpu."""
     if torch.cuda.is_available():
+        return "cuda"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
+def print_gpu_info():
+    device = get_device_type()
+    print(f"Device: {device}")
+    if device == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+    elif device == "mps":
+        print("GPU: Apple Silicon (Metal Performance Shaders)")
+        print("Mode: fp16 full fine-tune (no QLoRA — models small enough)")
     else:
         print("WARNING: No GPU — training will be slow on CPU")
 
@@ -61,38 +83,68 @@ def download_data(hf_token: str):
 
 
 def load_model_and_tokenizer(base_model: str):
-    """Load base model with QLoRA quantization and LoRA adapter."""
-    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+    """Load base model with QLoRA (CUDA), LoRA+fp16 (MPS/Apple Silicon), or fp32 (CPU)."""
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from peft import LoraConfig, get_peft_model
 
-    print(f"Loading {base_model}...")
+    device = get_device_type()
+    print(f"Loading {base_model} (device={device})...")
 
     tokenizer = AutoTokenizer.from_pretrained(base_model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    load_kwargs = {"device_map": "auto", "trust_remote_code": True}
-    if torch.cuda.is_available():
+    load_kwargs = {"trust_remote_code": True}
+
+    if device == "cuda":
+        # CUDA: use 4-bit QLoRA for memory efficiency
+        from transformers import BitsAndBytesConfig
+        from peft import prepare_model_for_kbit_training
+
         compute_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+        load_kwargs["device_map"] = "auto"
         load_kwargs["quantization_config"] = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=compute_dtype,
             bnb_4bit_use_double_quant=True,
         )
+    elif device == "mps":
+        # Apple Silicon: fp16 on MPS — models are small enough (0.5B/1.5B)
+        # Don't use device_map="auto" with MPS — it doesn't support it well.
+        # Load to CPU first, then move to MPS after LoRA wrapping.
+        load_kwargs["torch_dtype"] = torch.float16
     else:
         load_kwargs["torch_dtype"] = torch.float32
 
     model = AutoModelForCausalLM.from_pretrained(base_model, **load_kwargs)
-    if torch.cuda.is_available():
+
+    if device == "cuda":
         model = prepare_model_for_kbit_training(model)
 
+    # Dropout=0 on MPS — dropout forces synchronization barriers on Metal,
+    # and with small models + limited data, regularization from LoRA rank is enough.
+    dropout = 0.0 if device == "mps" else 0.05
+
     lora_config = LoraConfig(
-        r=16, lora_alpha=32, lora_dropout=0.05,
+        r=16, lora_alpha=32, lora_dropout=dropout,
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
         bias="none", task_type="CAUSAL_LM",
     )
     model = get_peft_model(model, lora_config)
+
+    if device == "mps":
+        model = model.to("mps")
+
+    # torch.compile() — 20-40% speedup by fusing operations.
+    # Available on MPS since PyTorch 2.4+ and CUDA since 2.0+.
+    if device in ("cuda", "mps") and hasattr(torch, "compile"):
+        try:
+            model = torch.compile(model)
+            print("torch.compile() enabled")
+        except Exception as e:
+            print(f"torch.compile() skipped: {e}")
+
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in model.parameters())
     print(f"Trainable: {trainable:,} / {total:,} ({100 * trainable / total:.1f}%)")
@@ -108,10 +160,16 @@ def train_sft(model, tokenizer, sft_ds, cfg, output_dir: str):
 
     from trl import SFTTrainer, SFTConfig
 
-    # Some Lightning.ai GPUs report bf16 support but fail during training.
-    # Use fp16 universally — it works on all CUDA GPUs and QLoRA handles the precision.
-    dtype_args = {"fp16": True} if torch.cuda.is_available() else {}
+    device = get_device_type()
+    dtype_args = {}
+    if device == "cuda":
+        dtype_args["fp16"] = True
+    elif device == "mps":
+        dtype_args["fp16"] = True  # MPS supports fp16 training
     steps_per_epoch = max(1, len(sft_ds) // (cfg["sft_batch"] * cfg["sft_grad_accum"]))
+
+    # Multiprocess data loading — use CPU cores for tokenization while GPU trains
+    num_workers = 4 if device in ("cuda", "mps") else 0
 
     sft_args = SFTConfig(
         output_dir=os.path.join(output_dir, "sft"),
@@ -121,8 +179,11 @@ def train_sft(model, tokenizer, sft_ds, cfg, output_dir: str):
         learning_rate=cfg["lr_sft"],
         warmup_steps=max(1, int(steps_per_epoch * cfg["sft_epochs"] * 0.1)),
         logging_steps=10,
-        save_strategy="epoch",
+        save_strategy="no",  # Don't save intermediate — saves disk I/O
         max_length=cfg["max_length"],
+        packing=True,  # Pack short examples together — eliminates padding waste
+        dataloader_pin_memory=device != "mps",
+        dataloader_num_workers=num_workers,
         **dtype_args,
     )
     trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=sft_ds, args=sft_args)
@@ -139,10 +200,13 @@ def train_dpo(model, tokenizer, dpo_ds, cfg, output_dir: str):
     from trl import DPOTrainer, DPOConfig
 
     tokenizer.padding_side = "left"  # Required by DPOTrainer
-    # Some Lightning.ai GPUs report bf16 support but fail during training.
-    # Use fp16 universally — it works on all CUDA GPUs and QLoRA handles the precision.
-    dtype_args = {"fp16": True} if torch.cuda.is_available() else {}
+    device = get_device_type()
+    dtype_args = {}
+    if device in ("cuda", "mps"):
+        dtype_args["fp16"] = True
     steps_per_epoch = max(1, len(dpo_ds) // (cfg["dpo_batch"] * cfg["dpo_grad_accum"]))
+
+    num_workers = 4 if device in ("cuda", "mps") else 0
 
     dpo_args = DPOConfig(
         output_dir=os.path.join(output_dir, "dpo"),
@@ -152,9 +216,11 @@ def train_dpo(model, tokenizer, dpo_ds, cfg, output_dir: str):
         learning_rate=cfg["lr_dpo"],
         warmup_steps=max(1, int(steps_per_epoch * 0.1)),
         logging_steps=10,
-        save_strategy="epoch",
+        save_strategy="no",
         max_length=cfg["max_length"],
         beta=0.1,
+        dataloader_pin_memory=device != "mps",
+        dataloader_num_workers=num_workers,
         **dtype_args,
     )
     trainer = DPOTrainer(model=model, processing_class=tokenizer, train_dataset=dpo_ds, args=dpo_args)
@@ -177,6 +243,8 @@ def merge_and_save(model, tokenizer, base_model: str, output_dir: str):
     del model
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        torch.mps.empty_cache()
 
     # Reload base in fp16 on CPU and merge — produces clean weights for GGUF
     print(f"Reloading {base_model} in fp16 on CPU for clean merge...")
@@ -221,7 +289,14 @@ def main():
 
     tier = args.tier
     version = args.version
-    cfg = TIER_CONFIG[tier]
+    cfg = {**TIER_CONFIG[tier]}  # copy so we don't mutate the original
+    device = get_device_type()
+
+    # Apply MPS batch size overrides for Apple Silicon
+    if device == "mps" and tier in MPS_OVERRIDES:
+        cfg.update(MPS_OVERRIDES[tier])
+        print(f"Applied MPS overrides: batch={cfg['sft_batch']}, grad_accum={cfg['sft_grad_accum']}")
+
     base_model = cfg["base_model"]
     output_dir = args.output_dir or f"rlaif/models/rigour-{tier}-v{version}"
     hf_token = args.hf_token
