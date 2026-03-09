@@ -178,11 +178,17 @@ def load_model_and_tokenizer(base_model: str):
     if device == "mps":
         model = model.to("mps")
 
-    # torch.compile() — 20-40% speedup by fusing operations.
-    # CUDA only. MPS inductor backend hits INT_MAX tensor dim limits with
-    # attention matrices, causing "MPSGraph does not support tensor dims
-    # larger than INT_MAX" crashes. Disabled on MPS until PyTorch fixes this.
-    if device == "cuda" and hasattr(torch, "compile"):
+    # torch.compile() is incompatible with:
+    # - QLoRA/quantized models on CUDA (transformers raises ValueError)
+    # - MPS backend (INT_MAX tensor dim limit in attention matrices)
+    # Only enable for non-quantized models (e.g., fp16 LoRA on MPS or full fine-tune).
+    use_compile = (
+        hasattr(torch, "compile")
+        and device not in ("mps", "cpu")  # MPS: inductor crashes; CPU: no benefit
+        and not getattr(model, "is_quantized", False)  # QLoRA: incompatible
+        and not any(hasattr(m, "quant_state") for m in model.modules())  # bnb check
+    )
+    if use_compile:
         try:
             model = torch.compile(model)
             print("torch.compile() enabled")
