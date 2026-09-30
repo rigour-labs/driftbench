@@ -1,0 +1,26 @@
+{
+ "repo": "TanStack/router",
+ "snapshot_sha": "41ebd288677beacb8eb56953f5f8c26e9d33313e",
+ "params": {
+  "fix_subject": "\\b(fix(e[sd])?|bug(fix)?|regression|hotfix|revert)\\b",
+  "not_a_defect": "\\b(typo|lint|format(ting)?|docs?|readme|changelog|test(s)?|ci|deps?|bump)\\b",
+  "max_fix_files": 15
+ },
+ "skipped": [],
+ "prs": {
+  "7886": [],
+  "7867": [],
+  "7856": [
+   {
+    "fix_sha": "0ba4e9f03b4eb3525f68c1c92f2584600b221313",
+    "fix_subject": "fix(nx): cache benchmark checks and build measurements (#8343)",
+    "path": "benchmarks/bundle-size/package.json",
+    "lines": [
+     6
+    ]
+   }
+  ],
+  "7855": [],
+  "7844": []
+ }
+}
