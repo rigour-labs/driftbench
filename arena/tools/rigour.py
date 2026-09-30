@@ -42,12 +42,18 @@ class RigourRun:
 
 
 def review(git: Git, merge_sha: str, cfg: RigourConfig) -> RigourRun:
+    """The PR as merged: its merge commit against the merge's first parent."""
+    return review_range(git, git.parent(merge_sha), merge_sha, cfg)
+
+
+def review_range(git: Git, base: str, head: str, cfg: RigourConfig) -> RigourRun:
+    """Review the change base..head with `head` checked out (a PR as merged, or as reviewed)."""
     workdir = Path(tempfile.mkdtemp(prefix="arena-rigour-"))
     tree = workdir / "tree"
     try:
-        git.run("worktree", "add", "-q", "--detach", str(tree), merge_sha)
+        git.run("worktree", "add", "-q", "--detach", str(tree), head)
         diff = workdir / "pr.diff"
-        diff.write_text(git.run("diff", "--no-color", git.parent(merge_sha), merge_sha))
+        diff.write_text(git.run("diff", "--no-color", base, head))
         return _run(tree, diff, cfg)
     finally:
         git.run("worktree", "remove", "--force", str(tree), check=False)

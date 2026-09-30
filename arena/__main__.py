@@ -6,7 +6,8 @@ import json
 import os
 from pathlib import Path
 
-from arena import pipeline, verdicts
+from arena import pipeline, preemption, verdicts
+from arena.repos import clone
 from arena.corpus import Corpus, mine
 from arena.tools.rigour import RigourConfig
 
@@ -29,6 +30,15 @@ def main() -> None:
     sub.choices["run"].add_argument("--tool", required=True, help="coderabbit, or a name from arena/configs (e.g. rigour-semantic)")
     sub.choices["score"].add_argument("--scope", choices=["code", "all"], default="code")
     sub.choices["score"].add_argument("--all", action="store_true", help="Every corpus, pooled (design sets excluded)")
+    pr_ = sub.add_parser("preempt-run", help="Review each PR as CodeRabbit saw it; record its acted-on comments")
+    pr_.add_argument("--repo", required=True)
+    pr_.add_argument("--tool", required=True, help="A name from arena/configs")
+    pr_.add_argument("--sample", type=int, default=0)
+    ps = sub.add_parser("preempt-score", help="Share of CodeRabbit's acted-on comments each tool raised before the PR")
+    ps.add_argument("--repo", default="", help="One repo; default: every repo with pre-emption results, pooled")
+    pp = sub.add_parser("preempt-sample", help="Random matched pairs to judge")
+    pp.add_argument("--size", type=int, default=50)
+    pp.add_argument("--out", required=True, type=Path)
     jp = sub.add_parser("judge-pack", help="Write what still needs a verdict, with instructions for the judge")
     jp.add_argument("--repo", required=True)
     jp.add_argument("--out", required=True, type=Path)
@@ -37,7 +47,8 @@ def main() -> None:
     jm.add_argument("answers", nargs="+", type=Path)
     args = parser.parse_args()
     handlers = {"mine": _mine, "label": _label, "run": _run, "score": _score,
-                "judge-pack": _judge_pack, "judge-merge": _judge_merge}
+                "judge-pack": _judge_pack, "judge-merge": _judge_merge,
+                "preempt-run": _preempt_run, "preempt-score": _preempt_score, "preempt-sample": _preempt_sample}
     handlers[args.command](args)
 
 
@@ -152,6 +163,56 @@ def _score_all(scope: str) -> None:
             if entries:
                 s = pipeline.pooled_score(entries, scope)
                 print(f"{tool:<22}{s.prs:>5}{s.bugs:>6}{s.comments:>10}  {_fmt(s.recall):<20}{_fmt(s.hit_rate):<20}{_fmt(s.comments_per_pr, pct=False):<16}")
+
+
+def _preempt_path(repo: str, tool: str) -> Path:
+    return ROOT / "results" / pipeline.slug(repo) / "pre-pr" / f"{tool}.json"
+
+
+def _preempt_run(args) -> None:
+    corpus = _sampled(Corpus.load(_paths(args.repo)[0]), args.sample)
+    results = preemption.run(clone(args.repo), corpus.prs, _rigour_config(args.tool)) | {"repo": args.repo}
+    pipeline.write_json(_preempt_path(args.repo, args.tool), results)
+    print(f"{args.tool}: {len(results['prs'])} PRs with acted-on comments reviewed as CodeRabbit saw them")
+
+
+def _preempt_results() -> dict[str, list[dict]]:
+    """tool -> results for every repo with pre-emption results (design sets excluded unless named)."""
+    by_tool: dict[str, list[dict]] = {}
+    for path in sorted((ROOT / "results").glob("*/pre-pr/*.json")):
+        by_tool.setdefault(path.stem, []).append(json.loads(path.read_text()))
+    return by_tool
+
+
+def _preempt_score(args) -> None:
+    print("pre-emption: CodeRabbit comments the developer acted on, raised by the tool before the PR (proximity, code scope)")
+    print(f"{'tool':<22}{'PRs':>6}{'targets':>9}{'raised':>8}  {'rate':<20}{'findings/PR':<16}by severity (raised/targets)")
+    paths = sorted((ROOT / "results").glob(f"{pipeline.slug(args.repo) if args.repo else '*'}/pre-pr/*.json"))
+    pooled: dict[str, dict] = {}
+    for path in paths:
+        if not args.repo and json.loads(path.read_text()).get("repo") in pipeline.DESIGN_SETS:
+            continue
+        data = json.loads(path.read_text())
+        merged = pooled.setdefault(path.stem, {"tool": path.stem, "prs": {}})
+        merged["prs"].update({f"{path.parent.parent.name}#{k}": v for k, v in data["prs"].items()})
+    for tool, results in pooled.items():
+        s = preemption.score(results)
+        severity = ", ".join(f"{k or '?'} {h}/{n}" for k, (h, n) in s.by_severity.items())
+        print(f"{tool:<22}{s.prs:>6}{s.targets:>9}{s.preempted:>8}  {_fmt(s.rate):<20}{_fmt(s.findings_per_pr, pct=False):<16}{severity}")
+
+
+def _preempt_sample(args) -> None:
+    pairs = []
+    for path in sorted((ROOT / "results").glob("*/pre-pr/*.json")):
+        data = json.loads(path.read_text())
+        repo = path.parent.parent.name.replace("__", "/", 1)
+        pairs += [{"repo": repo, "tool": data["tool"], **p} for p in preemption.sample(data, 10_000)]
+    import random
+    random.Random(7).shuffle(pairs)
+    pipeline.write_json(args.out, {"pairs": pairs[:args.size], "instructions": (
+        "For each pair, read the CodeRabbit comment (gh api repos/<repo>/pulls/comments/<comment>) and the Rigour finding "
+        "message. same_issue=true only if both point at the same problem. Answer [{comment, finding, same_issue, reason}].")})
+    print(f"{min(args.size, len(pairs))} of {len(pairs)} matched pairs -> {args.out}")
 
 
 def _judge_pack(args) -> None:

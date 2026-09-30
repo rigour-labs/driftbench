@@ -123,6 +123,10 @@ jobs:
           python -m arena label --repo "$REPO" --sample "$SAMPLE"
           for tool in $TOOLS; do
             python -m arena run --repo "$REPO" --sample "$SAMPLE" --tool "$tool"
+            # Pre-emption: the same tool on each PR as CodeRabbit reviewed it, before merge.
+            if [ "$tool" != "coderabbit" ]; then
+              python -m arena preempt-run --repo "$REPO" --sample "$SAMPLE" --tool "$tool"
+            fi
           done
 
       - name: Upload labels and results
@@ -163,6 +167,8 @@ jobs:
             python -m arena score --all --scope code
             echo
             python -m arena score --all --scope all
+            echo
+            python -m arena preempt-score
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
