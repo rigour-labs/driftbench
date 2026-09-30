@@ -2,7 +2,10 @@
 #
 # run_training.sh — Full training pipeline for Lightning.ai GPU studio.
 #
-# Runs everything locally: finetune → dequantize → export GGUF → upload.
+# Runs everything locally: finetune → dequantize → export GGUF → evaluate → publish.
+# Publishing (--upload) happens only after every tier passes the eval gate, and
+# latest_version.json is bumped last, so clients are never told about a model
+# that failed evaluation or has not been uploaded yet.
 # No GitHub Actions needed. SSH in, run this, watch it work.
 #
 # Usage:
@@ -31,6 +34,7 @@ VERSION=""
 SKIP_FINETUNE=false
 SKIP_EXPORT=false
 UPLOAD=false
+BASELINE_VERSION=""
 DRY_RUN=false
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -42,6 +46,7 @@ while [[ $# -gt 0 ]]; do
     --skip-finetune) SKIP_FINETUNE=true; shift ;;
     --skip-export) SKIP_EXPORT=true; shift ;;
     --upload)      UPLOAD=true; shift ;;
+    --baseline-version) BASELINE_VERSION="$2"; shift 2 ;;
     --dry-run)     DRY_RUN=true; shift ;;
     --status)
       STATUS_FILE="rlaif/models/training-status.json"
@@ -62,7 +67,7 @@ for k, v in s.items():
       fi
       exit 0 ;;
     -h|--help)
-      echo "Usage: $0 --version MAJOR.MINOR.PATCH [--tier deep|lite|both] [--upload] [--skip-finetune] [--skip-export] [--dry-run]"
+      echo "Usage: $0 --version MAJOR.MINOR.PATCH [--tier deep|lite|both] [--upload] [--baseline-version V] [--skip-finetune] [--skip-export] [--dry-run]"
       exit 0 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
@@ -75,6 +80,70 @@ echo "════════════════════════�
 echo "  Rigour Training Pipeline (Local Runner)"
 echo "═══════════════════════════════════════════"
 
+# ─── Resolve version (SemVer: MAJOR.MINOR.PATCH) ─────────────
+# MAJOR: training format change, base model change
+# MINOR: new repos, dataset update, hyperparameters
+# PATCH: bug fix, retrain same data
+if [ -z "$VERSION" ]; then
+  echo "ERROR: --version is required (SemVer format, e.g., 2.0.0)"
+  echo ""
+  echo "  To see current version:"
+  echo "    python scripts/update_version.py --bump patch --dry-run"
+  echo ""
+  echo "  Version guidelines:"
+  echo "    MAJOR (X.0.0): New training format, base model change, pipeline rewrite"
+  echo "    MINOR (0.X.0): New training repos, dataset expansion, hyperparameter tuning"
+  echo "    PATCH (0.0.X): Bug fix, retrain with same data/format"
+  echo ""
+  echo "  Examples:"
+  echo "    ./run_training.sh --version 2.0.0  # New aligned prompt format + enterprise repos"
+  echo "    ./run_training.sh --version 2.1.0  # Added 10 more repos, same format"
+  echo "    ./run_training.sh --version 2.0.1  # Fixed tokenizer bug, retrained"
+  exit 1
+fi
+
+# Validate SemVer format
+if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+  echo "ERROR: Version must be SemVer format (MAJOR.MINOR.PATCH), got: $VERSION"
+  echo "  Examples: 2.0.0, 2.1.0, 2.0.1"
+  exit 1
+fi
+
+echo "Version: v${VERSION}"
+
+# ─── Build tier list ──────────────────────────────────────────
+if [ "$TIER" = "both" ]; then
+  TIERS=("deep" "lite")
+else
+  TIERS=("$TIER")
+fi
+
+echo "Tiers: ${TIERS[*]}"
+echo "Version: v${VERSION}"
+echo "Skip finetune: ${SKIP_FINETUNE}"
+echo "Skip export: ${SKIP_EXPORT}"
+echo ""
+
+if [ "$DRY_RUN" = true ]; then
+  echo "[DRY RUN] Would run the following:"
+  for t in "${TIERS[@]}"; do
+    if [ "$SKIP_FINETUNE" = false ]; then
+      echo "  python scripts/finetune_model.py --tier $t --version $VERSION $([ "$UPLOAD" = true ] && echo --upload)"
+    fi
+    if [ "$SKIP_EXPORT" = false ]; then
+      echo "  python scripts/dequantize_model.py --model-dir rlaif/models/rigour-${t}-v${VERSION}/merged"
+      echo "  python -m rlaif.export_gguf --model rlaif/models/rigour-${t}-v${VERSION}/merged --output rlaif/models/rigour-${t}-v${VERSION} --llama-cpp-path llama.cpp --version $VERSION $([ $t = lite ] && echo --lite)"
+    fi
+    echo "  python scripts/eval_model.py --tier $t --version $VERSION --gguf-path <quantized gguf> --output rlaif/models/rigour-${t}-v${VERSION}/eval_results.json $([ -n "$BASELINE_VERSION" ] && echo --baseline-version $BASELINE_VERSION)"
+  done
+  if [ "$UPLOAD" = true ]; then
+    echo "  (only if every tier passed) upload each GGUF + eval_results.json, then:"
+    echo "  python scripts/update_version.py --version $VERSION --changelog 'Training run v${VERSION}'"
+  fi
+  exit 0
+fi
+
+# ─── Preflight: token and dependencies (after the dry-run exit, so a dry run changes nothing) ───
 if [ -z "${HF_TOKEN:-}" ]; then
   echo "ERROR: HF_TOKEN not set. Run: export HF_TOKEN=hf_xxx"
   exit 1
@@ -136,64 +205,6 @@ else:
     print('  WARNING: No GPU — training will be very slow')
 "
 
-# ─── Resolve version (SemVer: MAJOR.MINOR.PATCH) ─────────────
-# MAJOR: training format change, base model change
-# MINOR: new repos, dataset update, hyperparameters
-# PATCH: bug fix, retrain same data
-if [ -z "$VERSION" ]; then
-  echo "ERROR: --version is required (SemVer format, e.g., 2.0.0)"
-  echo ""
-  echo "  To see current version:"
-  echo "    python scripts/update_version.py --bump patch --dry-run"
-  echo ""
-  echo "  Version guidelines:"
-  echo "    MAJOR (X.0.0): New training format, base model change, pipeline rewrite"
-  echo "    MINOR (0.X.0): New training repos, dataset expansion, hyperparameter tuning"
-  echo "    PATCH (0.0.X): Bug fix, retrain with same data/format"
-  echo ""
-  echo "  Examples:"
-  echo "    ./run_training.sh --version 2.0.0  # New aligned prompt format + enterprise repos"
-  echo "    ./run_training.sh --version 2.1.0  # Added 10 more repos, same format"
-  echo "    ./run_training.sh --version 2.0.1  # Fixed tokenizer bug, retrained"
-  exit 1
-fi
-
-# Validate SemVer format
-if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-  echo "ERROR: Version must be SemVer format (MAJOR.MINOR.PATCH), got: $VERSION"
-  echo "  Examples: 2.0.0, 2.1.0, 2.0.1"
-  exit 1
-fi
-
-echo "Version: v${VERSION}"
-
-# ─── Build tier list ──────────────────────────────────────────
-if [ "$TIER" = "both" ]; then
-  TIERS=("deep" "lite")
-else
-  TIERS=("$TIER")
-fi
-
-echo "Tiers: ${TIERS[*]}"
-echo "Version: v${VERSION}"
-echo "Skip finetune: ${SKIP_FINETUNE}"
-echo "Skip export: ${SKIP_EXPORT}"
-echo ""
-
-if [ "$DRY_RUN" = true ]; then
-  echo "[DRY RUN] Would run the following:"
-  for t in "${TIERS[@]}"; do
-    if [ "$SKIP_FINETUNE" = false ]; then
-      echo "  python scripts/finetune_model.py --tier $t --version $VERSION $([ "$UPLOAD" = true ] && echo --upload)"
-    fi
-    echo "  python scripts/update_version.py --version $VERSION --changelog 'describe what changed'"
-    if [ "$SKIP_EXPORT" = false ]; then
-      echo "  python scripts/dequantize_model.py --model-dir rlaif/models/rigour-${t}-v${VERSION}/merged"
-      echo "  python -m rlaif.export_gguf --model rlaif/models/rigour-${t}-v${VERSION}/merged --output rlaif/models/rigour-${t}-v${VERSION} --llama-cpp-path llama.cpp --version $VERSION $([ $t = lite ] && echo --lite)"
-    fi
-  done
-  exit 0
-fi
 
 # ─── Step 1: Fine-tune ────────────────────────────────────────
 if [ "$SKIP_FINETUNE" = false ]; then
@@ -208,10 +219,6 @@ if [ "$SKIP_FINETUNE" = false ]; then
     fi
     python scripts/finetune_model.py --tier "$t" --version "$VERSION" $UPLOAD_FLAG
   done
-
-  echo ""
-  echo "Updating latest_version.json on HuggingFace..."
-  python scripts/update_version.py --version "$VERSION" --changelog "Training run v${VERSION}"
 else
   echo "Skipping finetune (--skip-finetune)"
 fi
@@ -298,29 +305,54 @@ if os.path.exists(tc_path):
       --version "$VERSION" \
       $TIER_FLAG
 
-    # Upload GGUF to HuggingFace
-    python3 -c "
-import os, glob
-from rlaif.export_gguf import upload_to_huggingface
-tier = '${t}'
-version = '${VERSION}'
-pattern = f'rlaif/models/rigour-{tier}-v{version}/*.gguf'
-gguf_files = glob.glob(pattern)
-gguf_files = [f for f in gguf_files if 'f16' not in f]
-if gguf_files:
-    upload_to_huggingface(
-        gguf_files[0],
-        f'rigour-labs/rigour-{tier}-v{version}-gguf',
-        version=version, tier=tier,
-    )
-else:
-    print('ERROR: No quantized GGUF found')
-    exit(1)
-"
-    echo "✓ ${t} GGUF uploaded"
+    echo "✓ ${t} GGUF exported"
   done
 else
   echo "Skipping export (--skip-export)"
+fi
+
+# ─── Step 3: Evaluate (the gate) ──────────────────────────────
+$PIP install -q llama-cpp-python 2>&1 | tail -1
+for t in "${TIERS[@]}"; do
+  echo ""
+  echo "════════════════════════════════════════"
+  echo "  EVAL GATE: ${t} tier (v${VERSION})"
+  echo "════════════════════════════════════════"
+  GGUF=$(ls rlaif/models/rigour-${t}-v${VERSION}/*.gguf 2>/dev/null | grep -v f16 | head -1 || true)
+  if [ -z "$GGUF" ]; then
+    echo "ERROR: no quantized GGUF for ${t} v${VERSION}; run the export step first"
+    exit 1
+  fi
+  BASELINE_FLAG=""
+  if [ -n "$BASELINE_VERSION" ]; then
+    BASELINE_FLAG="--baseline-version $BASELINE_VERSION"
+  fi
+  # Exits non-zero when the gate fails, which stops the script before anything is published.
+  python scripts/eval_model.py --tier "$t" --version "$VERSION" --gguf-path "$GGUF" \
+    --output "rlaif/models/rigour-${t}-v${VERSION}/eval_results.json" $BASELINE_FLAG
+done
+
+# ─── Step 4: Publish (only with --upload, only after every tier passed) ───
+if [ "$UPLOAD" = true ]; then
+  for t in "${TIERS[@]}"; do
+    python3 -c "
+import glob
+from huggingface_hub import HfApi
+from rlaif.export_gguf import upload_to_huggingface
+tier, version = '${t}', '${VERSION}'
+repo = f'rigour-labs/rigour-{tier}-v{version}-gguf'
+gguf = [f for f in glob.glob(f'rlaif/models/rigour-{tier}-v{version}/*.gguf') if 'f16' not in f][0]
+upload_to_huggingface(gguf, repo, version=version, tier=tier)
+HfApi().upload_file(path_or_fileobj=f'rlaif/models/rigour-{tier}-v{version}/eval_results.json',
+                    path_in_repo='eval_results.json', repo_id=repo)
+"
+    echo "✓ ${t} GGUF and eval results uploaded"
+  done
+  # Last: clients follow latest_version.json, so it moves only when every tier is live.
+  python scripts/update_version.py --version "$VERSION" --changelog "Training run v${VERSION}"
+else
+  echo ""
+  echo "Not published: pass --upload to upload the models and move latest_version.json."
 fi
 
 echo ""

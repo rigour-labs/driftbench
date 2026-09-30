@@ -33,6 +33,8 @@ from dataclasses import dataclass, field, asdict
 logger = logging.getLogger("leaderboard_batch")
 
 ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(ROOT))
+from evalgate.sanitize import sanitize_patch  # noqa: E402  (answer-revealing comments out of prompts)
 DATASETS_DIR = ROOT / "datasets"
 KAGGLE_BENCHMARK_DIR = ROOT / "kaggle_benchmark"
 RESULTS_DIR = ROOT / "results"
@@ -152,7 +154,7 @@ def load_scenarios() -> List[Scenario]:
                 repository=repository,
                 category=category,
                 intent=intent,
-                patch=golden_path.read_text(),
+                patch=sanitize_patch(golden_path.read_text()),
                 has_drift=False,
             ))
 
@@ -167,7 +169,7 @@ def load_scenarios() -> List[Scenario]:
                     repository=repository,
                     category=category,
                     intent=intent,
-                    patch=drift_path.read_text(),
+                    patch=sanitize_patch(drift_path.read_text()),
                     has_drift=True,
                     drift_type=candidate.get("drift_type"),
                     expected_gate=candidate.get("fail_gate"),
