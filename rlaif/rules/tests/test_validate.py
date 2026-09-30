@@ -3,8 +3,8 @@ from pathlib import Path
 from rlaif.rules import validate as v
 
 
-def f(rule, sha, side, path, line=1):
-    return {"rule": rule, "file": f"{sha}/{side}/{path}", "line": line, "message": "m"}
+def f(rule, sha, side, path, line=1, message="m"):
+    return {"rule": rule, "file": f"{sha}/{side}/{path}", "line": line, "message": message}
 
 
 def test_a_catch_fires_before_the_fix_and_less_after_it():
@@ -14,6 +14,13 @@ def test_a_catch_fires_before_the_fix_and_less_after_it():
         f("r", "s3", "after", "c.ts", 1),                                      # only after: introduced
     ])
     assert [(c["fix"], c["file"], c["line"]) for c in found] == [("s2", "b.ts", 4)]
+
+
+def test_a_fix_that_repairs_part_of_what_a_finding_said_is_a_catch():
+    found = v.catches([
+        f("r", "s1", "before", "index.ts", 11, "uses `A`, `B`"), f("r", "s1", "after", "index.ts", 17, "uses `A`"),
+    ])
+    assert [c["message"] for c in found] == ["uses `A`, `B`"]
 
 
 def _sheet(monkeypatch, tmp_path: Path, marks: list[str], catches: int = 1, per_5k: float = 0.4) -> Path:

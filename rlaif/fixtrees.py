@@ -21,6 +21,7 @@ TRAINING = Path(__file__).resolve().parent / "repos_training.json"
 JS_TS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts")
 MANIFESTS = ("package.json", "tsconfig.json")
 SIDES = ("before", "after")
+MAX_SIBLINGS = 80
 
 
 def refuse_eval_repo(repo: str) -> None:
@@ -51,22 +52,37 @@ def code_files(commit: Commit) -> list[str]:
     return [f for f in commit.files if f.endswith(JS_TS) and in_scope(f, "code")]
 
 
-def write_pair(git: Git, tree: Path, fix: Commit, path: str) -> list[str]:
-    """Both versions of a changed file with their manifests; nothing when the fix added or deleted it.
-    Returns the written source files, relative to `tree`."""
+def write_pair(git: Git, tree: Path, fix: Commit, path: str, context: bool = False) -> list[str]:
+    """Both versions of a changed file with their manifests. Returns the written
+    changed files, relative to `tree`: the files to scan.
+
+    A file the fix added has no pair. With `context`, a file the fix deleted keeps
+    its before side (a rule that fired on it was fixed by the deletion), and the
+    files beside it are written too, unscanned, so rules that compare a file with
+    its siblings (entries, the types they export) see the package as it was.
+    """
     shas = {"before": fix.parent, "after": fix.sha}
     texts = {side: git.run("show", f"{sha}:{path}", check=False) for side, sha in shas.items()}
-    if not all(texts.values()):
+    if not texts["before"] or not (texts["after"] or context):
         return []
     written = []
     for side in SIDES:
+        if not texts[side]:
+            continue
         root = tree / fix.sha / side
         _write(root / path, texts[side])
         written.append(str((root / path).relative_to(tree)))
-        for manifest in nearest_manifests(git, shas[side], path):
-            if not (root / manifest).exists():
-                _write(root / manifest, git.run("show", f"{shas[side]}:{manifest}"))
+        for extra in [*nearest_manifests(git, shas[side], path), *(siblings(git, shas[side], path) if context else [])]:
+            if not (root / extra).exists():
+                _write(root / extra, git.run("show", f"{shas[side]}:{extra}"))
     return written
+
+
+def siblings(git: Git, sha: str, path: str) -> list[str]:
+    """Non-test JS/TS files in the same directory as `path` at `sha`, capped."""
+    directory = str(PurePosixPath(path).parent)
+    listed = git.run("ls-tree", "--name-only", sha, f"{directory}/" if directory != "." else ".", check=False).splitlines()
+    return [f for f in listed if f != path and f.endswith(JS_TS) and in_scope(f, "code")][:MAX_SIBLINGS]
 
 
 def nearest_manifests(git: Git, sha: str, path: str) -> list[str]:

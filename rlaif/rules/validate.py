@@ -65,16 +65,28 @@ def validate(rules: list[str], repos: list[str], max_fixes: int) -> dict[str, Re
 
 
 def catches(findings: list[dict]) -> list[dict]:
-    """Findings on a fix's before-side file where the after side has fewer findings of that rule."""
-    counts: Counter = Counter()
-    before: dict[tuple, list[dict]] = {}
+    """Findings on a fix's before side whose statement the fix made untrue.
+
+    A finding is matched by rule, file and message (messages name identifiers,
+    not lines), so a fix that repairs one of two issues a finding reported counts,
+    and code that merely moved does not.
+    """
+    after: Counter = Counter()
     for finding in findings:
         sha, side, path = split(finding["file"])
-        key = (finding["rule"], sha, path)
-        counts[(*key, side)] += 1
-        if side == "before":
-            before.setdefault(key, []).append({**finding, "fix": sha, "file": path})
-    return [f for key, found in before.items() if counts[(*key, "before")] > counts[(*key, "after")] for f in found]
+        if side == "after":
+            after[(finding["rule"], sha, path, finding.get("message", ""))] += 1
+    caught = []
+    for finding in findings:
+        sha, side, path = split(finding["file"])
+        key = (finding["rule"], sha, path, finding.get("message", ""))
+        if side != "before":
+            continue
+        if after[key] > 0:
+            after[key] -= 1
+        else:
+            caught.append({**finding, "fix": sha, "file": path})
+    return caught
 
 
 def _root(git: Git) -> str:
@@ -84,7 +96,7 @@ def _root(git: Git) -> str:
 def _scan_fixes(git: Git, repo: str, fixes: list[Commit], reports: dict[str, Report]) -> None:
     tree = Path(tempfile.mkdtemp(prefix="rule-validate-"))
     try:
-        written = [w for fix in fixes for path in code_files(fix) for w in write_pair(git, tree, fix, path)]
+        written = [w for fix in fixes for path in code_files(fix) for w in write_pair(git, tree, fix, path, context=True)]
         findings = run_rigour(tree, ["scan-rules", "--rules", ",".join(reports), *written]) if written else []
         for report in reports.values():
             report.fixes_scanned += len(fixes)

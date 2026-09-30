@@ -59,3 +59,22 @@ def test_evaluation_repositories_are_refused():
 def test_rigour_cli_override_runs_the_local_build(monkeypatch):
     monkeypatch.setenv("RIGOUR_CLI", "/x/cli.js")
     assert fixtrees.rigour_command() == ["node", "/x/cli.js"]
+
+
+def test_with_context_a_deleted_file_keeps_its_before_side_and_siblings_are_written(tmp_path: Path):
+    repo = tmp_path / "ctx"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    for key, value in [("user.name", "t"), ("user.email", "t@example.com"), ("commit.gpgsign", "false")]:
+        subprocess.run(["git", "-C", str(repo), "config", key, value], check=True)
+    _commit(repo, "init", {"src/index.ts": "export { a } from './a';\n", "src/index.rsc.ts": "export {};\n",
+                           "src/a.ts": "export const a = 1;\n", "src/a.test.ts": "x\n"})
+    subprocess.run(["git", "-C", str(repo), "rm", "-q", "src/index.rsc.ts"], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "fix: drop the rsc entry"], check=True)
+    git = Git(repo)
+    fix = _fix(git)
+    tree = tmp_path / "tree"
+    assert fixtrees.write_pair(git, tree, fix, "src/index.rsc.ts") == []
+    written = fixtrees.write_pair(git, tree, fix, "src/index.rsc.ts", context=True)
+    assert [fixtrees.split(w)[1:] for w in written] == [("before", "src/index.rsc.ts")]
+    before = tree / fix.sha / "before" / "src"
+    assert sorted(p.name for p in before.iterdir()) == ["a.ts", "index.rsc.ts", "index.ts"]  # tests are not context
