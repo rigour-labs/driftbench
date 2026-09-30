@@ -53,3 +53,12 @@ def test_pack_skips_fixes_judged_not_real_and_pairs_already_judged():
 def test_malformed_answers_are_rejected(answer):
     with pytest.raises(ValueError):
         merge(Verdicts(), [answer])
+
+
+def test_config_flags_expand_environment_variables_and_refuse_unset_ones(monkeypatch):
+    from arena.__main__ import _expand
+    monkeypatch.setenv("RIGOUR_MODEL_PATH", "/models/candidate.gguf")
+    assert _expand(["--max", "--model-path", "${RIGOUR_MODEL_PATH}"]) == ("--max", "--model-path", "/models/candidate.gguf")
+    monkeypatch.delenv("RIGOUR_MODEL_PATH")
+    with pytest.raises(SystemExit, match="unset environment variable"):
+        _expand(["--model-path", "${RIGOUR_MODEL_PATH}"])

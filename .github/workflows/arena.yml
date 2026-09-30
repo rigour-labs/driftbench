@@ -102,6 +102,17 @@ jobs:
         if: env.RIGOUR_REF == ''
         run: npx --yes "@rigour-labs/cli@${RIGOUR_VERSION}" --version
 
+      - name: Bring-your-own-key settings (byok-frontier only)
+        if: contains(env.TOOLS, 'byok-frontier')
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # The key goes in the arena's private HOME, never on a command line.
+          test -n "$ANTHROPIC_API_KEY" || { echo "byok-frontier needs the ANTHROPIC_API_KEY secret"; exit 1; }
+          mkdir -p ~/.cache/driftbench/arena/home/.rigour
+          python -c "import json,os; json.dump({'providers': {'claude': os.environ['ANTHROPIC_API_KEY']}}, open(os.path.expanduser('~/.cache/driftbench/arena/home/.rigour/settings.json'), 'w'))"
+          chmod 600 ~/.cache/driftbench/arena/home/.rigour/settings.json
+
       - name: Label and run tools
         env:
           REPO: ${{ matrix.repo }}

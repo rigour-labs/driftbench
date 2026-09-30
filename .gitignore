@@ -74,3 +74,4 @@ htmlcov/
 
 # Mined training examples (published to Hugging Face, not committed)
 rlaif/intent/data/
+rlaif/review/data/

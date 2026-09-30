@@ -46,6 +46,7 @@ GGUF_FILENAMES = {
     "deep": "rigour-deep-v{version}-q4_k_m.gguf",       # Qwen2.5-Coder-1.5B (full, company-hosted)
     "lite": "rigour-lite-v{version}-q4_k_m.gguf",        # Qwen3.5-0.8B (lightweight sidecar)
     "legacy": "rigour-legacy-v{version}-q4_k_m.gguf",    # Qwen2.5-Coder-0.5B
+    "max": "rigour-max-v{version}-q4_k_m.gguf",          # Qwen2.5-Coder-7B review model
 }
 
 QUANTIZATION = "q4_k_m"  # Same quant level as stock Qwen models
@@ -174,6 +175,7 @@ def _build_model_card(
         "deep": ("Qwen2.5-Coder-1.5B", "Qwen/Qwen2.5-Coder-1.5B-Instruct", "qwen2"),
         "lite": ("Qwen3.5-0.8B", "Qwen/Qwen3.5-0.8B", "qwen3"),
         "legacy": ("Qwen2.5-Coder-0.5B", "Qwen/Qwen2.5-Coder-0.5B-Instruct", "qwen2"),
+        "max": ("Qwen2.5-Coder-7B", "Qwen/Qwen2.5-Coder-7B-Instruct", "qwen2"),
     }
     base_name, base_id, tag = base_map.get(tier, base_map["deep"])
     return f"""---
@@ -230,6 +232,9 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Legacy tier (Qwen2.5-Coder-0.5B, for reproducibility)",
     )
     p.add_argument(
+        "--max", action="store_true", help="Max tier (Qwen2.5-Coder-7B review model)",
+    )
+    p.add_argument(
         "--version", type=str, default="1",
         help="Model version number",
     )
@@ -250,7 +255,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main():
     args = _build_parser().parse_args()
-    tier = "legacy" if args.legacy else ("lite" if args.lite else "deep")
+    tier = "max" if args.max else "legacy" if args.legacy else ("lite" if args.lite else "deep")
     os.makedirs(args.output, exist_ok=True)
 
     # Step 1: Convert HF -> GGUF f16

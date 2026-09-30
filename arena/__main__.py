@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 from arena import pipeline, verdicts
@@ -85,7 +86,16 @@ def _sampled(corpus: Corpus, sample: int) -> Corpus:
 def _rigour_config(name: str) -> RigourConfig:
     spec = json.loads((ROOT / "configs" / f"{name}.json").read_text())
     config = spec.get("config")
-    return RigourConfig(name, (ROOT / "configs" / config) if config else None, tuple(spec.get("flags", [])))
+    return RigourConfig(name, (ROOT / "configs" / config) if config else None, _expand(spec.get("flags", [])))
+
+
+def _expand(flags: list[str]) -> tuple[str, ...]:
+    """Flags may name environment variables (`${RIGOUR_MODEL_PATH}`); a missing one is an error, not a literal."""
+    expanded = tuple(os.path.expandvars(flag) for flag in flags)
+    missing = [flag for flag in expanded if "${" in flag]
+    if missing:
+        raise SystemExit(f"unset environment variable in config flags: {missing}")
+    return expanded
 
 
 def _score(args) -> None:

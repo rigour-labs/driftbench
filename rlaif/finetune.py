@@ -50,6 +50,17 @@ BASE_MODELS = {
     "deep": "Qwen/Qwen2.5-Coder-1.5B-Instruct",      # Full: code pretrain + QLoRA, company-hosted
     "lite": "Qwen/Qwen2.5-Coder-0.5B-Instruct",      # Lite: same arch as deep, runs on any CPU
     "legacy": "Qwen/Qwen2.5-Coder-0.5B-Instruct",    # Previous default, reproducibility
+    "max": "Qwen/Qwen2.5-Coder-7B-Instruct",         # Max: the review model a 16GB laptop runs (4.7GB at q4)
+}
+
+#: Sequence and batch shape per tier. Review prompts carry numbered source and
+#: reference material (~3k tokens), so max trains long sequences one at a time;
+#: a 7B model in 4-bit fits a free 16GB T4 that way.
+TRAINING_SHAPE = {
+    "deep": {"max_length": 1024, "batch_size": 4, "grad_accum": 4},
+    "lite": {"max_length": 1024, "batch_size": 4, "grad_accum": 4},
+    "legacy": {"max_length": 1024, "batch_size": 4, "grad_accum": 4},
+    "max": {"max_length": 4096, "batch_size": 1, "grad_accum": 16},
 }
 
 # QLoRA defaults tuned for code quality analysis
@@ -176,26 +187,28 @@ def _compute_warmup_steps(dataset_size: int, batch_size: int, grad_accum: int,
     return max(1, int(total_steps * ratio))
 
 
-def run_sft(model, tokenizer, sft_dataset, output_dir: str, epochs: int):
+def run_sft(model, tokenizer, sft_dataset, output_dir: str, epochs: int, shape: dict | None = None):
     """Run supervised fine-tuning phase."""
     from trl import SFTTrainer, SFTConfig
 
-    logger.info(f"Starting SFT training ({len(sft_dataset)} examples)")
+    shape = shape or TRAINING_SHAPE["deep"]
+    logger.info(f"Starting SFT training ({len(sft_dataset)} examples, shape {shape})")
 
     dtype_kwargs = _detect_dtype()
-    warmup = _compute_warmup_steps(len(sft_dataset), 4, 4, epochs)
+    warmup = _compute_warmup_steps(len(sft_dataset), shape["batch_size"], shape["grad_accum"], epochs)
 
     training_args = SFTConfig(
         output_dir=os.path.join(output_dir, "sft"),
         num_train_epochs=epochs,
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=4,
+        per_device_train_batch_size=shape["batch_size"],
+        gradient_accumulation_steps=shape["grad_accum"],
+        gradient_checkpointing=shape["batch_size"] == 1,
         learning_rate=2e-4,
         warmup_steps=warmup,
         logging_steps=10,
         save_strategy="epoch",
         **dtype_kwargs,
-        max_length=1024,  # trl >= 0.15 renamed max_seq_length → max_length
+        max_length=shape["max_length"],  # trl >= 0.15 renamed max_seq_length → max_length
     )
 
     trainer = SFTTrainer(
@@ -284,6 +297,10 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Use previous Qwen2.5-Coder-0.5B (for reproducibility)",
     )
     p.add_argument(
+        "--max", action="store_true",
+        help="Qwen2.5-Coder-7B review model (review pairs from rlaif.review; fits a free 16GB T4)",
+    )
+    p.add_argument(
         "--no-4bit", action="store_true",
         help="Disable 4-bit quantization (needs more VRAM)",
     )
@@ -303,7 +320,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def main():
     args = _build_parser().parse_args()
 
-    tier = "legacy" if args.legacy else ("lite" if args.lite else "deep")
+    tier = "max" if args.max else "legacy" if args.legacy else ("lite" if args.lite else "deep")
     base_model = BASE_MODELS[tier]
     logger.info(f"Tier: {tier} | Base model: {base_model}")
 
@@ -326,7 +343,7 @@ def main():
     # Phase 1: SFT
     if sft_dataset and not args.skip_sft:
         model = run_sft(
-            model, tokenizer, sft_dataset, args.output, args.sft_epochs
+            model, tokenizer, sft_dataset, args.output, args.sft_epochs, TRAINING_SHAPE[tier]
         )
 
     # Phase 2: DPO

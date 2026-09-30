@@ -85,3 +85,40 @@ The verifier prevents false positives by requiring structural evidence before ac
 ## CI/CD
 
 The GitHub Actions workflow (`.github/workflows/rlaif-pipeline.yml`) runs weekly and uploads to HuggingFace. See [docs/RLAIF_SETUP.md](../docs/RLAIF_SETUP.md) for secrets setup.
+
+## Max review model: free, measured fine-tuning
+
+The `max` tier is Qwen2.5-Coder-7B, the strongest model a 16GB laptop runs.
+It is fine-tuned on review pairs labelled by later fixes, with no teacher model
+and no API spend, and ships only if it beats the stock model on the Review Arena.
+
+1. **Mine pairs** from training repositories. Evaluation repositories are refused.
+
+   ```bash
+   RIGOUR_CLI=/path/to/rigour/packages/rigour-cli/dist/cli.js \
+     python -m rlaif.review.mine_pairs --repo honojs/hono --max-commits 400
+   python -m rlaif.review.export_sft --out rlaif/data/review_sft.jsonl
+   ```
+
+2. **Train on a free GPU**: a Kaggle notebook with a T4, about 30 GPU-hours a
+   week (Colab works too).
+
+   ```bash
+   pip install torch transformers peft trl datasets bitsandbytes accelerate huggingface_hub
+   python -m rlaif.finetune --max --sft rlaif/data/review_sft.jsonl --dpo "" \
+     --sft-epochs 1 --output rlaif/models/rigour-max
+   python -m rlaif.export_gguf --model rlaif/models/rigour-max/merged --max --version 6.0.0
+   ```
+
+3. **Measure before publishing.** Score the GGUF on the arena against the stock max model:
+
+   ```bash
+   RIGOUR_MODEL_PATH=/path/to/rigour-max-v6.0.0-q4_k_m.gguf \
+     python -m arena run --repo <eval repo> --sample 40 --tool rigour-max-candidate
+   python -m arena run --repo <eval repo> --sample 40 --tool rigour-max
+   python -m arena score --all
+   ```
+
+4. **Publish** only when judged recall beats `rigour-max` and judged precision
+   does not drop. Upload with `export_gguf --upload`, then bump
+   `latest_version.json` last. Rigour picks the model up on its next run.
