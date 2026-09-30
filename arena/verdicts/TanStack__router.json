@@ -360,6 +360,74 @@
    "describes": true,
    "reason": "Describes the nested collector losing retain/strip metadata, the defect the fix repairs."
   },
+  "rigour-branch|6159|semantic-bugs@packages/start-server-core/src/request-response.ts:331|82ac628b2c0e63ba8002134ec04d2afc4b964857": {
+   "describes": true,
+   "reason": "The fix replaces the internal h3 symbol with the public event.res."
+  },
+  "rigour-branch|6343|semantic-bugs@packages/solid-router/src/HeadContent.tsx:236|995168e9d1588683baa4bc0bcf98f56c4522c3cf": {
+   "describes": true,
+   "reason": "The fix replaces the React && idiom with Show in Solid."
+  },
+  "rigour-branch|6505|semantic-bugs@packages/router-core/src/path.ts:267|ebd96af43572e170b26d70a06a8da679cdf29f00": {
+   "describes": true,
+   "reason": "The fix stops destructuring the @internal property that stripInternal removes."
+  },
+  "rigour-branch|6722|semantic-bugs@packages/start-plugin-core/src/import-protection-plugin/virtualModules.ts:201|c099ebf204bbaeab45206379542aa284cf6f5218": {
+   "describes": true,
+   "reason": "The fix stops relying on syntheticNamedExports, unsupported by Rolldown."
+  },
+  "rigour-branch|6746|semantic-bugs@packages/start-plugin-core/src/import-protection-plugin/plugin.ts:910|c099ebf204bbaeab45206379542aa284cf6f5218": {
+   "describes": true,
+   "reason": "The fix stops relying on syntheticNamedExports, unsupported by Rolldown."
+  },
+  "rigour-branch|6865|semantic-bugs@packages/vue-router/src/link.tsx:294|38485038c52ff898777cabeeeb2eaaa29c93f789": {
+   "describes": true,
+   "reason": "The fix restores Link prop reactivity lost to computeds over values built once in setup."
+  },
+  "rigour-branch|6865|semantic-bugs@packages/vue-router/src/link.tsx:325|38485038c52ff898777cabeeeb2eaaa29c93f789": {
+   "describes": true,
+   "reason": "The fix restores Link prop reactivity lost to computeds over values built once in setup."
+  },
+  "rigour-branch|7144|semantic-bugs@packages/react-start-rsc/src/index.rsc.ts:5|d6decca41807e9ca28279e2db6640e7a8bdc1229": {
+   "describes": false,
+   "reason": "It names a different missing export than the renderable types the fix adds."
+  },
+  "rigour-branch|7144|semantic-bugs@packages/react-start/src/index.rsc.ts:1|7fa0f39cabf4407aa1cb99e369566e8ea85554a2": {
+   "describes": true,
+   "reason": "The fix restores useServerFn missing from the react-server entry."
+  },
+  "rigour-branch|7228|semantic-bugs@packages/router-plugin/src/core/hmr/webpack-adapter.ts:73|1e371b60f1832c158ff4953a4ae6c5ccfe8460b3": {
+   "describes": true,
+   "reason": "The fix stops emitting an import of the undeclared react-refresh runtime."
+  },
+  "rigour-branch|7228|semantic-bugs@packages/start-plugin-core/src/rsbuild/normalized-client-build.ts:43|222300b82fe6f2a5e7e7f460ae21a2e35c6230d7": {
+   "describes": true,
+   "reason": "The fix POSIX-normalizes the module path used as the route key on Windows."
+  },
+  "rigour-branch|7253|security-patterns@packages/react-router/src/Asset.tsx:99|cf166d160e6397007a979bfc7065b45ff69ea543": {
+   "describes": false,
+   "reason": "A generic sanitization warning, not the per-render rewrite the fix repairs."
+  },
+  "rigour-branch|7253|semantic-bugs@packages/react-router/src/Asset.tsx:99|cf166d160e6397007a979bfc7065b45ff69ea543": {
+   "describes": true,
+   "reason": "The fix memoizes the __html object that React 19 rewrote on every render."
+  },
+  "rigour-branch|7362|semantic-bugs@packages/solid-start-client/src/GenericHydrate.tsx:171|76239a34b732ca19d1b16d42efb83824b1de1c69": {
+   "describes": true,
+   "reason": "The fix replaces the per-instance document scan with a ref."
+  },
+  "rigour-branch|7447|semantic-bugs@packages/router-core/src/scroll-restoration.ts:197|776d8ef283e5bd9ffe97d43bc3a7f58064cd7e03": {
+   "describes": true,
+   "reason": "The fix stops unconditional bare browser globals that crashed router creation outside a browser."
+  },
+  "rigour-branch|7447|semantic-bugs@packages/router-core/src/scroll-restoration.ts:197|e2dd2049cb42eb219d3b447b8605066d19d9c1fa": {
+   "describes": false,
+   "reason": "The fix separates window and element scroll restoration; a bare global is a different issue."
+  },
+  "rigour-branch|7447|semantic-bugs@packages/router-core/src/scroll-restoration.ts:237|776d8ef283e5bd9ffe97d43bc3a7f58064cd7e03": {
+   "describes": true,
+   "reason": "The fix stops unconditional bare browser globals that crashed router creation outside a browser."
+  },
   "rigour-default|7253|security-patterns@packages/react-router/src/Asset.tsx:99|cf166d160e6397007a979bfc7065b45ff69ea543": {
    "describes": false,
    "reason": "Generic XSS warning on dangerouslySetInnerHTML, not the per-render identity rewrite."

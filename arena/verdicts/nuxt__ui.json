@@ -1,0 +1,343 @@
+{
+ "repo": "nuxt/ui",
+ "fixes": {
+  "007b136a257d03270dff7f7aaf8ab884827ea045": {
+   "real": "no",
+   "needs": null,
+   "reason": "The fixed max-height on select content predates the blamed PR, which only moved the open/close animation classes to a position variant."
+  },
+  "09fb52b73397733a61c1f53dbd035c2ba040145e": {
+   "real": "no",
+   "needs": null,
+   "reason": "Navigation items were keyed by index before PR 6031, which only switched the template to read from the props proxy."
+  },
+  "0a5b433c228f8c08fa13847be147d8f02f7919c8": {
+   "real": "yes",
+   "needs": "execution",
+   "reason": "The new ProsePrompt theme used a non-wrapping row layout that breaks on narrow screens, only visible when rendered at small widths."
+  },
+  "0daacb02fa12e1037dc7db9e404cdb7909d0418d": {
+   "real": "no",
+   "needs": null,
+   "reason": "The header alignment issue is layout behaviour that predates PR 4387, which only rewrote the ui prop references on those template lines."
+  },
+  "0f1074fdaaaaffe821703363073758cda837837f": {
+   "real": "no",
+   "needs": null,
+   "reason": "Parent accordion items never received the per-link disabled flag before PR 4387, which only renamed the ui prop reference on those lines."
+  },
+  "0fabbe5bc426896a18288171e356be43c1a202cd": {
+   "real": "yes",
+   "needs": "intent",
+   "reason": "The PR that introduced function-form slot replacers made app-config replacers discard the whole resolved chain including variants, which the fix changes to replace only the slot's own theme classes."
+  },
+  "1082960e60ae9754e1d947085c2f7efc85793873": {
+   "real": "no",
+   "needs": null,
+   "reason": "The unconditional header wrapper div predates the Theme PR, which only changed its ui class source."
+  },
+  "1350d625d051a4b9c7d54335a9fa3bf78e5924bd": {
+   "real": "no",
+   "needs": null,
+   "reason": "Only handling statusCode/statusMessage predates the Theme PR, which just swapped the ui class source on those lines."
+  },
+  "20f66db8e63f1941ce82acd4cc38fd2c2826cbc7": {
+   "real": "no",
+   "needs": null,
+   "reason": "The slot typing loss is pre-existing; the Theme PR only swapped ui class references on the blamed line."
+  },
+  "255807a4bf95b91e8222ccd8bbc60016ec862c1c": {
+   "real": "no",
+   "needs": null,
+   "reason": "Item-aligned position was never supported; the blamed PRs only touched type casts and ui prop plumbing on those template lines."
+  },
+  "276302eef23a8ea9a2b144aca80e18b6efa55111": {
+   "real": "no",
+   "needs": null,
+   "reason": "Internal links always took rel from NuxtLink's custom-slot props, which drop it; PR 6060 only added type casts, and PR 6310 added a separate branch for external links."
+  },
+  "2799fa6f2b25ce3eb15e050f3ef7c57d0d9a2fdb": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "PR 6026 named its new boolean prop autocomplete, which shadows the native input attribute of the same name and chooses the root props once at setup, so they don't react when the mode changes."
+  },
+  "27a3ef7ea5f688b42815595e6c49469f900e3a20": {
+   "real": "partial",
+   "needs": "local",
+   "reason": "The anchor as-child and theme variant already keyed on the raw multiple flag before PR 6643, but that PR spread the same inconsistency into the new data-slot logic so autocomplete plus multiple lost the base slot; PR 6474 only renamed the condition."
+  },
+  "29f9890b359b07e1e9fa55025c2d632ee8045c69": {
+   "real": "no",
+   "needs": null,
+   "reason": "The wrong xs size and the invalid text-md class existed in the theme before PR 6582, which only hoisted them into shared size maps."
+  },
+  "2c4ff352d81660cc8e7f665b69e90f9e4e4bd05c": {
+   "real": "no",
+   "needs": null,
+   "reason": "The fragment template around the custom slot, which gives the component more than one root node, predates PR 6060; that PR only changed how slot props were typed."
+  },
+  "2d4782ba926ff911a2a7178372c062a3e7150fff": {
+   "real": "no",
+   "needs": null,
+   "reason": "Passing a resolved default into the controlled model-value binding (freezing uncontrolled usage) predates the blamed PR, which only changed generics and the optional-modifier assignment."
+  },
+  "2dac77803466b79a12a2c806c90a6b48b75a5a63": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "The PR switched the inline color style tag priority to a relative critical value, which changed its ordering relative to other head tags under Unhead's weighting and was later reverted."
+  },
+  "2e8f533dc684531844e3fa7a5ef7c0e53b7b6797": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "The loading, empty and expanded rows already counted every column including hidden ones, and PR 6217 copied that into its new virtual padding rows; PR 6031 only renamed the ui prop reference."
+  },
+  "3c55cf230dc623bdbfd1918357ec04f137afd290": {
+   "real": "no",
+   "needs": null,
+   "reason": "The dialog title and description fallbacks to the same locale keys existed before PR 6031, which only switched them to read from props."
+  },
+  "3cee61016931bb4411c5a6b6b5934fe974836f5c": {
+   "real": "no",
+   "needs": null,
+   "reason": "Index-based keys on tabs content predate PR 4387, which only changed the class binding on that line."
+  },
+  "3d2de0ce790f3fd90a95447b7145bf25c9ee4b3a": {
+   "real": "no",
+   "needs": null,
+   "reason": "Forwarding emits to the slider root existed before via the emits-forwarding helper; the PR merely swapped helpers and a later template reorder exposed the duplicate emit."
+  },
+  "51793a80190a6d271c00699abb8ab346cf58c527": {
+   "real": "yes",
+   "needs": "intent",
+   "reason": "PR 6171 introduced the shimmer component with a single left-to-right background animation and no right-to-left variant."
+  },
+  "578a12f67f45a2b2f922f69cd26ca29521d89058": {
+   "real": "no",
+   "needs": null,
+   "reason": "The div inside the button predates the Theme PR, which only changed the ui class reference."
+  },
+  "57f7699315833854a4f4421c60763d365805e0e7": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed PR only added data-slot forwarding on the root element; the missing post method on the form predates it."
+  },
+  "5afbd5c9aeaffe427c90b7e97249c8e1de9acf04": {
+   "real": "no",
+   "needs": null,
+   "reason": "Transition events not firing from the overlay in scrollable mode predates the PR, which only renamed the ui class reference on the overlay line."
+  },
+  "5d82418c56e956a9f1b684b48f9bf40197cdf3aa": {
+   "real": "no",
+   "needs": null,
+   "reason": "The Thai chatReasoning strings added by the PR were only reordered by the fix, whose actual wording change is to an unrelated key."
+  },
+  "6caa6a9522d50b301ca031e760b2d53f714eb87b": {
+   "real": "no",
+   "needs": null,
+   "reason": "The trapped focus scope that auto-focuses the search input on open predates PR 6031, which only changed the class binding on that line."
+  },
+  "6d6737af38d517f1d5bae9a4a0e063d169c17890": {
+   "real": "no",
+   "needs": null,
+   "reason": "The falsy-coalescing assignment that turns zero into null or undefined existed before; the blamed PR only tightened the optional-modifier condition around it."
+  },
+  "6dd0fc4ef3f22f2c8343650cbf93241ad051e220": {
+   "real": "no",
+   "needs": null,
+   "reason": "The pixel size lookup from the raw size prop, which ignores theme-resolved sizes, predates PR 4387, which only changed the root class binding."
+  },
+  "6f7af3e0f9e12ef949d1767f064644ede056135e": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "Unwrapping nullable nested types in the PR let the key-path type recurse into more non-plain object types, worsening an over-introspection that already existed."
+  },
+  "726e1420accfa81d2c438074dab2212a92e956c7": {
+   "real": "no",
+   "needs": null,
+   "reason": "The duplicate accordion trigger logic predates the PR, which only prefixed orientation and collapsed with props."
+  },
+  "75b37d0bc9985c4975f1547cdc2f815534d5ceef": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "PR 5746 added a circuit check that reads the raw highlightVariant prop, so an app-config default variant never enables the circuit mask; the other blamed PRs either already resolved app config or only refactored older checkbox and radio code."
+  },
+  "7c4c6e3568f074cfee7a603e034895892a8ab252": {
+   "real": "no",
+   "needs": null,
+   "reason": "The heading element was always rendered without a title check before PR 6031, which only rewrote its class binding."
+  },
+  "88baabcf42b115b7da1a65e5f71092a37b5c9bf3": {
+   "real": "no",
+   "needs": null,
+   "reason": "The attribute fall-through loss came from a later change making Separator multi-root; the blamed PR only refactored class and prop references."
+  },
+  "898fbced395417871897359077cb0944986f3e70": {
+   "real": "no",
+   "needs": null,
+   "reason": "The PR only added non-null assertions to the highlight calls; the unconditional token splitting lives in the highlight utility and predates it."
+  },
+  "89f7778e216833b09342ebf3681fff59d2462d25": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "PR 5384 moved mdc setup to module dependencies and marked mdc as non-optional whenever content was enabled, which forces users to install that package even though the old code only merged options."
+  },
+  "906e8fd49f2dbf664133c79f2ebe5569e63d627e": {
+   "real": "no",
+   "needs": null,
+   "reason": "The missing fallback when the i18n localePath helper returns an empty value dates from the original auto-localization PR; the blamed PR only added a locale argument to that call."
+  },
+  "9b08a84f1d00493681cdae4f883d3a241b70a761": {
+   "real": "no",
+   "needs": null,
+   "reason": "The broken vertical RTL keyframe and physical left/right gradient classes predate both PRs, which only added a motion-safe prefix and tweaked docs sizing classes."
+  },
+  "9b91ee40b06092ce193bb94ca3913c2143dc8ac0": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "The new Sidebar component copied the existing Header/DashboardSidebar default that prevents dialog auto-focus, propagating the focus-trap defect."
+  },
+  "9ea37c1653cf0fdae78a2edd7dd95fcb85b2a033": {
+   "real": "no",
+   "needs": null,
+   "reason": "The clear button never checked the disabled state before the PR, which only renamed prop and ui references."
+  },
+  "a494a97daf9d9dffe9dc38c4755c8964e666ed46": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The PR added a hardcoded post method on the Form root even when it renders as a div for nested forms, which the fix gates on the parent-bus check already used nearby."
+  },
+  "a71dece0fdc332c06f0de4b7f4e8d1fa00559cb8": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "PR 6538 added an items watcher that re-highlights the first entry on any items change, which scrolls the list back to the top on infinite-scroll appends even when create-item is not in use."
+  },
+  "ab203db1d50ae4b880d6c6aae367230539695205": {
+   "real": "no",
+   "needs": null,
+   "reason": "The left-aligned tier and header text existed before PR 6111, which only appended layout classes to the same theme line."
+  },
+  "ae693d0e243eea4e585b5667fc027c97edca16da": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "The absolute negative tagPriority already existed in the runtime colors plugin and the docs theme plugin, and PR 6038 copied it into new docs inline styles, which pushed meta tags down."
+  },
+  "b808ce4661f5232357615fcb40d7d9be8ad1ceb1": {
+   "real": "no",
+   "needs": null,
+   "reason": "Copying only the code prop predates the Theme PR, which only refactored the ui class reference."
+  },
+  "bbf1e14906158453db54e1692740372edf092268": {
+   "real": "no",
+   "needs": null,
+   "reason": "The user and assistant Pick types already omitted color before PR 6391, which only switched the base type to the generic props."
+  },
+  "c3bef7a21bdd67343492f01e874044e59894b95b": {
+   "real": "no",
+   "needs": null,
+   "reason": "Binding id and attrs on the combobox root instead of the trigger predates the PR, which only refactored prop access."
+  },
+  "c4ee0ea3164a965940ab2f058fab47e8c756444a": {
+   "real": "no",
+   "needs": null,
+   "reason": "This restores prefetching after Nuxt 4.5 stopped prefetching custom links, an upstream framework change rather than a defect added by PR 6060's type-cast edits."
+  },
+  "d2d7543b7fdeecd44639602aba5c13bc5bfa1e8e": {
+   "real": "no",
+   "needs": null,
+   "reason": "The heuristic for detecting a streaming reasoning part predates PR 6176, which only renamed it and added the tool helper that the fix merely moved."
+  },
+  "dde09d06486e68b1b4dd4538f91fefd08a3d7548": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The auto-localization PR passed every internal string path through the i18n localePath helper, which re-prefixes paths that already carry a locale code."
+  },
+  "e333e8d424a21b86ede888fb29172fdc7aacc0a4": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed lines are translation strings added by various PRs, and the fix renames the Tajik locale file and code and corrects native names elsewhere, so the blame is rename noise."
+  },
+  "e791d302bac0a761d1e53a281cc99d669bc823ee": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The PRs that made inputs responsive re-pinned fixed text-sm/text-xs base classes in the select theme, so selects (which extend the input theme) skipped the responsive sizing and fixed variant."
+  },
+  "eb468e6095e36eaf0ad3209660637e0e664856b0": {
+   "real": "no",
+   "needs": null,
+   "reason": "The content slot never had an overflow-wrap rule; PR 6460 only moved min-w-0 to the new body wrapper, so long unbroken words overflowed before it too."
+  },
+  "ed2f955f092b6213ba2c3a4750260433f0edc2c6": {
+   "real": "no",
+   "needs": null,
+   "reason": "Omitting the locale prop from these wrappers was a deliberate pre-existing choice and restoring it is an enhancement; the blamed lines were only touched by unrelated type/range changes."
+  },
+  "f317c7f6b2b6c9d1050bc9d2e94a58116ddb70e9": {
+   "real": "no",
+   "needs": null,
+   "reason": "ProseKbd never had a default slot and always required value; PR 6031 only changed how props were read on that template line."
+  },
+  "f3c2ac21fb4d97de862d87febdc9dcfa375826bc": {
+   "real": "no",
+   "needs": null,
+   "reason": "Form aria attributes were already bound on the slider root before PR 6031, which only touched the thumb lines for the ui prop rename."
+  },
+  "f51b1e8809b5a35e9e3583db7a433cd7dd2c8f97": {
+   "real": "no",
+   "needs": null,
+   "reason": "The hardcoded unprefixed utility classes predate the PR, which only renamed ui prop references on those lines."
+  },
+  "f5e58fb7baae38ca2cedf589af3b625b73e247f3": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "PR 6031 introduced the prop-resolution chain that puts withDefaults above app-config defaultVariants, which formalized an ordering that already kept pinned props from following global variants, and the fix reverses it."
+  },
+  "f639b19db25161ce0cd34f0e21c3303f8fe3caf8": {
+   "real": "partial",
+   "needs": "local",
+   "reason": "The async-search mapping added by the PR only tracked root and immediate parent, dropping intermediate ancestors, but it mirrored the pre-existing parent-only logic in the file mapper that the fix also changes."
+  }
+ },
+ "pairs": {
+  "coderabbit|5537|3101485190|dde09d06486e68b1b4dd4538f91fefd08a3d7548": {
+   "describes": true,
+   "reason": "It warns that already-localized paths get re-localized and suggests a locale opt-out, matching the double-prefix fix."
+  },
+  "coderabbit|6026|2883004305|2799fa6f2b25ce3eb15e050f3ef7c57d0d9a2fdb": {
+   "describes": true,
+   "reason": "It flags that the root prop forwarding is chosen once at setup and does not react to mode changes, which the fix repaired by making it computed."
+  },
+  "coderabbit|6026|2884179165|2799fa6f2b25ce3eb15e050f3ef7c57d0d9a2fdb": {
+   "describes": false,
+   "reason": "It asks for the initial search term to fall back to defaultValue, which the fix does not address."
+  },
+  "coderabbit|6026|2889221072|2799fa6f2b25ce3eb15e050f3ef7c57d0d9a2fdb": {
+   "describes": false,
+   "reason": "It concerns model value typing in autocomplete mode, not the prop name clashing with the HTML attribute or the reactivity problem."
+  },
+  "coderabbit|6031|3162147324|0fabbe5bc426896a18288171e356be43c1a202cd": {
+   "describes": false,
+   "reason": "It concerns prose-prefixed lookups in scaffolded templates, unrelated to replacers dropping variants."
+  },
+  "coderabbit|6040|2807806767|e791d302bac0a761d1e53a281cc99d669bc823ee": {
+   "describes": true,
+   "reason": "It flags that select md/lg sizes stay text-sm on mobile unlike the responsive input sizes, which is the defect fixed."
+  },
+  "coderabbit|6060|2814838120|2d4782ba926ff911a2a7178372c062a3e7150fff": {
+   "describes": false,
+   "reason": "It notes a no-op nullish assignment, not the frozen uncontrolled default-value behaviour."
+  },
+  "coderabbit|6217|2961943979|2e8f533dc684531844e3fa7a5ef7c0e53b7b6797": {
+   "describes": false,
+   "reason": "It flags inconsistent null handling between the virtual row key and the row prop, not colspan counting hidden columns."
+  },
+  "coderabbit|6404|3148622380|906e8fd49f2dbf664133c79f2ebe5569e63d627e": {
+   "describes": false,
+   "reason": "It covers locale-prefix detection with query or hash, not the empty localePath result needing a fallback."
+  },
+  "coderabbit|6512|3311611312|a494a97daf9d9dffe9dc38c4755c8964e666ed46": {
+   "describes": false,
+   "reason": "It asks to let consumers override the method, not to omit it on nested div forms."
+  }
+ },
+ "spot_check": {}
+}
