@@ -18,7 +18,7 @@ jobs:
           python-version: "3.13"
       - run: pip install pytest
       - name: Unit tests (arena, eval gate, rlaif)
-        run: python -m pytest arena/tests evalgate/tests rlaif/tests rlaif/intent/tests rlaif/rules/tests -q
+        run: python -m pytest arena/tests evalgate/tests rlaif/tests rlaif/intent/tests rlaif/rules/tests rlaif/review/tests -q
       - name: Published data carries no answer-revealing comments
         run: |
           python -m kaggle_benchmark.export_dataset
