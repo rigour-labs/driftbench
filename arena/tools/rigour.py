@@ -20,7 +20,13 @@ from arena.gitrepo import Git
 from arena.repos import CACHE
 from arena.score import Finding
 
+#: Per-PR limit on one Rigour run. The local 7B tier (--max) reads each file
+#: twice and self-checks, so it needs longer: set ARENA_RIGOUR_TIMEOUT_S.
 TIMEOUT_S = 600
+
+
+def _timeout() -> int:
+    return int(os.environ.get("ARENA_RIGOUR_TIMEOUT_S", TIMEOUT_S))
 
 
 @dataclass(frozen=True)
@@ -67,7 +73,11 @@ def _run(tree: Path, diff: Path, cfg: RigourConfig) -> RigourRun:
     env = {**os.environ, "HOME": os.environ.get("ARENA_RIGOUR_HOME", str(CACHE / "home"))}
     Path(env["HOME"]).mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
-    result = subprocess.run(args, cwd=tree, env=env, capture_output=True, text=True, timeout=TIMEOUT_S, check=False)
+    try:
+        result = subprocess.run(args, cwd=tree, env=env, capture_output=True, text=True, timeout=_timeout(), check=False)
+    except subprocess.TimeoutExpired:
+        # One slow PR is a recorded error, never the end of the whole run.
+        return RigourRun([], time.monotonic() - started, "error", f"timed out after {_timeout()}s")
     seconds = time.monotonic() - started
     try:
         report = json.loads(result.stdout)
