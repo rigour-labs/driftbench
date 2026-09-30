@@ -16,43 +16,25 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import shutil
-import subprocess
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
 from arena.gitrepo import Commit, Git
 from arena.repos import clone
-from arena.score import in_scope
-from arena.szz import MAX_FIX_FILES, is_fix
+from rlaif.fixtrees import code_files, mineable, refuse_eval_repo, run_rigour, split, write_pair
 from rlaif.intent.pairing import label_fix
 
 ROOT = Path(__file__).resolve().parent
-JS_TS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts")
 BATCH_FIXES = 50
 
 
-def rigour_command() -> list[str]:
-    cli = os.environ.get("RIGOUR_CLI")
-    if cli:
-        return ["node", cli]
-    return ["npx", "--yes", f"@rigour-labs/cli@{os.environ.get('RIGOUR_VERSION', 'latest')}"]
-
-
-def eval_repos() -> set[str]:
-    data = json.loads((ROOT.parent / "repos_training.json").read_text())
-    blocked = data.get("_eval_repos_DO_NOT_ADD", []) if isinstance(data, dict) else []
-    return {r.lower() for r in blocked}
-
-
 def mine(repo: str, max_fixes: int | None = None) -> list[dict]:
-    if repo.lower() in eval_repos():
-        raise SystemExit(f"{repo} is an evaluation repository; it must not become training data")
+    refuse_eval_repo(repo)
     git = clone(repo)
     root = git.run("rev-list", "--max-parents=0", "HEAD").split()[-1]
-    fixes = [c for c in git.first_parent_history(root, "HEAD") if _mineable(c)]
+    fixes = [c for c in git.first_parent_history(root, "HEAD") if mineable(c)]
     if max_fixes:
         fixes = fixes[-max_fixes:]
     examples: list[dict] = []
@@ -61,18 +43,10 @@ def mine(repo: str, max_fixes: int | None = None) -> list[dict]:
     return examples
 
 
-def _mineable(commit: Commit) -> bool:
-    return is_fix(commit.subject) and 0 < len(commit.files) <= MAX_FIX_FILES and bool(_code_files(commit))
-
-
-def _code_files(commit: Commit) -> list[str]:
-    return [f for f in commit.files if f.endswith(JS_TS) and in_scope(f, "code")]
-
-
 def _mine_batch(git: Git, repo: str, fixes: list[Commit]) -> list[dict]:
     tree = Path(tempfile.mkdtemp(prefix="intent-mine-"))
     try:
-        written = [w for fix in fixes for path in _code_files(fix) for w in _write_pair(git, tree, fix, path)]
+        written = [w for fix in fixes for path in code_files(fix) for w in write_pair(git, tree, fix, path)]
         sites = _export(tree, written)
         subjects = {fix.sha: fix.subject for fix in fixes}
         return [
@@ -84,34 +58,15 @@ def _mine_batch(git: Git, repo: str, fixes: list[Commit]) -> list[dict]:
         shutil.rmtree(tree, ignore_errors=True)
 
 
-def _write_pair(git: Git, tree: Path, fix: Commit, path: str) -> list[str]:
-    """Both versions of a file, or nothing when the fix added or deleted it."""
-    before = git.run("show", f"{fix.parent}:{path}", check=False)
-    after = git.run("show", f"{fix.sha}:{path}", check=False)
-    if not before or not after:
-        return []
-    written = []
-    for side, text in (("before", before), ("after", after)):
-        target = tree / fix.sha / side / path
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(text)
-        written.append(str(target.relative_to(tree)))
-    return written
-
-
 def _export(tree: Path, files: list[str]) -> list[dict]:
-    if not files:
-        return []
-    result = subprocess.run([*rigour_command(), "export-training-sites", *files], cwd=tree,
-                            capture_output=True, text=True, check=True)
-    return [json.loads(line) for line in result.stdout.splitlines() if line.startswith("{")]
+    return run_rigour(tree, ["export-training-sites", *files]) if files else []
 
 
 def _group(sites: list[dict]) -> dict[tuple[str, str], dict[str, list[dict]]]:
     """Sites keyed by (fix sha, original path) and side; paths are `<sha>/<side>/<path>`."""
     grouped: dict[tuple[str, str], dict[str, list[dict]]] = {}
     for site in sites:
-        sha, side, path = site["file"].split("/", 2)
+        sha, side, path = split(site["file"])
         grouped.setdefault((sha, path), {}).setdefault(side, []).append(site)
     return grouped
 

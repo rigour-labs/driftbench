@@ -19,8 +19,3 @@ def test_evaluation_repositories_are_refused_before_cloning(monkeypatch):
     monkeypatch.setattr(mine, "clone", lambda repo: pytest.fail("cloned an evaluation repository"))
     with pytest.raises(SystemExit, match="evaluation repository"):
         mine.mine("Lodash/Lodash")
-
-
-def test_rigour_cli_override_runs_the_local_build(monkeypatch):
-    monkeypatch.setenv("RIGOUR_CLI", "/x/cli.js")
-    assert mine.rigour_command() == ["node", "/x/cli.js"]
