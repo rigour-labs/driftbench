@@ -1,0 +1,4897 @@
+{
+ "repo": "nuxt/ui",
+ "snapshot_sha": "57f7699315833854a4f4421c60763d365805e0e7",
+ "mined_at": "2026-09-30T09:23:26+00:00",
+ "min_age_days": 60,
+ "prs": [
+  {
+   "number": 6785,
+   "url": "https://github.com/nuxt/ui/pull/6785",
+   "merge_sha": "8aa804167e5d4e8a618feb0a370e3481e223af8a",
+   "head_sha": "6b2cd9bcfbe496f902997d1faad7d688ed7ea15c",
+   "merged_at": "2026-07-31T13:44:32Z",
+   "reviewed_commits": [
+    "6b2cd9bcfbe496f902997d1faad7d688ed7ea15c"
+   ],
+   "comments": [
+    {
+     "id": 3690719788,
+     "url": "https://github.com/nuxt/ui/pull/6785#discussion_r3690719788",
+     "path": "test/bench/button-link.bench.ts",
+     "start": 34,
+     "end": 46,
+     "commit": "6b2cd9bcfbe496f902997d1faad7d688ed7ea15c",
+     "category": "\ud83d\ude80 Performance & Scalability",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6781,
+   "url": "https://github.com/nuxt/ui/pull/6781",
+   "merge_sha": "4ee416f8d479316a5f5b233b5e6604c875af048a",
+   "head_sha": "be31b921d8e7c775c4486a7e5127a9871deebfe3",
+   "merged_at": "2026-07-30T14:55:22Z",
+   "reviewed_commits": [
+    "3aac1d5915bacac8ec412070aef16765294c0026"
+   ],
+   "comments": [
+    {
+     "id": 3683339973,
+     "url": "https://github.com/nuxt/ui/pull/6781#discussion_r3683339973",
+     "path": "docs/server/api/ai.post.ts",
+     "start": 454,
+     "end": 462,
+     "commit": "3aac1d5915bacac8ec412070aef16765294c0026",
+     "category": "\ud83d\udd12 Security & Privacy",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3683339987,
+     "url": "https://github.com/nuxt/ui/pull/6781#discussion_r3683339987",
+     "path": "docs/server/utils/chatUser.ts",
+     "start": 13,
+     "end": 15,
+     "commit": "3aac1d5915bacac8ec412070aef16765294c0026",
+     "category": "\ud83d\udd12 Security & Privacy",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6778,
+   "url": "https://github.com/nuxt/ui/pull/6778",
+   "merge_sha": "706cfd0db7584bcb6aeb55cb0e5dcfa628e45fbf",
+   "head_sha": "a5925b4ca1bf5271324af3a536bbdcc05f3c2e9d",
+   "merged_at": "2026-07-29T10:00:00Z",
+   "reviewed_commits": [
+    "0868346f6d3937b96ae90ae00ca5b80ae763a8f6",
+    "93e9f9bb2ff22ba3babdb9d9d8e7aae4ef4bc077"
+   ],
+   "comments": [
+    {
+     "id": 3672478356,
+     "url": "https://github.com/nuxt/ui/pull/6778#discussion_r3672478356",
+     "path": "src/theme/content/content-toc.ts",
+     "start": 13,
+     "end": 13,
+     "commit": "0868346f6d3937b96ae90ae00ca5b80ae763a8f6",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3672786461,
+     "url": "https://github.com/nuxt/ui/pull/6778#discussion_r3672786461",
+     "path": "src/theme/content/content-toc.ts",
+     "start": 13,
+     "end": 13,
+     "commit": "93e9f9bb2ff22ba3babdb9d9d8e7aae4ef4bc077",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6764,
+   "url": "https://github.com/nuxt/ui/pull/6764",
+   "merge_sha": "c4b786c952de69ca650807b7d5fcba7cf8114e28",
+   "head_sha": "426e0d302b5ffef8922314ef1bdeadb6fb1afe5b",
+   "merged_at": "2026-07-30T10:08:10Z",
+   "reviewed_commits": [
+    "47eaa8136d838af69734ba065e6c35b12aca858d"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6742,
+   "url": "https://github.com/nuxt/ui/pull/6742",
+   "merge_sha": "735b264e4df8565d05cd522df36406df35fe5896",
+   "head_sha": "e297537dc45962d5e77d297c0b78ac7ffe0bc7a9",
+   "merged_at": "2026-07-31T12:43:28Z",
+   "reviewed_commits": [
+    "506b7eeeadfa9a40f737c2978eafdf757755cdc0"
+   ],
+   "comments": [
+    {
+     "id": 3684501626,
+     "url": "https://github.com/nuxt/ui/pull/6742#discussion_r3684501626",
+     "path": "src/theme/slideover.ts",
+     "start": 91,
+     "end": 109,
+     "commit": "506b7eeeadfa9a40f737c2978eafdf757755cdc0",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3684501633,
+     "url": "https://github.com/nuxt/ui/pull/6742#discussion_r3684501633",
+     "path": "src/theme/toaster.ts",
+     "start": 4,
+     "end": 4,
+     "commit": "506b7eeeadfa9a40f737c2978eafdf757755cdc0",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6737,
+   "url": "https://github.com/nuxt/ui/pull/6737",
+   "merge_sha": "4200e80c03719d0b6e36e2d3957575bf1c24bc7d",
+   "head_sha": "ae572cadd09eadbfd2fd0a817c35c369cd3d0527",
+   "merged_at": "2026-07-31T14:41:07Z",
+   "reviewed_commits": [
+    "03a5208bf50d14957de3cfc5e85544e484543381",
+    "05272d77c682bc663198fc95224cb1c8ed4c5b73",
+    "3cb40a29e33e875aa86d4a3126434147525af3f4"
+   ],
+   "comments": [
+    {
+     "id": 3588339772,
+     "url": "https://github.com/nuxt/ui/pull/6737#discussion_r3588339772",
+     "path": "test/utils/tv.spec.ts",
+     "start": 162,
+     "end": 165,
+     "commit": "05272d77c682bc663198fc95224cb1c8ed4c5b73",
+     "category": "\ud83d\udcd0 Maintainability & Code Quality",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3683179576,
+     "url": "https://github.com/nuxt/ui/pull/6737#discussion_r3683179576",
+     "path": "src/runtime/utils/tv.ts",
+     "start": 125,
+     "end": 126,
+     "commit": "3cb40a29e33e875aa86d4a3126434147525af3f4",
+     "category": "\ud83e\ude7a Stability & Availability",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3689961494,
+     "url": "https://github.com/nuxt/ui/pull/6737#discussion_r3689961494",
+     "path": "test/utils/tv.spec.ts",
+     "start": 241,
+     "end": 249,
+     "commit": "03a5208bf50d14957de3cfc5e85544e484543381",
+     "category": "\ud83d\udcd0 Maintainability & Code Quality",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6736,
+   "url": "https://github.com/nuxt/ui/pull/6736",
+   "merge_sha": "6bd1dfc86c88645801f8485a43c4241635770c84",
+   "head_sha": "79b6681d406e093ed1e01f7d749868885970cb26",
+   "merged_at": "2026-07-30T15:17:27Z",
+   "reviewed_commits": [
+    "98ef573e6a96403de8bb6a7c64d12c8bd04f7dba"
+   ],
+   "comments": [
+    {
+     "id": 3683154868,
+     "url": "https://github.com/nuxt/ui/pull/6736#discussion_r3683154868",
+     "path": "src/runtime/components/Select.vue",
+     "start": 204,
+     "end": 204,
+     "commit": "98ef573e6a96403de8bb6a7c64d12c8bd04f7dba",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6730,
+   "url": "https://github.com/nuxt/ui/pull/6730",
+   "merge_sha": "14b60013ddc094c8e7cee5a3633a57d26c5842e6",
+   "head_sha": "8016741ef79665103e70905efe25ffaf48c99c0e",
+   "merged_at": "2026-07-15T08:48:05Z",
+   "reviewed_commits": [
+    "4e5601267b30cc55c9d0d4a4da0452c7b28cf9a0"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6728,
+   "url": "https://github.com/nuxt/ui/pull/6728",
+   "merge_sha": "f546b2c9008044a48e4e9a1d08e9082d5012b200",
+   "head_sha": "645065d993c5607729902ea8925698e5791bba29",
+   "merged_at": "2026-07-15T08:48:26Z",
+   "reviewed_commits": [
+    "d29069d16b5a3fef9dbc1f5cda50b69582cccd79"
+   ],
+   "comments": [
+    {
+     "id": 3578257088,
+     "url": "https://github.com/nuxt/ui/pull/6728#discussion_r3578257088",
+     "path": ".github/workflows/benchmark.yml",
+     "start": 25,
+     "end": 35,
+     "commit": "d29069d16b5a3fef9dbc1f5cda50b69582cccd79",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3578257099,
+     "url": "https://github.com/nuxt/ui/pull/6728#discussion_r3578257099",
+     "path": "test/bench/components.bench.ts",
+     "start": 26,
+     "end": 30,
+     "commit": "d29069d16b5a3fef9dbc1f5cda50b69582cccd79",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6724,
+   "url": "https://github.com/nuxt/ui/pull/6724",
+   "merge_sha": "317901253dfd02a857ebdba632816445ba45afef",
+   "head_sha": "fb220d68af16d00d242a55e875f1c940ca51c662",
+   "merged_at": "2026-07-15T08:38:19Z",
+   "reviewed_commits": [
+    "6f4c826d117236120a98940110e36cf8110587bc",
+    "c76a0bc171dff3848315a8cf4df5d0a0bb6f13ef"
+   ],
+   "comments": [
+    {
+     "id": 3571172120,
+     "url": "https://github.com/nuxt/ui/pull/6724#discussion_r3571172120",
+     "path": "src/theme/sidebar.ts",
+     "start": 29,
+     "end": 34,
+     "commit": "6f4c826d117236120a98940110e36cf8110587bc",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3571669255,
+     "url": "https://github.com/nuxt/ui/pull/6724#discussion_r3571669255",
+     "path": "src/theme/content/content-surround.ts",
+     "start": 15,
+     "end": 19,
+     "commit": "c76a0bc171dff3848315a8cf4df5d0a0bb6f13ef",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6723,
+   "url": "https://github.com/nuxt/ui/pull/6723",
+   "merge_sha": "f95152949ac6762aa61610482892bd6551a21593",
+   "head_sha": "a810883442f7f1e7ef566cbec8130f892fd71631",
+   "merged_at": "2026-07-13T12:53:14Z",
+   "reviewed_commits": [
+    "a810883442f7f1e7ef566cbec8130f892fd71631"
+   ],
+   "comments": [
+    {
+     "id": 3570684385,
+     "url": "https://github.com/nuxt/ui/pull/6723#discussion_r3570684385",
+     "path": "docs/content/docs/2.components/progress.md",
+     "start": 98,
+     "end": 100,
+     "commit": "a810883442f7f1e7ef566cbec8130f892fd71631",
+     "category": "\ud83d\udcd0 Maintainability & Code Quality",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6712,
+   "url": "https://github.com/nuxt/ui/pull/6712",
+   "merge_sha": "7e6d8b0e69c6de392c2df45008f4722c1eda740d",
+   "head_sha": "3fc3fc25b51aed3b0dbe7a7140e19eb7070aff82",
+   "merged_at": "2026-07-10T12:47:14Z",
+   "reviewed_commits": [
+    "3fc3fc25b51aed3b0dbe7a7140e19eb7070aff82"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6709,
+   "url": "https://github.com/nuxt/ui/pull/6709",
+   "merge_sha": "123184b5c72fd3f7d4b6c032a6dd4b52a5046e6e",
+   "head_sha": "f63c87d89a323c16910f08a8c558452d0e8a98bd",
+   "merged_at": "2026-07-10T13:50:34Z",
+   "reviewed_commits": [
+    "f63c87d89a323c16910f08a8c558452d0e8a98bd"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6707,
+   "url": "https://github.com/nuxt/ui/pull/6707",
+   "merge_sha": "86cd25c5cadacfbbe63d04195a4fb05fec9702d9",
+   "head_sha": "1d11a486bdfc75f8c1e131fd9b51aa1a01915e8c",
+   "merged_at": "2026-07-13T08:48:03Z",
+   "reviewed_commits": [
+    "1d11a486bdfc75f8c1e131fd9b51aa1a01915e8c"
+   ],
+   "comments": [
+    {
+     "id": 3552500907,
+     "url": "https://github.com/nuxt/ui/pull/6707#discussion_r3552500907",
+     "path": "docs/content/docs/2.components/empty.md",
+     "start": 114,
+     "end": 114,
+     "commit": "1d11a486bdfc75f8c1e131fd9b51aa1a01915e8c",
+     "category": "\ud83d\udcd0 Maintainability & Code Quality",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6704,
+   "url": "https://github.com/nuxt/ui/pull/6704",
+   "merge_sha": "4c607453fe405705e715c24801939bdc7acf6ba6",
+   "head_sha": "c33a0d2cd8ddfc297bb448bbf87806ad779f7078",
+   "merged_at": "2026-07-09T12:36:31Z",
+   "reviewed_commits": [
+    "41059d8f9c0c130d40c816b5e4a8fd12469e5c83"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6703,
+   "url": "https://github.com/nuxt/ui/pull/6703",
+   "merge_sha": "76ee17697fdf2bf7a2e79fbe3c2d389b05934163",
+   "head_sha": "038f4cdca476a435d4896bc97a874d4ec6d887fe",
+   "merged_at": "2026-07-09T14:38:35Z",
+   "reviewed_commits": [
+    "f04f589d93b57da88fd6d0753996a99dd22fd87b"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6701,
+   "url": "https://github.com/nuxt/ui/pull/6701",
+   "merge_sha": "c257686a254906f7ffd333ed5da29c112924f7dd",
+   "head_sha": "41e61c65c6bf26b59cc2e6e5586663bc3bd1bc61",
+   "merged_at": "2026-07-09T12:15:28Z",
+   "reviewed_commits": [
+    "5dffcbaa1f3a205baeab409ff9a31bb0d801f26c"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6698,
+   "url": "https://github.com/nuxt/ui/pull/6698",
+   "merge_sha": "71c623b900a2b0997b60304e43e73397fea11dac",
+   "head_sha": "82c485a1d6ae0a5b740824a87b8457b993a16973",
+   "merged_at": "2026-07-09T12:36:51Z",
+   "reviewed_commits": [
+    "817a8d0ad983e24fa466e89bd92d085a6add8042"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6694,
+   "url": "https://github.com/nuxt/ui/pull/6694",
+   "merge_sha": "1a3a9dc35b6a4e7a3aea57d93532b155de51c0ec",
+   "head_sha": "68947f537e08641dae48da77f4208020a1343647",
+   "merged_at": "2026-07-09T09:02:13Z",
+   "reviewed_commits": [
+    "d5b1e48c65f3168dbb86974d1aa0fa72911d12f2"
+   ],
+   "comments": [
+    {
+     "id": 3545496961,
+     "url": "https://github.com/nuxt/ui/pull/6694#discussion_r3545496961",
+     "path": "docs/app/components/content/examples/chat/ChatToolApprovalExample.vue",
+     "start": 24,
+     "end": 46,
+     "commit": "d5b1e48c65f3168dbb86974d1aa0fa72911d12f2",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3545496975,
+     "url": "https://github.com/nuxt/ui/pull/6694#discussion_r3545496975",
+     "path": "docs/app/components/content/examples/chat/ChatToolApprovalExample.vue",
+     "start": 54,
+     "end": 75,
+     "commit": "d5b1e48c65f3168dbb86974d1aa0fa72911d12f2",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3545496987,
+     "url": "https://github.com/nuxt/ui/pull/6694#discussion_r3545496987",
+     "path": "playgrounds/nuxt/app/pages/chat.vue",
+     "start": 46,
+     "end": 50,
+     "commit": "d5b1e48c65f3168dbb86974d1aa0fa72911d12f2",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3545496998,
+     "url": "https://github.com/nuxt/ui/pull/6694#discussion_r3545496998",
+     "path": "playgrounds/nuxt/server/api/chat.post.ts",
+     "start": 18,
+     "end": 22,
+     "commit": "d5b1e48c65f3168dbb86974d1aa0fa72911d12f2",
+     "category": "\ud83d\uddc4\ufe0f Data Integrity & Integration",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6693,
+   "url": "https://github.com/nuxt/ui/pull/6693",
+   "merge_sha": "7bdcb1381c7cb55c7fd602545b3ddc4461b19c43",
+   "head_sha": "71812497f3622803f82a5c8cb84a611d082f1fe4",
+   "merged_at": "2026-07-08T13:38:05Z",
+   "reviewed_commits": [
+    "71812497f3622803f82a5c8cb84a611d082f1fe4"
+   ],
+   "comments": [
+    {
+     "id": 3544267106,
+     "url": "https://github.com/nuxt/ui/pull/6693#discussion_r3544267106",
+     "path": "src/runtime/components/prose/Prompt.vue",
+     "start": 17,
+     "end": 20,
+     "commit": "71812497f3622803f82a5c8cb84a611d082f1fe4",
+     "category": "\ud83d\udcd0 Maintainability & Code Quality",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6684,
+   "url": "https://github.com/nuxt/ui/pull/6684",
+   "merge_sha": "d7284f3a3f284fc4be3dc9f09b24a91bbf1e0d14",
+   "head_sha": "f05c057066c002e60b8c6d87e88fc507b3180907",
+   "merged_at": "2026-07-06T09:40:45Z",
+   "reviewed_commits": [
+    "f05c057066c002e60b8c6d87e88fc507b3180907"
+   ],
+   "comments": [
+    {
+     "id": 3527762256,
+     "url": "https://github.com/nuxt/ui/pull/6684#discussion_r3527762256",
+     "path": "docs/package.json",
+     "start": 53,
+     "end": 53,
+     "commit": "f05c057066c002e60b8c6d87e88fc507b3180907",
+     "category": "\ud83d\udd12 Security & Privacy",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6677,
+   "url": "https://github.com/nuxt/ui/pull/6677",
+   "merge_sha": "276302eef23a8ea9a2b144aca80e18b6efa55111",
+   "head_sha": "ee712cf1706b702ae9f4e471eecdb7fe28f58ec7",
+   "merged_at": "2026-07-06T13:10:33Z",
+   "reviewed_commits": [
+    "1d0cb42f211854800e387752dbb68879560474e1",
+    "72776cd2d4e1a197c7259f56d95a4f936d0800df"
+   ],
+   "comments": [
+    {
+     "id": 3528879992,
+     "url": "https://github.com/nuxt/ui/pull/6677#discussion_r3528879992",
+     "path": "src/runtime/components/Link.vue",
+     "start": 211,
+     "end": 214,
+     "commit": "72776cd2d4e1a197c7259f56d95a4f936d0800df",
+     "category": "\ud83d\udd12 Security & Privacy",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6668,
+   "url": "https://github.com/nuxt/ui/pull/6668",
+   "merge_sha": "269080a85dc877a2140bdc951c32ccd5626f4684",
+   "head_sha": "9cd366a4afb4f7d672aeb04c7135c2e0f305349f",
+   "merged_at": "2026-07-02T15:57:54Z",
+   "reviewed_commits": [
+    "21ba4813f95306c7226fa968e29326934b49d982"
+   ],
+   "comments": [
+    {
+     "id": 3514329453,
+     "url": "https://github.com/nuxt/ui/pull/6668#discussion_r3514329453",
+     "path": "src/runtime/components/LinkBase.vue",
+     "start": 8,
+     "end": 8,
+     "commit": "21ba4813f95306c7226fa968e29326934b49d982",
+     "category": "\ud83d\uddc4\ufe0f Data Integrity & Integration",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6657,
+   "url": "https://github.com/nuxt/ui/pull/6657",
+   "merge_sha": "7e6d0f767666be718ae32709a029cfe456fb660b",
+   "head_sha": "dc2e9b1211b43f6a5647d166a00992cf7e53d24c",
+   "merged_at": "2026-06-30T13:31:57Z",
+   "reviewed_commits": [
+    "049d29f7de801b5847e0381d9d328b98df3d1d2c",
+    "26918b81ffba9db4c16e6579ac846d5c6606ef59",
+    "5a9b37e44e80dd6a758dfe8c1fc30424b0c7beb5",
+    "aa24709744d9e7229eae691bf3806c14defad059"
+   ],
+   "comments": [
+    {
+     "id": 3492493981,
+     "url": "https://github.com/nuxt/ui/pull/6657#discussion_r3492493981",
+     "path": "src/runtime/components/Table.vue",
+     "start": 718,
+     "end": 725,
+     "commit": "aa24709744d9e7229eae691bf3806c14defad059",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3495355462,
+     "url": "https://github.com/nuxt/ui/pull/6657#discussion_r3495355462",
+     "path": "docs/app/components/content/examples/scroll-area/ScrollAreaExternalScrollExample.vue",
+     "start": 183,
+     "end": 188,
+     "commit": "26918b81ffba9db4c16e6579ac846d5c6606ef59",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6650,
+   "url": "https://github.com/nuxt/ui/pull/6650",
+   "merge_sha": "a84de85b2a017c8692e6da889291c06d5015c115",
+   "head_sha": "07bbf82ff7d547ff33a1396dc935a8f4fc3e6de7",
+   "merged_at": "2026-06-29T12:41:36Z",
+   "reviewed_commits": [
+    "07bbf82ff7d547ff33a1396dc935a8f4fc3e6de7",
+    "249ccd5d615ac2861568e7625b8bff11fec566d1",
+    "3265cc4bdbedeca2ff650e984d8f8b6c3adfd2bc"
+   ],
+   "comments": [
+    {
+     "id": 3489073835,
+     "url": "https://github.com/nuxt/ui/pull/6650#discussion_r3489073835",
+     "path": "docs/app/components/content/examples/scroll-area/ScrollAreaExternalScrollExample.vue",
+     "start": 10,
+     "end": 15,
+     "commit": "3265cc4bdbedeca2ff650e984d8f8b6c3adfd2bc",
+     "category": "\ud83d\udd12 Security & Privacy",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3489073840,
+     "url": "https://github.com/nuxt/ui/pull/6650#discussion_r3489073840",
+     "path": "docs/app/components/content/examples/scroll-area/ScrollAreaExternalScrollExample.vue",
+     "start": 65,
+     "end": 68,
+     "commit": "3265cc4bdbedeca2ff650e984d8f8b6c3adfd2bc",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3489073842,
+     "url": "https://github.com/nuxt/ui/pull/6650#discussion_r3489073842",
+     "path": "docs/content/docs/2.components/scroll-area.md",
+     "start": 156,
+     "end": 156,
+     "commit": "3265cc4bdbedeca2ff650e984d8f8b6c3adfd2bc",
+     "category": "\ud83d\udcd0 Maintainability & Code Quality",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6648,
+   "url": "https://github.com/nuxt/ui/pull/6648",
+   "merge_sha": "6576fb81dd34c25a8e6b2209b9df9b2bf935f99b",
+   "head_sha": "2d4975b3bbe4b5aeefade39daf21d8042facf4e5",
+   "merged_at": "2026-06-29T09:01:03Z",
+   "reviewed_commits": [
+    "ab54d4468d136c935ef675e3c38b4deb7f48c758"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6643,
+   "url": "https://github.com/nuxt/ui/pull/6643",
+   "merge_sha": "c9c5232238f483f51b1be30128fa1c548a7b0329",
+   "head_sha": "b17361a432849b87a0e979ffa012780093b6021e",
+   "merged_at": "2026-07-06T14:14:03Z",
+   "reviewed_commits": [
+    "ab828105692bcc90e1f52303ca0671482bdb3b8c"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6641,
+   "url": "https://github.com/nuxt/ui/pull/6641",
+   "merge_sha": "88baabcf42b115b7da1a65e5f71092a37b5c9bf3",
+   "head_sha": "f866a271073061764a1441278acc1fd266c2cf4e",
+   "merged_at": "2026-06-26T15:38:33Z",
+   "reviewed_commits": [
+    "0fcec449601b8ad06c7898698bc514db2f87dcf4"
+   ],
+   "comments": [
+    {
+     "id": 3482125579,
+     "url": "https://github.com/nuxt/ui/pull/6641#discussion_r3482125579",
+     "path": "src/runtime/components/Separator.vue",
+     "start": 107,
+     "end": 107,
+     "commit": "0fcec449601b8ad06c7898698bc514db2f87dcf4",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3482125598,
+     "url": "https://github.com/nuxt/ui/pull/6641#discussion_r3482125598",
+     "path": "test/components/Separator.spec.ts",
+     "start": 29,
+     "end": 45,
+     "commit": "0fcec449601b8ad06c7898698bc514db2f87dcf4",
+     "category": "\ud83e\ude7a Stability & Availability",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6636,
+   "url": "https://github.com/nuxt/ui/pull/6636",
+   "merge_sha": "dfbbfeb5a9ab3cbaf9582ba3393cceb1584baa5e",
+   "head_sha": "c16a141efdc528d90580c0d889d09e02c5e94ed0",
+   "merged_at": "2026-07-02T13:48:44Z",
+   "reviewed_commits": [
+    "11e60d6e942beab792e89ec7e2ecc921fb2411da"
+   ],
+   "comments": [
+    {
+     "id": 3513137920,
+     "url": "https://github.com/nuxt/ui/pull/6636#discussion_r3513137920",
+     "path": "docs/package.json",
+     "start": 12,
+     "end": 15,
+     "commit": "11e60d6e942beab792e89ec7e2ecc921fb2411da",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3513137926,
+     "url": "https://github.com/nuxt/ui/pull/6636#discussion_r3513137926",
+     "path": "playgrounds/nuxt/app/pages/chat.vue",
+     "start": 38,
+     "end": 43,
+     "commit": "11e60d6e942beab792e89ec7e2ecc921fb2411da",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6635,
+   "url": "https://github.com/nuxt/ui/pull/6635",
+   "merge_sha": "dcf7cbc0918dcf55ad4e93929ebe4949dd5ac17c",
+   "head_sha": "48977fffb3ac5b1b207dc2a244cb26cfe75fa142",
+   "merged_at": "2026-07-07T13:26:59Z",
+   "reviewed_commits": [
+    "406f40ee4f3c654eeb444d2ec06241eac930fb47",
+    "cb856a68dbc3b7f900585d6f369bc8b389f95d18"
+   ],
+   "comments": [
+    {
+     "id": 3499694766,
+     "url": "https://github.com/nuxt/ui/pull/6635#discussion_r3499694766",
+     "path": "src/plugins/icons.ts",
+     "start": 115,
+     "end": 118,
+     "commit": "406f40ee4f3c654eeb444d2ec06241eac930fb47",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3499694796,
+     "url": "https://github.com/nuxt/ui/pull/6635#discussion_r3499694796",
+     "path": "src/plugins/icons.ts",
+     "start": 141,
+     "end": 146,
+     "commit": "406f40ee4f3c654eeb444d2ec06241eac930fb47",
+     "category": "\ud83e\ude7a Stability & Availability",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6633,
+   "url": "https://github.com/nuxt/ui/pull/6633",
+   "merge_sha": "8d46034c19474e62e5dbc25b5efb3f887d615c58",
+   "head_sha": "104f53240b6f9bf75a30d1548233ece49b617eb5",
+   "merged_at": "2026-06-30T12:39:56Z",
+   "reviewed_commits": [
+    "1b9050c1f3e1688ffadb9c961ab3822c8f9fefff"
+   ],
+   "comments": [
+    {
+     "id": 3497985429,
+     "url": "https://github.com/nuxt/ui/pull/6633#discussion_r3497985429",
+     "path": "docs/content/docs/1.getting-started/6.integrations/1.icons/1.nuxt.md",
+     "start": 135,
+     "end": 137,
+     "commit": "1b9050c1f3e1688ffadb9c961ab3822c8f9fefff",
+     "category": "\ud83d\udcd0 Maintainability & Code Quality",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6628,
+   "url": "https://github.com/nuxt/ui/pull/6628",
+   "merge_sha": "d3b5f1d3f966e92f9194e1e114f5c84ea1e8cbaa",
+   "head_sha": "f09567b75ec0e242c06194cb1b3a4bce744cc4c9",
+   "merged_at": "2026-06-24T14:40:27Z",
+   "reviewed_commits": [
+    "9b2661f78b922e5d349728d386a7f4af1083e232"
+   ],
+   "comments": [
+    {
+     "id": 3450324872,
+     "url": "https://github.com/nuxt/ui/pull/6628#discussion_r3450324872",
+     "path": "src/runtime/components/BlogPost.vue",
+     "start": 128,
+     "end": 128,
+     "commit": "9b2661f78b922e5d349728d386a7f4af1083e232",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3450324879,
+     "url": "https://github.com/nuxt/ui/pull/6628#discussion_r3450324879",
+     "path": "src/runtime/components/PageFeature.vue",
+     "start": 80,
+     "end": 80,
+     "commit": "9b2661f78b922e5d349728d386a7f4af1083e232",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3450324884,
+     "url": "https://github.com/nuxt/ui/pull/6628#discussion_r3450324884",
+     "path": "src/runtime/components/prose/Card.vue",
+     "start": 61,
+     "end": 61,
+     "commit": "9b2661f78b922e5d349728d386a7f4af1083e232",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3450324899,
+     "url": "https://github.com/nuxt/ui/pull/6628#discussion_r3450324899",
+     "path": "src/runtime/components/User.vue",
+     "start": 76,
+     "end": 76,
+     "commit": "9b2661f78b922e5d349728d386a7f4af1083e232",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6582,
+   "url": "https://github.com/nuxt/ui/pull/6582",
+   "merge_sha": "ca3c72eb6606da882a6aba5c9f35a3ff0dddf820",
+   "head_sha": "b68395c9d3ebd9dd21d08672c5fef9a9c81e6ad6",
+   "merged_at": "2026-06-11T17:00:04Z",
+   "reviewed_commits": [
+    "293f1986c06790e49539c2b6ff60dc98eae80f1d",
+    "c45e18ce24777d6f444377b87f4d809c287b447a"
+   ],
+   "comments": [
+    {
+     "id": 3389699177,
+     "url": "https://github.com/nuxt/ui/pull/6582#discussion_r3389699177",
+     "path": "docs/content/docs/2.components/calendar.md",
+     "start": 58,
+     "end": 58,
+     "commit": "293f1986c06790e49539c2b6ff60dc98eae80f1d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6579,
+   "url": "https://github.com/nuxt/ui/pull/6579",
+   "merge_sha": "02259a6ae963408b2a971722b9b66d225a0505f3",
+   "head_sha": "fdc8f37b72c537760e6fbb86d021b8c104ef6a12",
+   "merged_at": "2026-06-12T09:13:13Z",
+   "reviewed_commits": [
+    "d79944a8cc09389fc7d7bc8ce7cca9e16224302a"
+   ],
+   "comments": [
+    {
+     "id": 3387278439,
+     "url": "https://github.com/nuxt/ui/pull/6579#discussion_r3387278439",
+     "path": "src/runtime/components/CommandPalette.vue",
+     "start": 448,
+     "end": 461,
+     "commit": "d79944a8cc09389fc7d7bc8ce7cca9e16224302a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6575,
+   "url": "https://github.com/nuxt/ui/pull/6575",
+   "merge_sha": "e8d18c37a0ebfe527ddc8fc38846d68f52e273be",
+   "head_sha": "9c44d20bc224a75950fdb724c39132cde935dc2b",
+   "merged_at": "2026-06-09T13:04:54Z",
+   "reviewed_commits": [
+    "9c44d20bc224a75950fdb724c39132cde935dc2b"
+   ],
+   "comments": [
+    {
+     "id": 3380603699,
+     "url": "https://github.com/nuxt/ui/pull/6575#discussion_r3380603699",
+     "path": "test/components/Select.spec.ts",
+     "start": 225,
+     "end": 243,
+     "commit": "9c44d20bc224a75950fdb724c39132cde935dc2b",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6570,
+   "url": "https://github.com/nuxt/ui/pull/6570",
+   "merge_sha": "9e5b8a6bff4f9f12fc6282b450466ec68dc9017d",
+   "head_sha": "d288819912524878f116f9a37a2768377e155063",
+   "merged_at": "2026-06-09T08:26:36Z",
+   "reviewed_commits": [
+    "f87a4e2b0fbf068e4b22a766d3c2efccf9960019"
+   ],
+   "comments": [
+    {
+     "id": 3374185169,
+     "url": "https://github.com/nuxt/ui/pull/6570#discussion_r3374185169",
+     "path": "docs/app/components/FrameworkTabs.vue",
+     "start": 23,
+     "end": 23,
+     "commit": "f87a4e2b0fbf068e4b22a766d3c2efccf9960019",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 3374185191,
+     "url": "https://github.com/nuxt/ui/pull/6570#discussion_r3374185191",
+     "path": "src/theme/tabs.ts",
+     "start": 85,
+     "end": 85,
+     "commit": "f87a4e2b0fbf068e4b22a766d3c2efccf9960019",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6565,
+   "url": "https://github.com/nuxt/ui/pull/6565",
+   "merge_sha": "52d3c45478d1cfc88e288a093407d459ccf5ad48",
+   "head_sha": "361343ba0ec104567ea61723a5bfca4e8bf56b8b",
+   "merged_at": "2026-06-12T15:42:08Z",
+   "reviewed_commits": [
+    "789421b6fc8c3880b3a71103cc2c725c0097c0bf",
+    "bfde9008438ef02ad3a08fe2205d5668677a3a3b"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6562,
+   "url": "https://github.com/nuxt/ui/pull/6562",
+   "merge_sha": "ea576e2f321665574c416af34e7ef04e68654a79",
+   "head_sha": "8ba7dc55a50d3ac9c4ca7aa1263d4a66e35b31cc",
+   "merged_at": "2026-06-08T15:50:02Z",
+   "reviewed_commits": [
+    "610b3ea0ae74a259ae870ca7637f0b9ba655e57c"
+   ],
+   "comments": [
+    {
+     "id": 3373596802,
+     "url": "https://github.com/nuxt/ui/pull/6562#discussion_r3373596802",
+     "path": "src/runtime/utils/tv.ts",
+     "start": 65,
+     "end": 73,
+     "commit": "610b3ea0ae74a259ae870ca7637f0b9ba655e57c",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6557,
+   "url": "https://github.com/nuxt/ui/pull/6557",
+   "merge_sha": "dc0515128ee6783b6cebd410c85a3e405fb7872a",
+   "head_sha": "5a70fc2cdf3b28a775f7ad97c2d2ae217134e000",
+   "merged_at": "2026-06-05T14:54:09Z",
+   "reviewed_commits": [
+    "00e8370f1d7c7f374cef32fada311a1d70f064d5",
+    "5a70fc2cdf3b28a775f7ad97c2d2ae217134e000"
+   ],
+   "comments": [
+    {
+     "id": 3362553925,
+     "url": "https://github.com/nuxt/ui/pull/6557#discussion_r3362553925",
+     "path": "src/runtime/components/Popover.vue",
+     "start": 125,
+     "end": 127,
+     "commit": "00e8370f1d7c7f374cef32fada311a1d70f064d5",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3362553936,
+     "url": "https://github.com/nuxt/ui/pull/6557#discussion_r3362553936",
+     "path": "src/runtime/composables/useTour.ts",
+     "start": 126,
+     "end": 129,
+     "commit": "00e8370f1d7c7f374cef32fada311a1d70f064d5",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3362553953,
+     "url": "https://github.com/nuxt/ui/pull/6557#discussion_r3362553953",
+     "path": "src/runtime/composables/useTour.ts",
+     "start": 144,
+     "end": 147,
+     "commit": "00e8370f1d7c7f374cef32fada311a1d70f064d5",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6538,
+   "url": "https://github.com/nuxt/ui/pull/6538",
+   "merge_sha": "0414dd0d1ba694962562efdabfb60c135ab742ad",
+   "head_sha": "859c16c5382f646734af9dcbc4cfcc5ac68b72c1",
+   "merged_at": "2026-06-03T12:55:01Z",
+   "reviewed_commits": [
+    "859c16c5382f646734af9dcbc4cfcc5ac68b72c1"
+   ],
+   "comments": [
+    {
+     "id": 3341061554,
+     "url": "https://github.com/nuxt/ui/pull/6538#discussion_r3341061554",
+     "path": "src/runtime/components/InputMenu.vue",
+     "start": 539,
+     "end": 550,
+     "commit": "859c16c5382f646734af9dcbc4cfcc5ac68b72c1",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3341061570,
+     "url": "https://github.com/nuxt/ui/pull/6538#discussion_r3341061570",
+     "path": "src/runtime/components/SelectMenu.vue",
+     "start": 497,
+     "end": 508,
+     "commit": "859c16c5382f646734af9dcbc4cfcc5ac68b72c1",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6531,
+   "url": "https://github.com/nuxt/ui/pull/6531",
+   "merge_sha": "f0571c3786cdddb54712bb89154f8482e0c3c62e",
+   "head_sha": "5eb5077a28e76985f03408f5881cbe8eb46939c2",
+   "merged_at": "2026-06-01T10:13:59Z",
+   "reviewed_commits": [
+    "5eb5077a28e76985f03408f5881cbe8eb46939c2"
+   ],
+   "comments": [
+    {
+     "id": 3332764873,
+     "url": "https://github.com/nuxt/ui/pull/6531#discussion_r3332764873",
+     "path": "src/templates.ts",
+     "start": 326,
+     "end": 326,
+     "commit": "5eb5077a28e76985f03408f5881cbe8eb46939c2",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6521,
+   "url": "https://github.com/nuxt/ui/pull/6521",
+   "merge_sha": "80bd0cc05e64bc1932fe9b421bf7bc255019f689",
+   "head_sha": "f90a1aad0f879087f40a44c67a4d655f66fbd1df",
+   "merged_at": "2026-05-28T15:21:28Z",
+   "reviewed_commits": [
+    "1accddcc3a1911db9de960732e9be049ff754934",
+    "f90a1aad0f879087f40a44c67a4d655f66fbd1df"
+   ],
+   "comments": [
+    {
+     "id": 3318739433,
+     "url": "https://github.com/nuxt/ui/pull/6521#discussion_r3318739433",
+     "path": "docs/app/components/header/Header.vue",
+     "start": 14,
+     "end": 19,
+     "commit": "1accddcc3a1911db9de960732e9be049ff754934",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3318739451,
+     "url": "https://github.com/nuxt/ui/pull/6521#discussion_r3318739451",
+     "path": "docs/app/components/header/Header.vue",
+     "start": 15,
+     "end": 17,
+     "commit": "1accddcc3a1911db9de960732e9be049ff754934",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3318739455,
+     "url": "https://github.com/nuxt/ui/pull/6521#discussion_r3318739455",
+     "path": "docs/app/components/header/Header.vue",
+     "start": 17,
+     "end": 17,
+     "commit": "1accddcc3a1911db9de960732e9be049ff754934",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6512,
+   "url": "https://github.com/nuxt/ui/pull/6512",
+   "merge_sha": "7a0825ad6a17627ce4c6dd860df3cebb7cf1d813",
+   "head_sha": "a80e3189425fb0796a2721faaf7692a6d8725617",
+   "merged_at": "2026-05-28T08:27:16Z",
+   "reviewed_commits": [
+    "a80e3189425fb0796a2721faaf7692a6d8725617"
+   ],
+   "comments": [
+    {
+     "id": 3311611312,
+     "url": "https://github.com/nuxt/ui/pull/6512#discussion_r3311611312",
+     "path": "src/runtime/components/Form.vue",
+     "start": 465,
+     "end": 465,
+     "commit": "a80e3189425fb0796a2721faaf7692a6d8725617",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6502,
+   "url": "https://github.com/nuxt/ui/pull/6502",
+   "merge_sha": "d0cfc2b1b23ea0c93c6579eeb7de1f6f0ed6e138",
+   "head_sha": "925b9fd7e903b63c5880a7f6094135d9fbc95c4d",
+   "merged_at": "2026-05-26T14:01:24Z",
+   "reviewed_commits": [
+    "53f1958851a9a4de99e4cdecebd7d1e6cc99eed2",
+    "925b9fd7e903b63c5880a7f6094135d9fbc95c4d"
+   ],
+   "comments": [
+    {
+     "id": 3303468235,
+     "url": "https://github.com/nuxt/ui/pull/6502#discussion_r3303468235",
+     "path": "docs/content/showcase.yml",
+     "start": 72,
+     "end": 73,
+     "commit": "53f1958851a9a4de99e4cdecebd7d1e6cc99eed2",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3304145592,
+     "url": "https://github.com/nuxt/ui/pull/6502#discussion_r3304145592",
+     "path": "docs/content/showcase.yml",
+     "start": 12,
+     "end": 13,
+     "commit": "925b9fd7e903b63c5880a7f6094135d9fbc95c4d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6495,
+   "url": "https://github.com/nuxt/ui/pull/6495",
+   "merge_sha": "d50c121c05372082a7414d205d612513e89d3af7",
+   "head_sha": "37bc735dfb1298389b3a3ed0442fb3f7e6f98053",
+   "merged_at": "2026-05-26T08:36:22Z",
+   "reviewed_commits": [
+    "37bc735dfb1298389b3a3ed0442fb3f7e6f98053"
+   ],
+   "comments": [
+    {
+     "id": 3295884434,
+     "url": "https://github.com/nuxt/ui/pull/6495#discussion_r3295884434",
+     "path": "src/runtime/components/Icon.vue",
+     "start": 15,
+     "end": 15,
+     "commit": "37bc735dfb1298389b3a3ed0442fb3f7e6f98053",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6484,
+   "url": "https://github.com/nuxt/ui/pull/6484",
+   "merge_sha": "af80a674a5061dea3272ea113fa497d698fc184b",
+   "head_sha": "e8de2ade45bb78e9b4ec0451cc4597d5bd8a15ec",
+   "merged_at": "2026-06-04T15:23:45Z",
+   "reviewed_commits": [
+    "e8de2ade45bb78e9b4ec0451cc4597d5bd8a15ec"
+   ],
+   "comments": [
+    {
+     "id": 3287774254,
+     "url": "https://github.com/nuxt/ui/pull/6484#discussion_r3287774254",
+     "path": "src/theme/sidebar.ts",
+     "start": 20,
+     "end": 26,
+     "commit": "e8de2ade45bb78e9b4ec0451cc4597d5bd8a15ec",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6474,
+   "url": "https://github.com/nuxt/ui/pull/6474",
+   "merge_sha": "2799fa6f2b25ce3eb15e050f3ef7c57d0d9a2fdb",
+   "head_sha": "a2736ad1fec70ef34192cfceca0432858bbb7df1",
+   "merged_at": "2026-05-21T09:59:05Z",
+   "reviewed_commits": [
+    "b81a02a5dae4248284182be6231534ca50e77975"
+   ],
+   "comments": [
+    {
+     "id": 3279995976,
+     "url": "https://github.com/nuxt/ui/pull/6474#discussion_r3279995976",
+     "path": "src/runtime/components/InputMenu.vue",
+     "start": 285,
+     "end": 286,
+     "commit": "b81a02a5dae4248284182be6231534ca50e77975",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6472,
+   "url": "https://github.com/nuxt/ui/pull/6472",
+   "merge_sha": "b0461e72dccd57503a5c4cfab0b84b33c53a693c",
+   "head_sha": "7207135bea18d9e1ef35e38561d1c18cbe620eeb",
+   "merged_at": "2026-05-20T17:01:40Z",
+   "reviewed_commits": [
+    "7207135bea18d9e1ef35e38561d1c18cbe620eeb"
+   ],
+   "comments": [
+    {
+     "id": 3275392428,
+     "url": "https://github.com/nuxt/ui/pull/6472#discussion_r3275392428",
+     "path": "docs/server/utils/transformMDC.ts",
+     "start": 315,
+     "end": 356,
+     "commit": "7207135bea18d9e1ef35e38561d1c18cbe620eeb",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6460,
+   "url": "https://github.com/nuxt/ui/pull/6460",
+   "merge_sha": "48685b6fa645bb0db694b2f789e6bd43af116dfc",
+   "head_sha": "1c6f192a29883a7f9a44e20fe78e386595fae694",
+   "merged_at": "2026-05-21T12:57:27Z",
+   "reviewed_commits": [
+    "74217abe667eb51b8e30bb7504d246bbd6e5c708",
+    "785f4ae8fe729661055955556ee68a693eab7192",
+    "ef888d57df62131ff74c5428e8d4714ee616970a"
+   ],
+   "comments": [
+    {
+     "id": 3266983764,
+     "url": "https://github.com/nuxt/ui/pull/6460#discussion_r3266983764",
+     "path": "docs/content/docs/2.components/chat-message.md",
+     "start": 116,
+     "end": 116,
+     "commit": "74217abe667eb51b8e30bb7504d246bbd6e5c708",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3266983789,
+     "url": "https://github.com/nuxt/ui/pull/6460#discussion_r3266983789",
+     "path": "playgrounds/nuxt/app/pages/chat.vue",
+     "start": 60,
+     "end": 71,
+     "commit": "74217abe667eb51b8e30bb7504d246bbd6e5c708",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 3266983810,
+     "url": "https://github.com/nuxt/ui/pull/6460#discussion_r3266983810",
+     "path": "src/runtime/components/ChatMessage.vue",
+     "start": 119,
+     "end": 120,
+     "commit": "74217abe667eb51b8e30bb7504d246bbd6e5c708",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3267011169,
+     "url": "https://github.com/nuxt/ui/pull/6460#discussion_r3267011169",
+     "path": "playgrounds/nuxt/app/pages/components/chat-message.vue",
+     "start": 3,
+     "end": 6,
+     "commit": "ef888d57df62131ff74c5428e8d4714ee616970a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 6432,
+   "url": "https://github.com/nuxt/ui/pull/6432",
+   "merge_sha": "a1bef8babc7eab2ebdf4e34d3d5205cb3053a1c7",
+   "head_sha": "4d5792cf7d532b8a6ad114665c9c90057541a5be",
+   "merged_at": "2026-05-19T13:52:39Z",
+   "reviewed_commits": [
+    "c739e2d16c64eb8830ab563258023ce01cb9f439"
+   ],
+   "comments": [
+    {
+     "id": 3265725524,
+     "url": "https://github.com/nuxt/ui/pull/6432#discussion_r3265725524",
+     "path": "docs/content/docs/2.components/content-search.md",
+     "start": 42,
+     "end": 42,
+     "commit": "c739e2d16c64eb8830ab563258023ce01cb9f439",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3265725529,
+     "url": "https://github.com/nuxt/ui/pull/6432#discussion_r3265725529",
+     "path": "src/runtime/components/content/ContentSearch.vue",
+     "start": 168,
+     "end": 182,
+     "commit": "c739e2d16c64eb8830ab563258023ce01cb9f439",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3265725535,
+     "url": "https://github.com/nuxt/ui/pull/6432#discussion_r3265725535",
+     "path": "src/runtime/composables/useContentSearch.ts",
+     "start": 6,
+     "end": 6,
+     "commit": "c739e2d16c64eb8830ab563258023ce01cb9f439",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3265725550,
+     "url": "https://github.com/nuxt/ui/pull/6432#discussion_r3265725550",
+     "path": "src/runtime/composables/useContentSearch.ts",
+     "start": 83,
+     "end": 83,
+     "commit": "c739e2d16c64eb8830ab563258023ce01cb9f439",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6423,
+   "url": "https://github.com/nuxt/ui/pull/6423",
+   "merge_sha": "5b6f86c548ca0c593e4ebd4594ff13725aabfdb9",
+   "head_sha": "15077082c7807bdc4ba364342fba818cbca655d8",
+   "merged_at": "2026-05-05T17:09:36Z",
+   "reviewed_commits": [
+    "01e04b78972c29ed5698103b72b148949eb30adc",
+    "15077082c7807bdc4ba364342fba818cbca655d8"
+   ],
+   "comments": [
+    {
+     "id": 3189753993,
+     "url": "https://github.com/nuxt/ui/pull/6423#discussion_r3189753993",
+     "path": "skills/nuxt-ui/references/guidelines/component-selection.md",
+     "start": 88,
+     "end": 88,
+     "commit": "01e04b78972c29ed5698103b72b148949eb30adc",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3189929968,
+     "url": "https://github.com/nuxt/ui/pull/6423#discussion_r3189929968",
+     "path": "skills/nuxt-ui/references/components.md",
+     "start": 158,
+     "end": 158,
+     "commit": "15077082c7807bdc4ba364342fba818cbca655d8",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6422,
+   "url": "https://github.com/nuxt/ui/pull/6422",
+   "merge_sha": "f0636262acd5c9cbc68086fc77bb6244b1a45e80",
+   "head_sha": "f177e3bb76ce8ba33b71deea6c6aca96db42914e",
+   "merged_at": "2026-05-05T09:07:36Z",
+   "reviewed_commits": [
+    "f177e3bb76ce8ba33b71deea6c6aca96db42914e"
+   ],
+   "comments": [
+    {
+     "id": 3187042993,
+     "url": "https://github.com/nuxt/ui/pull/6422#discussion_r3187042993",
+     "path": "docs/server/routes/.well-known/mcp/server-card.json.get.ts",
+     "start": 7,
+     "end": 7,
+     "commit": "f177e3bb76ce8ba33b71deea6c6aca96db42914e",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6415,
+   "url": "https://github.com/nuxt/ui/pull/6415",
+   "merge_sha": "844660ad8e092ac9108d6172e0492178f726ed15",
+   "head_sha": "f3647919195fa6469e8412749cfbdfa38ba95bbe",
+   "merged_at": "2026-05-05T14:12:35Z",
+   "reviewed_commits": [
+    "2ec33b7f59094185fd5871d9d448a2a1a3263ad0",
+    "722e5f41e58d8c65dd35056a9b202aa54fe62077"
+   ],
+   "comments": [
+    {
+     "id": 3178107482,
+     "url": "https://github.com/nuxt/ui/pull/6415#discussion_r3178107482",
+     "path": "docs/content/docs/2.components/separator.md",
+     "start": 50,
+     "end": 50,
+     "commit": "2ec33b7f59094185fd5871d9d448a2a1a3263ad0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3178107485,
+     "url": "https://github.com/nuxt/ui/pull/6415#discussion_r3178107485",
+     "path": "src/runtime/components/Separator.vue",
+     "start": 67,
+     "end": 70,
+     "commit": "2ec33b7f59094185fd5871d9d448a2a1a3263ad0",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3178107486,
+     "url": "https://github.com/nuxt/ui/pull/6415#discussion_r3178107486",
+     "path": "src/theme/separator.ts",
+     "start": 37,
+     "end": 41,
+     "commit": "2ec33b7f59094185fd5871d9d448a2a1a3263ad0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6412,
+   "url": "https://github.com/nuxt/ui/pull/6412",
+   "merge_sha": "6e96375851898a9c3c389ad8326a767cffb6d6f8",
+   "head_sha": "8bcb04d1fa7cf36c9e01f6ce7b58df33f16051bc",
+   "merged_at": "2026-04-30T15:27:54Z",
+   "reviewed_commits": [
+    "658090bb9321e0631270d49f22f250e7a5b450bd",
+    "901eb9a311f5209aa8d429520955ec62bfdff728",
+    "fa126f339c801f6f3c0a47f1128ecf0eacc5883a"
+   ],
+   "comments": [
+    {
+     "id": 3168517195,
+     "url": "https://github.com/nuxt/ui/pull/6412#discussion_r3168517195",
+     "path": "docs/app/pages/docs/[...slug].vue",
+     "start": 77,
+     "end": 83,
+     "commit": "658090bb9321e0631270d49f22f250e7a5b450bd",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6407,
+   "url": "https://github.com/nuxt/ui/pull/6407",
+   "merge_sha": "c6ce8ca4bee4cb399aef54ee4ba477f3fa4f5ebe",
+   "head_sha": "fe649c1f4b6db9874de93fb3bc7664056896da85",
+   "merged_at": "2026-05-11T13:31:17Z",
+   "reviewed_commits": [
+    "28cc3f1b759533781a88cc38a638a0b1d5f8dc8d",
+    "736ee0615f37a853a91198cc96322ef01baa6fef",
+    "d03831060f59a88b68115db4b303274cc625f394"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6406,
+   "url": "https://github.com/nuxt/ui/pull/6406",
+   "merge_sha": "955dac1ad1796c98b43caf3e6a936a9be2098cb4",
+   "head_sha": "51192b421a0959c5dfa3d6f910b527526f21662f",
+   "merged_at": "2026-05-05T14:25:14Z",
+   "reviewed_commits": [
+    "51192b421a0959c5dfa3d6f910b527526f21662f",
+    "7b1dd30a87744d526b71cb851c74e5d6a5328a56"
+   ],
+   "comments": [
+    {
+     "id": 3189005192,
+     "url": "https://github.com/nuxt/ui/pull/6406#discussion_r3189005192",
+     "path": "src/runtime/components/Breadcrumb.vue",
+     "start": 93,
+     "end": 95,
+     "commit": "7b1dd30a87744d526b71cb851c74e5d6a5328a56",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 3189113067,
+     "url": "https://github.com/nuxt/ui/pull/6406#discussion_r3189113067",
+     "path": "src/theme/breadcrumb.ts",
+     "start": 45,
+     "end": 57,
+     "commit": "51192b421a0959c5dfa3d6f910b527526f21662f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6405,
+   "url": "https://github.com/nuxt/ui/pull/6405",
+   "merge_sha": "6f2396fc032c5622214b35be77cf8a54ea4141c5",
+   "head_sha": "b3defeb4e26e8086db5537649bfb38ad0b7b2c30",
+   "merged_at": "2026-05-05T14:52:47Z",
+   "reviewed_commits": [
+    "c2aed4c8e4eb8d9e0bafb35340f35ca8aaea4786"
+   ],
+   "comments": [
+    {
+     "id": 3150492847,
+     "url": "https://github.com/nuxt/ui/pull/6405#discussion_r3150492847",
+     "path": "docs/content/docs/2.components/avatar.md",
+     "start": 103,
+     "end": 103,
+     "commit": "c2aed4c8e4eb8d9e0bafb35340f35ca8aaea4786",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3150492857,
+     "url": "https://github.com/nuxt/ui/pull/6405#discussion_r3150492857",
+     "path": "src/runtime/components/AvatarGroup.vue",
+     "start": 19,
+     "end": 26,
+     "commit": "c2aed4c8e4eb8d9e0bafb35340f35ca8aaea4786",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6404,
+   "url": "https://github.com/nuxt/ui/pull/6404",
+   "merge_sha": "dde09d06486e68b1b4dd4538f91fefd08a3d7548",
+   "head_sha": "95cb6a598230ae060fb05adabbe631bb131690e9",
+   "merged_at": "2026-04-27T19:11:45Z",
+   "reviewed_commits": [
+    "b8c8be970a082ae8cc6ce8396998e5c815fe2f2d"
+   ],
+   "comments": [
+    {
+     "id": 3148622380,
+     "url": "https://github.com/nuxt/ui/pull/6404#discussion_r3148622380",
+     "path": "src/runtime/components/Link.vue",
+     "start": 177,
+     "end": 182,
+     "commit": "b8c8be970a082ae8cc6ce8396998e5c815fe2f2d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6392,
+   "url": "https://github.com/nuxt/ui/pull/6392",
+   "merge_sha": "89b30e8ebe2b3b3e637ba823d1c35bc2c2d32a68",
+   "head_sha": "b8b589a85de5e87f4b376b05b772b332db4e2cc5",
+   "merged_at": "2026-06-08T13:29:04Z",
+   "reviewed_commits": [
+    "15df05894ffebd698d0ef0e04bff107bdf2424c9",
+    "77a01e79a3f8a245bd8adc700fed62392c2ab4dc",
+    "ad7b719bfdc1a19a14c84ac116c6bf01c7d0e428",
+    "b800b71127e04e475c48a61c729e4106bbcbe996",
+    "d5d521a2f94a9ef199c2ba9a1304fc07f06b3956"
+   ],
+   "comments": [
+    {
+     "id": 3131964459,
+     "url": "https://github.com/nuxt/ui/pull/6392#discussion_r3131964459",
+     "path": "docs/content/docs/2.components/pin-input.md",
+     "start": 173,
+     "end": 173,
+     "commit": "15df05894ffebd698d0ef0e04bff107bdf2424c9",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3131964488,
+     "url": "https://github.com/nuxt/ui/pull/6392#discussion_r3131964488",
+     "path": "src/runtime/components/PinInput.vue",
+     "start": 152,
+     "end": 156,
+     "commit": "15df05894ffebd698d0ef0e04bff107bdf2424c9",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3138044616,
+     "url": "https://github.com/nuxt/ui/pull/6392#discussion_r3138044616",
+     "path": "src/runtime/components/PinInput.vue",
+     "start": 42,
+     "end": 46,
+     "commit": "d5d521a2f94a9ef199c2ba9a1304fc07f06b3956",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3357733783,
+     "url": "https://github.com/nuxt/ui/pull/6392#discussion_r3357733783",
+     "path": "docs/content/docs/2.components/pin-input.md",
+     "start": 201,
+     "end": 216,
+     "commit": "b800b71127e04e475c48a61c729e4106bbcbe996",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 3357748053,
+     "url": "https://github.com/nuxt/ui/pull/6392#discussion_r3357748053",
+     "path": "docs/content/docs/2.components/pin-input.md",
+     "start": 175,
+     "end": 175,
+     "commit": "ad7b719bfdc1a19a14c84ac116c6bf01c7d0e428",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3364166077,
+     "url": "https://github.com/nuxt/ui/pull/6392#discussion_r3364166077",
+     "path": "src/runtime/components/PinInput.vue",
+     "start": 121,
+     "end": 125,
+     "commit": "77a01e79a3f8a245bd8adc700fed62392c2ab4dc",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6391,
+   "url": "https://github.com/nuxt/ui/pull/6391",
+   "merge_sha": "20f66db8e63f1941ce82acd4cc38fd2c2826cbc7",
+   "head_sha": "6c8d6367bace3059687f6c2991e50e5b015cf137",
+   "merged_at": "2026-04-24T13:50:03Z",
+   "reviewed_commits": [
+    "50930c4c9a539b612c853077c1a8365fe173e1e2",
+    "6f2f3a570133e68e849d337d6cd886c0385f3591",
+    "bb3ca57e0065729a2be5d2195ea02baa5c26eecc",
+    "d3c6405f20ed7e5bb6801a2913862d831863d573"
+   ],
+   "comments": [
+    {
+     "id": 3131242325,
+     "url": "https://github.com/nuxt/ui/pull/6391#discussion_r3131242325",
+     "path": "docs/content/docs/2.components/chat-messages.md",
+     "start": 423,
+     "end": 426,
+     "commit": "bb3ca57e0065729a2be5d2195ea02baa5c26eecc",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3131242345,
+     "url": "https://github.com/nuxt/ui/pull/6391#discussion_r3131242345",
+     "path": "src/runtime/components/ChatMessage.vue",
+     "start": 35,
+     "end": 35,
+     "commit": "bb3ca57e0065729a2be5d2195ea02baa5c26eecc",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3131242352,
+     "url": "https://github.com/nuxt/ui/pull/6391#discussion_r3131242352",
+     "path": "test/components/ChatMessage.spec.ts",
+     "start": 5,
+     "end": 5,
+     "commit": "bb3ca57e0065729a2be5d2195ea02baa5c26eecc",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3131242380,
+     "url": "https://github.com/nuxt/ui/pull/6391#discussion_r3131242380",
+     "path": "test/components/ChatMessages.spec.ts",
+     "start": 5,
+     "end": 5,
+     "commit": "bb3ca57e0065729a2be5d2195ea02baa5c26eecc",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3137006609,
+     "url": "https://github.com/nuxt/ui/pull/6391#discussion_r3137006609",
+     "path": "src/runtime/components/ChatMessage.vue",
+     "start": 52,
+     "end": 55,
+     "commit": "50930c4c9a539b612c853077c1a8365fe173e1e2",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3137006619,
+     "url": "https://github.com/nuxt/ui/pull/6391#discussion_r3137006619",
+     "path": "src/runtime/components/ChatMessage.vue",
+     "start": 107,
+     "end": 118,
+     "commit": "50930c4c9a539b612c853077c1a8365fe173e1e2",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6382,
+   "url": "https://github.com/nuxt/ui/pull/6382",
+   "merge_sha": "ab203db1d50ae4b880d6c6aae367230539695205",
+   "head_sha": "04be47631d2b46a80760cd9d54908bef1694e953",
+   "merged_at": "2026-04-21T19:10:40Z",
+   "reviewed_commits": [
+    "04be47631d2b46a80760cd9d54908bef1694e953"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6373,
+   "url": "https://github.com/nuxt/ui/pull/6373",
+   "merge_sha": "2f01eeabb69617dd69dce32ee1b5553cc420d63d",
+   "head_sha": "6436d1cb670d0fe0e566d5d009f0f2cd0c7256c1",
+   "merged_at": "2026-04-20T16:48:39Z",
+   "reviewed_commits": [
+    "1b92fe6e9d55c123210b977a47930aa8deeef4a8",
+    "7ab83db60f673eb7e990e9faa726ca44c3b29d0a",
+    "b0bbbf1301d75afdeeeea7d409f20bc9f16af78b",
+    "ccd5d07f1eba666b31f3029cf3ae17085dde6f7b"
+   ],
+   "comments": [
+    {
+     "id": 3110124786,
+     "url": "https://github.com/nuxt/ui/pull/6373#discussion_r3110124786",
+     "path": "docs/app/pages/docs/[...slug].vue",
+     "start": 89,
+     "end": 108,
+     "commit": "1b92fe6e9d55c123210b977a47930aa8deeef4a8",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3110124801,
+     "url": "https://github.com/nuxt/ui/pull/6373#discussion_r3110124801",
+     "path": "docs/server/routes/raw/[...slug].md.get.ts",
+     "start": 50,
+     "end": 58,
+     "commit": "1b92fe6e9d55c123210b977a47930aa8deeef4a8",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3110124821,
+     "url": "https://github.com/nuxt/ui/pull/6373#discussion_r3110124821",
+     "path": "docs/server/routes/sitemap.xml.get.ts",
+     "start": 14,
+     "end": 17,
+     "commit": "1b92fe6e9d55c123210b977a47930aa8deeef4a8",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3110588067,
+     "url": "https://github.com/nuxt/ui/pull/6373#discussion_r3110588067",
+     "path": "docs/server/routes/raw/[...slug].md.get.ts",
+     "start": 5,
+     "end": 5,
+     "commit": "7ab83db60f673eb7e990e9faa726ca44c3b29d0a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3111783218,
+     "url": "https://github.com/nuxt/ui/pull/6373#discussion_r3111783218",
+     "path": "docs/server/utils/transformMDC.ts",
+     "start": 123,
+     "end": 135,
+     "commit": "b0bbbf1301d75afdeeeea7d409f20bc9f16af78b",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6362,
+   "url": "https://github.com/nuxt/ui/pull/6362",
+   "merge_sha": "2451ac6f499b7790dc4358e51600a07bd263e137",
+   "head_sha": "bf089f14d7bfc91155835c72aeaaa26eb0719827",
+   "merged_at": "2026-04-17T13:54:09Z",
+   "reviewed_commits": [
+    "f32f96088e78c569f145356d63598270586b7920"
+   ],
+   "comments": [
+    {
+     "id": 3100661055,
+     "url": "https://github.com/nuxt/ui/pull/6362#discussion_r3100661055",
+     "path": "src/runtime/components/prose/Prompt.vue",
+     "start": 61,
+     "end": 73,
+     "commit": "f32f96088e78c569f145356d63598270586b7920",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3100661059,
+     "url": "https://github.com/nuxt/ui/pull/6362#discussion_r3100661059",
+     "path": "src/runtime/components/prose/Prompt.vue",
+     "start": 76,
+     "end": 115,
+     "commit": "f32f96088e78c569f145356d63598270586b7920",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3100661067,
+     "url": "https://github.com/nuxt/ui/pull/6362#discussion_r3100661067",
+     "path": "src/runtime/locale/eu.ts",
+     "start": 123,
+     "end": 126,
+     "commit": "f32f96088e78c569f145356d63598270586b7920",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3100661088,
+     "url": "https://github.com/nuxt/ui/pull/6362#discussion_r3100661088",
+     "path": "src/runtime/locale/hy.ts",
+     "start": 123,
+     "end": 126,
+     "commit": "f32f96088e78c569f145356d63598270586b7920",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 6361,
+   "url": "https://github.com/nuxt/ui/pull/6361",
+   "merge_sha": "75b37d0bc9985c4975f1547cdc2f815534d5ceef",
+   "head_sha": "5018151c9f3b6e5bbd42d5f234d02b153f906aa5",
+   "merged_at": "2026-04-17T12:16:06Z",
+   "reviewed_commits": [
+    "24fc32d8ca7cd34271453fafdc9fe4491e3f39eb"
+   ],
+   "comments": [
+    {
+     "id": 3099295290,
+     "url": "https://github.com/nuxt/ui/pull/6361#discussion_r3099295290",
+     "path": "test/composables/useResolvedVariants.spec.ts",
+     "start": 13,
+     "end": 100,
+     "commit": "24fc32d8ca7cd34271453fafdc9fe4491e3f39eb",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6358,
+   "url": "https://github.com/nuxt/ui/pull/6358",
+   "merge_sha": "255807a4bf95b91e8222ccd8bbc60016ec862c1c",
+   "head_sha": "7fd1ecbbc0fb4165ae00d752c2db1f506c1fee79",
+   "merged_at": "2026-04-17T09:07:36Z",
+   "reviewed_commits": [
+    "3be300180bb733aae823ba0ace8451511e48869a",
+    "5082cf60183fdfe514a9096e544f6c38620f796e",
+    "7fd1ecbbc0fb4165ae00d752c2db1f506c1fee79"
+   ],
+   "comments": [
+    {
+     "id": 3094863102,
+     "url": "https://github.com/nuxt/ui/pull/6358#discussion_r3094863102",
+     "path": "src/runtime/components/SelectMenu.vue",
+     "start": 622,
+     "end": 622,
+     "commit": "5082cf60183fdfe514a9096e544f6c38620f796e",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3098900076,
+     "url": "https://github.com/nuxt/ui/pull/6358#discussion_r3098900076",
+     "path": "src/runtime/components/Select.vue",
+     "start": 339,
+     "end": 339,
+     "commit": "3be300180bb733aae823ba0ace8451511e48869a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3098996218,
+     "url": "https://github.com/nuxt/ui/pull/6358#discussion_r3098996218",
+     "path": "src/runtime/components/Select.vue",
+     "start": 356,
+     "end": 356,
+     "commit": "7fd1ecbbc0fb4165ae00d752c2db1f506c1fee79",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6352,
+   "url": "https://github.com/nuxt/ui/pull/6352",
+   "merge_sha": "40474513aeb15a45b1e3df0b95fb224adf691456",
+   "head_sha": "dedbf0ad2cb46b135896372fbcaabf46e5c82d4e",
+   "merged_at": "2026-04-15T16:21:07Z",
+   "reviewed_commits": [
+    "dedbf0ad2cb46b135896372fbcaabf46e5c82d4e"
+   ],
+   "comments": [
+    {
+     "id": 3087025998,
+     "url": "https://github.com/nuxt/ui/pull/6352#discussion_r3087025998",
+     "path": "docs/server/api/ai.post.ts",
+     "start": 26,
+     "end": 30,
+     "commit": "dedbf0ad2cb46b135896372fbcaabf46e5c82d4e",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6350,
+   "url": "https://github.com/nuxt/ui/pull/6350",
+   "merge_sha": "d4e4ea1eaa620814273ed84fab44ac6176707652",
+   "head_sha": "31525ad0c2699533494b14716053223d64a20105",
+   "merged_at": "2026-04-17T07:41:11Z",
+   "reviewed_commits": [
+    "1a500f36a8555995e4b7ee437c7406008af572f1"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6348,
+   "url": "https://github.com/nuxt/ui/pull/6348",
+   "merge_sha": "f91ecfee8d2872bee924b850a3e9d790716999a7",
+   "head_sha": "cb0097fdd0a35f25897482d6a518962c4e3cbc7a",
+   "merged_at": "2026-04-16T13:08:11Z",
+   "reviewed_commits": [
+    "01fb2df8b572c5551d8c74658ce2275c236ff6fb",
+    "16e86d4f0ec342b096176ebc4667014c33fd7b58",
+    "8d0df8863e69de3aba047b349e8d0249f94f3bb0"
+   ],
+   "comments": [
+    {
+     "id": 3080825138,
+     "url": "https://github.com/nuxt/ui/pull/6348#discussion_r3080825138",
+     "path": "docs/content/blog/how-to-build-an-ai-chat.md",
+     "start": 57,
+     "end": 70,
+     "commit": "01fb2df8b572c5551d8c74658ce2275c236ff6fb",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3088013896,
+     "url": "https://github.com/nuxt/ui/pull/6348#discussion_r3088013896",
+     "path": "docs/content/docs/2.components/chat.md",
+     "start": 61,
+     "end": 61,
+     "commit": "16e86d4f0ec342b096176ebc4667014c33fd7b58",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3092161349,
+     "url": "https://github.com/nuxt/ui/pull/6348#discussion_r3092161349",
+     "path": "docs/content/docs/4.typography/1.index.md",
+     "start": 137,
+     "end": 142,
+     "commit": "8d0df8863e69de3aba047b349e8d0249f94f3bb0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6347,
+   "url": "https://github.com/nuxt/ui/pull/6347",
+   "merge_sha": "e33e4b3b0ab73c885f792a42dad79961b252c9ef",
+   "head_sha": "483968eadea0a9ea3c3303c8592075c900054e6c",
+   "merged_at": "2026-04-14T13:05:14Z",
+   "reviewed_commits": [
+    "fe4fe91fdece5eb38ab54ed3e2e7640dbec28978"
+   ],
+   "comments": [
+    {
+     "id": 3078943432,
+     "url": "https://github.com/nuxt/ui/pull/6347#discussion_r3078943432",
+     "path": "skills/nuxt-ui/references/guidelines/forms.md",
+     "start": 191,
+     "end": 200,
+     "commit": "fe4fe91fdece5eb38ab54ed3e2e7640dbec28978",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3078943438,
+     "url": "https://github.com/nuxt/ui/pull/6347#discussion_r3078943438",
+     "path": "skills/nuxt-ui/references/layouts/chat.md",
+     "start": 57,
+     "end": 65,
+     "commit": "fe4fe91fdece5eb38ab54ed3e2e7640dbec28978",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3078943452,
+     "url": "https://github.com/nuxt/ui/pull/6347#discussion_r3078943452",
+     "path": "skills/nuxt-ui/references/layouts/editor.md",
+     "start": 13,
+     "end": 20,
+     "commit": "fe4fe91fdece5eb38ab54ed3e2e7640dbec28978",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3078943457,
+     "url": "https://github.com/nuxt/ui/pull/6347#discussion_r3078943457",
+     "path": "skills/nuxt-ui/references/recipes/auth.md",
+     "start": 47,
+     "end": 49,
+     "commit": "fe4fe91fdece5eb38ab54ed3e2e7640dbec28978",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3078943464,
+     "url": "https://github.com/nuxt/ui/pull/6347#discussion_r3078943464",
+     "path": "skills/nuxt-ui/references/recipes/data-tables.md",
+     "start": 11,
+     "end": 25,
+     "commit": "fe4fe91fdece5eb38ab54ed3e2e7640dbec28978",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 3078943476,
+     "url": "https://github.com/nuxt/ui/pull/6347#discussion_r3078943476",
+     "path": "skills/nuxt-ui/references/recipes/overlays.md",
+     "start": 99,
+     "end": 112,
+     "commit": "fe4fe91fdece5eb38ab54ed3e2e7640dbec28978",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3078943483,
+     "url": "https://github.com/nuxt/ui/pull/6347#discussion_r3078943483",
+     "path": "skills/nuxt-ui/references/recipes/overlays.md",
+     "start": 153,
+     "end": 166,
+     "commit": "fe4fe91fdece5eb38ab54ed3e2e7640dbec28978",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6334,
+   "url": "https://github.com/nuxt/ui/pull/6334",
+   "merge_sha": "26affc75b3a0342d6aa378687ebab4ce2625292f",
+   "head_sha": "d451c05d409f6020b4edcc82610a0a8c49da13ff",
+   "merged_at": "2026-04-17T12:40:10Z",
+   "reviewed_commits": [
+    "221661ce75c1199a307403dca1b60465fa146506",
+    "b61302222a82a351bdff9370365e676214be95f4"
+   ],
+   "comments": [
+    {
+     "id": 3065207388,
+     "url": "https://github.com/nuxt/ui/pull/6334#discussion_r3065207388",
+     "path": "docs/app/components/content/examples/input-date/InputDateDateRangeFilterExample.vue",
+     "start": 19,
+     "end": 27,
+     "commit": "b61302222a82a351bdff9370365e676214be95f4",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3065207416,
+     "url": "https://github.com/nuxt/ui/pull/6334#discussion_r3065207416",
+     "path": "docs/content/docs/2.components/input-date.md",
+     "start": 231,
+     "end": 236,
+     "commit": "b61302222a82a351bdff9370365e676214be95f4",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3068023898,
+     "url": "https://github.com/nuxt/ui/pull/6334#discussion_r3068023898",
+     "path": "docs/app/components/content/examples/calendar/CalendarDateRangePickerExample.vue",
+     "start": 17,
+     "end": 18,
+     "commit": "221661ce75c1199a307403dca1b60465fa146506",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3068023900,
+     "url": "https://github.com/nuxt/ui/pull/6334#discussion_r3068023900",
+     "path": "docs/app/components/content/examples/calendar/CalendarDateRangePickerExample.vue",
+     "start": 33,
+     "end": 36,
+     "commit": "221661ce75c1199a307403dca1b60465fa146506",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6333,
+   "url": "https://github.com/nuxt/ui/pull/6333",
+   "merge_sha": "b808ce4661f5232357615fcb40d7d9be8ad1ceb1",
+   "head_sha": "a7198250540f38765da85e443bfec10714d203bd",
+   "merged_at": "2026-04-11T11:46:42Z",
+   "reviewed_commits": [
+    "fdf7958dc58a0aeecc9187daac55a1d49bb1b6c1"
+   ],
+   "comments": [
+    {
+     "id": 3064577978,
+     "url": "https://github.com/nuxt/ui/pull/6333#discussion_r3064577978",
+     "path": "src/runtime/components/prose/Pre.vue",
+     "start": 75,
+     "end": 75,
+     "commit": "fdf7958dc58a0aeecc9187daac55a1d49bb1b6c1",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6329,
+   "url": "https://github.com/nuxt/ui/pull/6329",
+   "merge_sha": "7fc773ca321fb4b7592d49af540f93b70197ae14",
+   "head_sha": "ae761c478898da2686c9acd78c8aa3ab71483cd2",
+   "merged_at": "2026-04-17T13:50:39Z",
+   "reviewed_commits": [
+    "ae761c478898da2686c9acd78c8aa3ab71483cd2"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6313,
+   "url": "https://github.com/nuxt/ui/pull/6313",
+   "merge_sha": "5155e27e6dd163cca21401737a3f8ac1faeff4bc",
+   "head_sha": "c8434c8ae90757e037c72d470831a3de42ec335f",
+   "merged_at": "2026-04-11T12:13:13Z",
+   "reviewed_commits": [
+    "28466484b953164fa96d17b28c8a2c88b24f4f73",
+    "c8434c8ae90757e037c72d470831a3de42ec335f",
+    "ec66f4fb1afa77e98764a347c82441d74ddff253",
+    "ecea57bb65695d92e2c3c3e85d7563ba235728e3",
+    "ed62af78da3f0abd1e30cb42d22c2714de5a9d1c"
+   ],
+   "comments": [
+    {
+     "id": 3050452347,
+     "url": "https://github.com/nuxt/ui/pull/6313#discussion_r3050452347",
+     "path": "src/runtime/components/Drawer.vue",
+     "start": 126,
+     "end": 177,
+     "commit": "ec66f4fb1afa77e98764a347c82441d74ddff253",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3059637497,
+     "url": "https://github.com/nuxt/ui/pull/6313#discussion_r3059637497",
+     "path": "src/runtime/components/Popover.vue",
+     "start": 129,
+     "end": 136,
+     "commit": "28466484b953164fa96d17b28c8a2c88b24f4f73",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3061002707,
+     "url": "https://github.com/nuxt/ui/pull/6313#discussion_r3061002707",
+     "path": "src/runtime/composables/useFieldGroup.ts",
+     "start": 23,
+     "end": 32,
+     "commit": "c8434c8ae90757e037c72d470831a3de42ec335f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6312,
+   "url": "https://github.com/nuxt/ui/pull/6312",
+   "merge_sha": "5199b7e1d262d693af4114884f06bd9126cd3202",
+   "head_sha": "78ea5f4102c43f6785f46c47d417dde5ecd83696",
+   "merged_at": "2026-06-05T14:41:44Z",
+   "reviewed_commits": [
+    "19d78d210a9616a4991abc3171c7477c1aca0c61",
+    "69731ad86710396e830a1020e8a51fec55c5c12b",
+    "80472f11e59059e2b294e6b19cd911bc7d4843b3"
+   ],
+   "comments": [
+    {
+     "id": 3048553307,
+     "url": "https://github.com/nuxt/ui/pull/6312#discussion_r3048553307",
+     "path": "src/runtime/components/DashboardSearch.vue",
+     "start": 72,
+     "end": 76,
+     "commit": "80472f11e59059e2b294e6b19cd911bc7d4843b3",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6310,
+   "url": "https://github.com/nuxt/ui/pull/6310",
+   "merge_sha": "2c4ff352d81660cc8e7f665b69e90f9e4e4bd05c",
+   "head_sha": "67f31afb0d8071692d547cc5cc29e6b89dedf67c",
+   "merged_at": "2026-04-07T14:06:34Z",
+   "reviewed_commits": [
+    "67f31afb0d8071692d547cc5cc29e6b89dedf67c"
+   ],
+   "comments": [
+    {
+     "id": 3045251258,
+     "url": "https://github.com/nuxt/ui/pull/6310#discussion_r3045251258",
+     "path": "src/runtime/vue/overrides/vue-router/Link.vue",
+     "start": 222,
+     "end": 236,
+     "commit": "67f31afb0d8071692d547cc5cc29e6b89dedf67c",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6307,
+   "url": "https://github.com/nuxt/ui/pull/6307",
+   "merge_sha": "00c16515bad0040651fd39a01bbf4907d2681f04",
+   "head_sha": "8e9f7db98ab5e0f80a38921cefcbe882ba68b727",
+   "merged_at": "2026-04-22T10:29:06Z",
+   "reviewed_commits": [
+    "3f930e19da8b65927a846580937db847a59f4ba8",
+    "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+    "c13dc6c5f17ac9cb243b05e13df1a995d9b2ab68"
+   ],
+   "comments": [
+    {
+     "id": 3039461355,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461355",
+     "path": "src/runtime/components/Listbox.vue",
+     "start": 82,
+     "end": 86,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3039461361,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461361",
+     "path": "src/runtime/components/Listbox.vue",
+     "start": 200,
+     "end": 202,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3039461372,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461372",
+     "path": "src/runtime/components/Listbox.vue",
+     "start": 297,
+     "end": 300,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3039461373,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461373",
+     "path": "src/runtime/locale/ca.ts",
+     "start": 103,
+     "end": 107,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3039461378,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461378",
+     "path": "src/runtime/locale/he.ts",
+     "start": 104,
+     "end": 108,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3039461383,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461383",
+     "path": "src/runtime/locale/it.ts",
+     "start": 103,
+     "end": 107,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3039461388,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461388",
+     "path": "src/runtime/locale/lo.ts",
+     "start": 103,
+     "end": 107,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3039461391,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461391",
+     "path": "src/runtime/locale/ro.ts",
+     "start": 103,
+     "end": 107,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3039461392,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3039461392",
+     "path": "src/runtime/locale/ug_cn.ts",
+     "start": 104,
+     "end": 108,
+     "commit": "45fd66d0b0f231895dad0e1caaddcf4898f87a43",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3116458240,
+     "url": "https://github.com/nuxt/ui/pull/6307#discussion_r3116458240",
+     "path": "src/runtime/locale/en.ts",
+     "start": 129,
+     "end": 129,
+     "commit": "3f930e19da8b65927a846580937db847a59f4ba8",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6305,
+   "url": "https://github.com/nuxt/ui/pull/6305",
+   "merge_sha": "81c7ddb6d47dade3f7f2415a2a9714e949133344",
+   "head_sha": "15ed95278b80221ee2089e783cb81275b2c7ab6b",
+   "merged_at": "2026-04-17T14:37:38Z",
+   "reviewed_commits": [
+    "59295a63daac87ff4a14a117eab25da6e81305e0"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6299,
+   "url": "https://github.com/nuxt/ui/pull/6299",
+   "merge_sha": "ae693d0e243eea4e585b5667fc027c97edca16da",
+   "head_sha": "d9d6bafa8b9f0d729034a47ff475521cee193efc",
+   "merged_at": "2026-04-08T09:37:46Z",
+   "reviewed_commits": [
+    "d9d6bafa8b9f0d729034a47ff475521cee193efc"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6282,
+   "url": "https://github.com/nuxt/ui/pull/6282",
+   "merge_sha": "6aba2ead4c76f992e1ad76f2fec11c70800143a4",
+   "head_sha": "e6e9f9cc48edcf7876fcd451193daabdac0bec48",
+   "merged_at": "2026-04-17T14:46:45Z",
+   "reviewed_commits": [
+    "c1b49297552d26849490177b2d1284d302481aa8"
+   ],
+   "comments": [
+    {
+     "id": 3027179632,
+     "url": "https://github.com/nuxt/ui/pull/6282#discussion_r3027179632",
+     "path": "src/runtime/components/content/ContentToc.vue",
+     "start": 196,
+     "end": 213,
+     "commit": "c1b49297552d26849490177b2d1284d302481aa8",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 6280,
+   "url": "https://github.com/nuxt/ui/pull/6280",
+   "merge_sha": "a911ca8aa822efe5fd3618bf8fb71fb304f5c32d",
+   "head_sha": "1d676370dfa47e85e3072765c5081f54bed450e8",
+   "merged_at": "2026-04-02T12:41:41Z",
+   "reviewed_commits": [
+    "b7b64a08eec4d9ed9d2b4056e3e5ee5e9884b5f7"
+   ],
+   "comments": [
+    {
+     "id": 3027613204,
+     "url": "https://github.com/nuxt/ui/pull/6280#discussion_r3027613204",
+     "path": "src/runtime/composables/useIMEGuard.ts",
+     "start": 23,
+     "end": 27,
+     "commit": "b7b64a08eec4d9ed9d2b4056e3e5ee5e9884b5f7",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6275,
+   "url": "https://github.com/nuxt/ui/pull/6275",
+   "merge_sha": "f99778e3e7639c11f6b46a4e4c57fbc66077195a",
+   "head_sha": "c0daa1747d911ac2cdbead9ead540dda431f4e3e",
+   "merged_at": "2026-06-15T11:51:23Z",
+   "reviewed_commits": [
+    "4f1fd8e819bd2f5bbe102260b62383b915cf47af",
+    "6c69f16e61adcf5dc8ea28413ce25726e3f433eb"
+   ],
+   "comments": [
+    {
+     "id": 3018641199,
+     "url": "https://github.com/nuxt/ui/pull/6275#discussion_r3018641199",
+     "path": "docs/content/docs/2.components/chat-messages.md",
+     "start": 448,
+     "end": 448,
+     "commit": "6c69f16e61adcf5dc8ea28413ce25726e3f433eb",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3068108494,
+     "url": "https://github.com/nuxt/ui/pull/6275#discussion_r3068108494",
+     "path": "src/runtime/components/ChatMessages.vue",
+     "start": 70,
+     "end": 70,
+     "commit": "4f1fd8e819bd2f5bbe102260b62383b915cf47af",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6268,
+   "url": "https://github.com/nuxt/ui/pull/6268",
+   "merge_sha": "4d83cf7d959db78c8f8e3497dc56917adf9e0f15",
+   "head_sha": "b43f32df2590f8450b619711ea6411de9d75f6aa",
+   "merged_at": "2026-04-07T13:30:54Z",
+   "reviewed_commits": [
+    "5c058dbfbbaf8dbba27baffdce36a9d9b8da0784",
+    "b43f32df2590f8450b619711ea6411de9d75f6aa"
+   ],
+   "comments": [
+    {
+     "id": 3045077421,
+     "url": "https://github.com/nuxt/ui/pull/6268#discussion_r3045077421",
+     "path": "docs/content/docs/2.components/chat.md",
+     "start": 187,
+     "end": 195,
+     "commit": "5c058dbfbbaf8dbba27baffdce36a9d9b8da0784",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3045077430,
+     "url": "https://github.com/nuxt/ui/pull/6268#discussion_r3045077430",
+     "path": "docs/server/mcp/tools/get-example.ts",
+     "start": 20,
+     "end": 25,
+     "commit": "5c058dbfbbaf8dbba27baffdce36a9d9b8da0784",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3045077447,
+     "url": "https://github.com/nuxt/ui/pull/6268#discussion_r3045077447",
+     "path": "docs/server/mcp/tools/get-template.ts",
+     "start": 26,
+     "end": 28,
+     "commit": "5c058dbfbbaf8dbba27baffdce36a9d9b8da0784",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3045077457,
+     "url": "https://github.com/nuxt/ui/pull/6268#discussion_r3045077457",
+     "path": "docs/server/mcp/tools/list-templates.ts",
+     "start": 13,
+     "end": 18,
+     "commit": "5c058dbfbbaf8dbba27baffdce36a9d9b8da0784",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3045077468,
+     "url": "https://github.com/nuxt/ui/pull/6268#discussion_r3045077468",
+     "path": "docs/server/utils/extractSections.ts",
+     "start": 12,
+     "end": 25,
+     "commit": "5c058dbfbbaf8dbba27baffdce36a9d9b8da0784",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3045195770,
+     "url": "https://github.com/nuxt/ui/pull/6268#discussion_r3045195770",
+     "path": "docs/server/mcp/tools/get-migration-guide.ts",
+     "start": 20,
+     "end": 20,
+     "commit": "b43f32df2590f8450b619711ea6411de9d75f6aa",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6266,
+   "url": "https://github.com/nuxt/ui/pull/6266",
+   "merge_sha": "9b91ee40b06092ce193bb94ca3913c2143dc8ac0",
+   "head_sha": "b9a7dc121cdf1033551b80b224548ca88fc5691c",
+   "merged_at": "2026-04-07T09:24:35Z",
+   "reviewed_commits": [
+    "d8cfd18532800b1d41a4880a45f3a50fc9f96c2e"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6239,
+   "url": "https://github.com/nuxt/ui/pull/6239",
+   "merge_sha": "4ba3eef1f42cf558c26801365ce45f048b43a894",
+   "head_sha": "37f1380f722ce849ed4889ac2b52ee3c3ccb9fc9",
+   "merged_at": "2026-04-03T14:32:45Z",
+   "reviewed_commits": [
+    "26d03bf5cbb93289816c424b0c3b1d226daac804",
+    "37f1380f722ce849ed4889ac2b52ee3c3ccb9fc9"
+   ],
+   "comments": [
+    {
+     "id": 2983851510,
+     "url": "https://github.com/nuxt/ui/pull/6239#discussion_r2983851510",
+     "path": "src/runtime/components/ChatMessages.vue",
+     "start": 146,
+     "end": 151,
+     "commit": "26d03bf5cbb93289816c424b0c3b1d226daac804",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6234,
+   "url": "https://github.com/nuxt/ui/pull/6234",
+   "merge_sha": "4427824f04005a84245f883d73d4a4d0156d3996",
+   "head_sha": "01059409f7861abc3406cb4c2b25f8b5aaa2c366",
+   "merged_at": "2026-04-11T13:17:21Z",
+   "reviewed_commits": [
+    "5537ad8919b6c9d03e936be6730bc8af97004d12",
+    "daff3e7d5ec026ccfa657cfbec961075fad6a0a9",
+    "e786e801a2a37750710ff5085177be34c33b9cfb"
+   ],
+   "comments": [
+    {
+     "id": 2979771262,
+     "url": "https://github.com/nuxt/ui/pull/6234#discussion_r2979771262",
+     "path": "src/runtime/composables/useEditorMenu.ts",
+     "start": 68,
+     "end": 71,
+     "commit": "5537ad8919b6c9d03e936be6730bc8af97004d12",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3068000378,
+     "url": "https://github.com/nuxt/ui/pull/6234#discussion_r3068000378",
+     "path": "test/composables/useEditorMenu.spec.ts",
+     "start": 62,
+     "end": 69,
+     "commit": "daff3e7d5ec026ccfa657cfbec961075fad6a0a9",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6217,
+   "url": "https://github.com/nuxt/ui/pull/6217",
+   "merge_sha": "15d32cea9831d20600719eb608b1223f15c0f203",
+   "head_sha": "62036f305fbbce1913441661b5a9d0d0cb397b81",
+   "merged_at": "2026-04-22T14:45:40Z",
+   "reviewed_commits": [
+    "a988c50127c8d77b84220a87352275703e2a88c6",
+    "e80700f38a2cb64705859120da7252f4b8c436d4",
+    "f80899722d737cc5b643e2c6ecf6f8c614f28e31"
+   ],
+   "comments": [
+    {
+     "id": 2961943979,
+     "url": "https://github.com/nuxt/ui/pull/6217#discussion_r2961943979",
+     "path": "src/runtime/components/Table.vue",
+     "start": 625,
+     "end": 632,
+     "commit": "f80899722d737cc5b643e2c6ecf6f8c614f28e31",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2963273616,
+     "url": "https://github.com/nuxt/ui/pull/6217#discussion_r2963273616",
+     "path": "PR.md",
+     "start": 20,
+     "end": 23,
+     "commit": "e80700f38a2cb64705859120da7252f4b8c436d4",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6209,
+   "url": "https://github.com/nuxt/ui/pull/6209",
+   "merge_sha": "390c4bd3fd9bda126d035dcfd8d3f3d855d7ec97",
+   "head_sha": "e20b39b6b643b1efa89a12aebfe909283d4a6dc2",
+   "merged_at": "2026-03-19T09:41:35Z",
+   "reviewed_commits": [
+    "bd13ff4d44db15883f793019884b54d475e08e7d",
+    "e20b39b6b643b1efa89a12aebfe909283d4a6dc2"
+   ],
+   "comments": [
+    {
+     "id": 2955213501,
+     "url": "https://github.com/nuxt/ui/pull/6209#discussion_r2955213501",
+     "path": "playgrounds/repl/index.html",
+     "start": 7,
+     "end": 7,
+     "commit": "bd13ff4d44db15883f793019884b54d475e08e7d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2955213524,
+     "url": "https://github.com/nuxt/ui/pull/6209#discussion_r2955213524",
+     "path": "playgrounds/repl/src/App.vue",
+     "start": 20,
+     "end": 20,
+     "commit": "bd13ff4d44db15883f793019884b54d475e08e7d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2955213537,
+     "url": "https://github.com/nuxt/ui/pull/6209#discussion_r2955213537",
+     "path": "playgrounds/repl/src/App.vue",
+     "start": 24,
+     "end": 32,
+     "commit": "bd13ff4d44db15883f793019884b54d475e08e7d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2955213543,
+     "url": "https://github.com/nuxt/ui/pull/6209#discussion_r2955213543",
+     "path": "playgrounds/repl/src/App.vue",
+     "start": 166,
+     "end": 173,
+     "commit": "bd13ff4d44db15883f793019884b54d475e08e7d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2958770549,
+     "url": "https://github.com/nuxt/ui/pull/6209#discussion_r2958770549",
+     "path": "playgrounds/repl/src/App.vue",
+     "start": 16,
+     "end": 21,
+     "commit": "e20b39b6b643b1efa89a12aebfe909283d4a6dc2",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6208,
+   "url": "https://github.com/nuxt/ui/pull/6208",
+   "merge_sha": "c1090ab1bb27407c10d76a5e78c6be93432b4eb7",
+   "head_sha": "17730ce69a7fb99ee13f96980e9a716c187eade9",
+   "merged_at": "2026-05-05T16:20:00Z",
+   "reviewed_commits": [
+    "cd1a78fc455587ba7e4a6ca8ac53ce673ba22f3c"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6203,
+   "url": "https://github.com/nuxt/ui/pull/6203",
+   "merge_sha": "c124f29389d139d5163f056ea3bad70b7ab108ea",
+   "head_sha": "f2bb8049c49ef586e89ee4d639491b3edf263b7c",
+   "merged_at": "2026-03-20T14:56:22Z",
+   "reviewed_commits": [
+    "5ba34723deab8214ccc63141f75c19108cbe1710",
+    "7d3ed835a5c495e9cf0351d965da66b204bd1e5f",
+    "b8e9bef501634078a892d7a0e3e2db555211f2c5",
+    "eaa0da69355ee560a63557e665ef37336e28f7c0"
+   ],
+   "comments": [
+    {
+     "id": 2943642376,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2943642376",
+     "path": "playgrounds/nuxt/app/pages/components/input-time.vue",
+     "start": 9,
+     "end": 13,
+     "commit": "7d3ed835a5c495e9cf0351d965da66b204bd1e5f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2943642377,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2943642377",
+     "path": "playgrounds/nuxt/app/pages/components/input-time.vue",
+     "start": 29,
+     "end": 29,
+     "commit": "7d3ed835a5c495e9cf0351d965da66b204bd1e5f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2943642386,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2943642386",
+     "path": "src/runtime/components/InputTime.vue",
+     "start": 3,
+     "end": 10,
+     "commit": "7d3ed835a5c495e9cf0351d965da66b204bd1e5f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2943642391,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2943642391",
+     "path": "src/runtime/components/InputTime.vue",
+     "start": 64,
+     "end": 69,
+     "commit": "7d3ed835a5c495e9cf0351d965da66b204bd1e5f",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2949883840,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2949883840",
+     "path": "docs/content/docs/2.components/input-time.md",
+     "start": 57,
+     "end": 58,
+     "commit": "5ba34723deab8214ccc63141f75c19108cbe1710",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2949883846,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2949883846",
+     "path": "docs/content/docs/2.components/input-time.md",
+     "start": 74,
+     "end": 98,
+     "commit": "5ba34723deab8214ccc63141f75c19108cbe1710",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2949948270,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2949948270",
+     "path": "docs/content/docs/2.components/input-time.md",
+     "start": 65,
+     "end": 82,
+     "commit": "b8e9bef501634078a892d7a0e3e2db555211f2c5",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2949948281,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2949948281",
+     "path": "src/runtime/components/InputTime.vue",
+     "start": 3,
+     "end": 3,
+     "commit": "b8e9bef501634078a892d7a0e3e2db555211f2c5",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2949970247,
+     "url": "https://github.com/nuxt/ui/pull/6203#discussion_r2949970247",
+     "path": "src/runtime/components/InputTime.vue",
+     "start": 8,
+     "end": 9,
+     "commit": "eaa0da69355ee560a63557e665ef37336e28f7c0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6199,
+   "url": "https://github.com/nuxt/ui/pull/6199",
+   "merge_sha": "643d28e5b2e0a07daff308c9a3dc76bfeed36744",
+   "head_sha": "4c6903dbeecbadb35bf9b40e74489260ad2746ca",
+   "merged_at": "2026-03-17T10:30:39Z",
+   "reviewed_commits": [
+    "4cc255b9846bce442eec3d1153fb9a5caa4eed90"
+   ],
+   "comments": [
+    {
+     "id": 2941958708,
+     "url": "https://github.com/nuxt/ui/pull/6199#discussion_r2941958708",
+     "path": "docs/content/docs/1.getting-started/4.contribution.md",
+     "start": 191,
+     "end": 194,
+     "commit": "4cc255b9846bce442eec3d1153fb9a5caa4eed90",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 6198,
+   "url": "https://github.com/nuxt/ui/pull/6198",
+   "merge_sha": "c58b9b26444ea34e2cf455451a90ac99eb1e0b7e",
+   "head_sha": "0b06c38fbbca33586aa4c62774e670b3b140cb58",
+   "merged_at": "2026-03-17T14:17:58Z",
+   "reviewed_commits": [
+    "0f7f54c2e34bd1ee00b7bf580bf3bce6de2695ab",
+    "76f6b502c1f8fc594c9469e0fb6f828feedd4472",
+    "bacb8f48088efc6664b9a72b26c7e3774746d72a"
+   ],
+   "comments": [
+    {
+     "id": 2941706210,
+     "url": "https://github.com/nuxt/ui/pull/6198#discussion_r2941706210",
+     "path": "docs/content/docs/1.getting-started/2.installation/2.vue.md",
+     "start": 807,
+     "end": 809,
+     "commit": "0f7f54c2e34bd1ee00b7bf580bf3bce6de2695ab",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2941706231,
+     "url": "https://github.com/nuxt/ui/pull/6198#discussion_r2941706231",
+     "path": "package.json",
+     "start": 34,
+     "end": 41,
+     "commit": "0f7f54c2e34bd1ee00b7bf580bf3bce6de2695ab",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2941706244,
+     "url": "https://github.com/nuxt/ui/pull/6198#discussion_r2941706244",
+     "path": "src/module.ts",
+     "start": 164,
+     "end": 164,
+     "commit": "0f7f54c2e34bd1ee00b7bf580bf3bce6de2695ab",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2941706252,
+     "url": "https://github.com/nuxt/ui/pull/6198#discussion_r2941706252",
+     "path": "src/plugins/components.ts",
+     "start": 67,
+     "end": 77,
+     "commit": "0f7f54c2e34bd1ee00b7bf580bf3bce6de2695ab",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2946021957,
+     "url": "https://github.com/nuxt/ui/pull/6198#discussion_r2946021957",
+     "path": "cli/commands/make/component.mjs",
+     "start": 80,
+     "end": 81,
+     "commit": "bacb8f48088efc6664b9a72b26c7e3774746d72a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6197,
+   "url": "https://github.com/nuxt/ui/pull/6197",
+   "merge_sha": "886f5fbab0c398ad2ddd53e143c8edb9172e029d",
+   "head_sha": "1042869dc230fa9158bf2be3231c3ee9feee722d",
+   "merged_at": "2026-03-16T14:34:25Z",
+   "reviewed_commits": [
+    "aaea910f3a919c5a9d81f09060370d788e41e5c3",
+    "ff8e328dcce9110d15acbe85aaba55bb6c45d07e"
+   ],
+   "comments": [
+    {
+     "id": 2940265070,
+     "url": "https://github.com/nuxt/ui/pull/6197#discussion_r2940265070",
+     "path": "src/imports.ts",
+     "start": 1,
+     "end": 13,
+     "commit": "ff8e328dcce9110d15acbe85aaba55bb6c45d07e",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6176,
+   "url": "https://github.com/nuxt/ui/pull/6176",
+   "merge_sha": "7849534eabe2039ffdb4fb632d95701a22359ec5",
+   "head_sha": "8c046ab5a0dcfee7d73a700b26b3891e9f22f719",
+   "merged_at": "2026-03-12T17:13:42Z",
+   "reviewed_commits": [
+    "8c046ab5a0dcfee7d73a700b26b3891e9f22f719",
+    "cf716dd8bbcab470bd2edb53708fafb505738b7c"
+   ],
+   "comments": [
+    {
+     "id": 2925270173,
+     "url": "https://github.com/nuxt/ui/pull/6176#discussion_r2925270173",
+     "path": "docs/app/components/content/examples/chat/ChatToolExample.vue",
+     "start": 3,
+     "end": 15,
+     "commit": "cf716dd8bbcab470bd2edb53708fafb505738b7c",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2925270208,
+     "url": "https://github.com/nuxt/ui/pull/6176#discussion_r2925270208",
+     "path": "docs/content/docs/2.components/chat-shimmer.md",
+     "start": 16,
+     "end": 18,
+     "commit": "cf716dd8bbcab470bd2edb53708fafb505738b7c",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2926062242,
+     "url": "https://github.com/nuxt/ui/pull/6176#discussion_r2926062242",
+     "path": "docs/content/docs/2.components/chat-messages.md",
+     "start": 106,
+     "end": 106,
+     "commit": "8c046ab5a0dcfee7d73a700b26b3891e9f22f719",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6175,
+   "url": "https://github.com/nuxt/ui/pull/6175",
+   "merge_sha": "6db594e2211e145f7a7accdb25662ba034c42755",
+   "head_sha": "ffdb7fea7f8af2b3ec9c23747b6bf0c4ff9837b5",
+   "merged_at": "2026-03-11T16:50:27Z",
+   "reviewed_commits": [
+    "7b06756abd93ef4735125ce99065f158386fb199"
+   ],
+   "comments": [
+    {
+     "id": 2919235712,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235712",
+     "path": "docs/content/blog/how-to-build-an-ai-chat.md",
+     "start": 246,
+     "end": 253,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2919235732,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235732",
+     "path": "docs/content/docs/3.composables/use-scroll-shadow.md",
+     "start": 44,
+     "end": 55,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2919235736,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235736",
+     "path": "docs/content/docs/3.composables/use-scroll-shadow.md",
+     "start": 67,
+     "end": 68,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2919235742,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235742",
+     "path": "src/runtime/composables/useScrollShadow.ts",
+     "start": 21,
+     "end": 34,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2919235745,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235745",
+     "path": "src/runtime/composables/useScrollShadow.ts",
+     "start": 38,
+     "end": 46,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2919235758,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235758",
+     "path": "src/runtime/locale/ckb.ts",
+     "start": 38,
+     "end": 42,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2919235761,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235761",
+     "path": "src/runtime/locale/fa_ir.ts",
+     "start": 38,
+     "end": 42,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2919235766,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235766",
+     "path": "src/runtime/locale/pl.ts",
+     "start": 37,
+     "end": 41,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2919235773,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235773",
+     "path": "src/runtime/locale/ru.ts",
+     "start": 37,
+     "end": 41,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2919235776,
+     "url": "https://github.com/nuxt/ui/pull/6175#discussion_r2919235776",
+     "path": "src/runtime/utils/ai.ts",
+     "start": 25,
+     "end": 37,
+     "commit": "7b06756abd93ef4735125ce99065f158386fb199",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6171,
+   "url": "https://github.com/nuxt/ui/pull/6171",
+   "merge_sha": "8db9c548d3d74127a1fd98a136105f9c711f191d",
+   "head_sha": "b5b3b47214b47ee9584c335daebe1a8e4978e2c4",
+   "merged_at": "2026-03-11T15:18:01Z",
+   "reviewed_commits": [
+    "b5b3b47214b47ee9584c335daebe1a8e4978e2c4",
+    "d7ae769278e33bf8b134b5bf485ccc022ae9c0a1"
+   ],
+   "comments": [
+    {
+     "id": 2917726311,
+     "url": "https://github.com/nuxt/ui/pull/6171#discussion_r2917726311",
+     "path": "playgrounds/nuxt/server/api/chat.post.ts",
+     "start": 28,
+     "end": 28,
+     "commit": "b5b3b47214b47ee9584c335daebe1a8e4978e2c4",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6164,
+   "url": "https://github.com/nuxt/ui/pull/6164",
+   "merge_sha": "755867b6fecf0b6763b0b2ab2c7e153a39ecc2f4",
+   "head_sha": "281c9fa1b6e27123539bfb522b3f71b2ce4766c3",
+   "merged_at": "2026-03-18T11:34:20Z",
+   "reviewed_commits": [
+    "93ac62b7341438c0769aee18823ee42c98d5314b",
+    "e9bbc82f4e0432adbf484dddba7fd036a7c6c59b"
+   ],
+   "comments": [
+    {
+     "id": 2902288854,
+     "url": "https://github.com/nuxt/ui/pull/6164#discussion_r2902288854",
+     "path": "src/theme/navigation-menu.ts",
+     "start": 79,
+     "end": 81,
+     "commit": "e9bbc82f4e0432adbf484dddba7fd036a7c6c59b",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2902296791,
+     "url": "https://github.com/nuxt/ui/pull/6164#discussion_r2902296791",
+     "path": "src/theme/navigation-menu.ts",
+     "start": 79,
+     "end": 80,
+     "commit": "93ac62b7341438c0769aee18823ee42c98d5314b",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6153,
+   "url": "https://github.com/nuxt/ui/pull/6153",
+   "merge_sha": "a529b433cf33bf6682bf90cc25aee02ed8a825ad",
+   "head_sha": "67e923b1f4dd3c78b069d1035cc674d0482d5598",
+   "merged_at": "2026-03-05T11:21:17Z",
+   "reviewed_commits": [
+    "226b265799bacd96e36b15bcbe06ac99385c85dd",
+    "4edca90e67d9df36d7e26747e71899b6cce414d1",
+    "67e923b1f4dd3c78b069d1035cc674d0482d5598",
+    "907bcc1ea8a35befa50f9f1007f1b9c10d7971fb",
+    "b3d835a2eba8bf1fd33f3fdac7d7abd7c89def57"
+   ],
+   "comments": [
+    {
+     "id": 2884892968,
+     "url": "https://github.com/nuxt/ui/pull/6153#discussion_r2884892968",
+     "path": "docs/content/docs/2.components/context-menu.md",
+     "start": 322,
+     "end": 322,
+     "commit": "4edca90e67d9df36d7e26747e71899b6cce414d1",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2884892975,
+     "url": "https://github.com/nuxt/ui/pull/6153#discussion_r2884892975",
+     "path": "docs/content/docs/2.components/dropdown-menu.md",
+     "start": 103,
+     "end": 103,
+     "commit": "4edca90e67d9df36d7e26747e71899b6cce414d1",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2884892995,
+     "url": "https://github.com/nuxt/ui/pull/6153#discussion_r2884892995",
+     "path": "src/runtime/components/DropdownMenuContent.vue",
+     "start": 111,
+     "end": 114,
+     "commit": "4edca90e67d9df36d7e26747e71899b6cce414d1",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2885211784,
+     "url": "https://github.com/nuxt/ui/pull/6153#discussion_r2885211784",
+     "path": "src/runtime/components/DropdownMenuContent.vue",
+     "start": 252,
+     "end": 255,
+     "commit": "226b265799bacd96e36b15bcbe06ac99385c85dd",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2889086951,
+     "url": "https://github.com/nuxt/ui/pull/6153#discussion_r2889086951",
+     "path": "docs/app/components/content/examples/dropdown-menu/DropdownMenuIgnoreFilterExample.vue",
+     "start": 20,
+     "end": 23,
+     "commit": "67e923b1f4dd3c78b069d1035cc674d0482d5598",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2889086963,
+     "url": "https://github.com/nuxt/ui/pull/6153#discussion_r2889086963",
+     "path": "docs/content/docs/2.components/dropdown-menu.md",
+     "start": 144,
+     "end": 146,
+     "commit": "67e923b1f4dd3c78b069d1035cc674d0482d5598",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6152,
+   "url": "https://github.com/nuxt/ui/pull/6152",
+   "merge_sha": "83afd9c35544b1db8c2b3ba146cca92aa69105b9",
+   "head_sha": "bc7582c38af74867ad89261d8b1e247be7763e69",
+   "merged_at": "2026-03-04T14:51:12Z",
+   "reviewed_commits": [
+    "bc7582c38af74867ad89261d8b1e247be7763e69"
+   ],
+   "comments": [
+    {
+     "id": 2883761829,
+     "url": "https://github.com/nuxt/ui/pull/6152#discussion_r2883761829",
+     "path": "src/runtime/components/Tooltip.vue",
+     "start": 77,
+     "end": 77,
+     "commit": "bc7582c38af74867ad89261d8b1e247be7763e69",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6150,
+   "url": "https://github.com/nuxt/ui/pull/6150",
+   "merge_sha": "91c6356e920e6288177e3795aa8ed56bc82907c0",
+   "head_sha": "4e063ddf54cabe657e7c500856fe963f783dcf37",
+   "merged_at": "2026-03-08T12:10:46Z",
+   "reviewed_commits": [
+    "212ff11d9ea440c1c0980796a729142f9d78129f",
+    "8fd80d111571d5abba1559cf11e9aa70bd27e4ad",
+    "c8ce2ae58b741cfd498a4473ede77a4e1b98ad15",
+    "fbcc21909d1fb2c13231ee8aded87ee279398c02"
+   ],
+   "comments": [
+    {
+     "id": 2900876031,
+     "url": "https://github.com/nuxt/ui/pull/6150#discussion_r2900876031",
+     "path": "src/runtime/components/Checkbox.vue",
+     "start": 12,
+     "end": 12,
+     "commit": "212ff11d9ea440c1c0980796a729142f9d78129f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2900876036,
+     "url": "https://github.com/nuxt/ui/pull/6150#discussion_r2900876036",
+     "path": "src/runtime/components/Checkbox.vue",
+     "start": 53,
+     "end": 55,
+     "commit": "212ff11d9ea440c1c0980796a729142f9d78129f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2900876040,
+     "url": "https://github.com/nuxt/ui/pull/6150#discussion_r2900876040",
+     "path": "src/runtime/components/Switch.vue",
+     "start": 50,
+     "end": 52,
+     "commit": "212ff11d9ea440c1c0980796a729142f9d78129f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2901723518,
+     "url": "https://github.com/nuxt/ui/pull/6150#discussion_r2901723518",
+     "path": "test/components/Switch.spec.ts",
+     "start": 70,
+     "end": 95,
+     "commit": "c8ce2ae58b741cfd498a4473ede77a4e1b98ad15",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6148,
+   "url": "https://github.com/nuxt/ui/pull/6148",
+   "merge_sha": "6921f13005610affc882e2525dbe8a7d1362be2f",
+   "head_sha": "c4bd689115cb7d721b3d7a5bc1774cea3f9d7652",
+   "merged_at": "2026-03-04T09:18:03Z",
+   "reviewed_commits": [
+    "09b2b4ea4482da03e9c58f5e1bd0b615d0225618",
+    "c4bd689115cb7d721b3d7a5bc1774cea3f9d7652"
+   ],
+   "comments": [
+    {
+     "id": 2880817677,
+     "url": "https://github.com/nuxt/ui/pull/6148#discussion_r2880817677",
+     "path": "src/runtime/components/content/ContentSurround.vue",
+     "start": 70,
+     "end": 70,
+     "commit": "09b2b4ea4482da03e9c58f5e1bd0b615d0225618",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6131,
+   "url": "https://github.com/nuxt/ui/pull/6131",
+   "merge_sha": "29658d1722075e3cb6c74bd531cb5cc385e9f91f",
+   "head_sha": "b7f633594e790aa55c892364446a9cdaab5a1a3c",
+   "merged_at": "2026-03-02T16:32:18Z",
+   "reviewed_commits": [
+    "c5aecdcbb6588d19a3e0e9ae9d92cb346854781e"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6125,
+   "url": "https://github.com/nuxt/ui/pull/6125",
+   "merge_sha": "af0407496713451fc46377c2ca87f5062296170d",
+   "head_sha": "d2640546418801309026a4781eb1bd048648e3ec",
+   "merged_at": "2026-03-02T16:37:25Z",
+   "reviewed_commits": [
+    "8364e4b9359ebc446ad1c3c141333f2576b7c64c"
+   ],
+   "comments": [
+    {
+     "id": 2872774923,
+     "url": "https://github.com/nuxt/ui/pull/6125#discussion_r2872774923",
+     "path": "package.json",
+     "start": 275,
+     "end": 278,
+     "commit": "8364e4b9359ebc446ad1c3c141333f2576b7c64c",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 6120,
+   "url": "https://github.com/nuxt/ui/pull/6120",
+   "merge_sha": "9c5c0df96caafa59f1199aaa6df115a41de7cd03",
+   "head_sha": "6bcadb47c738fb74cb198fd011b0051ce6a770f8",
+   "merged_at": "2026-04-17T15:29:40Z",
+   "reviewed_commits": [
+    "6bcadb47c738fb74cb198fd011b0051ce6a770f8"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6116,
+   "url": "https://github.com/nuxt/ui/pull/6116",
+   "merge_sha": "390060cabc40c886f9d743c91c477ca6ad4d0c32",
+   "head_sha": "f0ba32446612bc4e67085e0d9136e05487d158b6",
+   "merged_at": "2026-03-02T17:16:42Z",
+   "reviewed_commits": [
+    "386023d95b3205cff2d9207487b379752077b97d",
+    "4163838c27b05457c47a212a189c5b110cb2d891",
+    "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+    "963e3a95d975beee248b9579b148695ccfb51176"
+   ],
+   "comments": [
+    {
+     "id": 2865419644,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419644",
+     "path": "docs/app/components/content/ComponentExample.vue",
+     "start": 233,
+     "end": 233,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865419655,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419655",
+     "path": "docs/app/components/content/examples/avatar-group/AvatarGroupLinkExample.vue",
+     "start": 9,
+     "end": 13,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865419660,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419660",
+     "path": "docs/app/components/content/examples/avatar-group/AvatarGroupMaskExample.vue",
+     "start": 3,
+     "end": 22,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2865419665,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419665",
+     "path": "docs/app/components/content/examples/avatar-group/AvatarGroupTooltipExample.vue",
+     "start": 4,
+     "end": 8,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865419670,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419670",
+     "path": "docs/app/components/content/examples/avatar/AvatarTooltipExample.vue",
+     "start": 3,
+     "end": 7,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865419674,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419674",
+     "path": "docs/app/components/content/examples/carousel/CarouselArrowsExample.vue",
+     "start": 14,
+     "end": 14,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2865419681,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419681",
+     "path": "docs/app/components/content/examples/carousel/CarouselAutoHeightExample.vue",
+     "start": 27,
+     "end": 27,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2865419689,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419689",
+     "path": "docs/app/components/content/examples/carousel/CarouselDotsMultipleExample.vue",
+     "start": 13,
+     "end": 14,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865419701,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419701",
+     "path": "docs/app/components/content/examples/carousel/CarouselItemsMultipleExample.vue",
+     "start": 14,
+     "end": 14,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2865419709,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419709",
+     "path": "docs/app/components/content/examples/chat/ChatPaletteModalExample.vue",
+     "start": 23,
+     "end": 28,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865419715,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865419715",
+     "path": "docs/app/components/content/examples/scroll-area/ScrollAreaInfiniteScrollExample.vue",
+     "start": 73,
+     "end": 78,
+     "commit": "94b7258538a00fdda057a6d37280697c2c3c0ca0",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865481362,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865481362",
+     "path": "docs/app/components/content/ComponentExample.vue",
+     "start": 120,
+     "end": 120,
+     "commit": "963e3a95d975beee248b9579b148695ccfb51176",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2865561721,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865561721",
+     "path": "docs/app/components/content/examples/input-menu/InputMenuFilterFieldsExample.vue",
+     "start": 22,
+     "end": 22,
+     "commit": "4163838c27b05457c47a212a189c5b110cb2d891",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865561730,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865561730",
+     "path": "docs/app/components/content/examples/select-menu/SelectMenuIgnoreFilterExample.vue",
+     "start": 26,
+     "end": 26,
+     "commit": "4163838c27b05457c47a212a189c5b110cb2d891",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865561733,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865561733",
+     "path": "docs/app/components/content/examples/select/SelectFetchExample.vue",
+     "start": 25,
+     "end": 25,
+     "commit": "4163838c27b05457c47a212a189c5b110cb2d891",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2865561741,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865561741",
+     "path": "docs/app/components/content/examples/table/TableFetchExample.vue",
+     "start": 2,
+     "end": 2,
+     "commit": "4163838c27b05457c47a212a189c5b110cb2d891",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2865561749,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2865561749",
+     "path": "docs/app/components/content/examples/table/TableFetchExample.vue",
+     "start": 56,
+     "end": 56,
+     "commit": "4163838c27b05457c47a212a189c5b110cb2d891",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2867612936,
+     "url": "https://github.com/nuxt/ui/pull/6116#discussion_r2867612936",
+     "path": "docs/server/api/github/commits.get.ts",
+     "start": 15,
+     "end": 16,
+     "commit": "386023d95b3205cff2d9207487b379752077b97d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 6115,
+   "url": "https://github.com/nuxt/ui/pull/6115",
+   "merge_sha": "fbd60d9998904ae4f5beb5b8980df24b4edde36f",
+   "head_sha": "4d54a32547c13131d0543dd2102dd55fa250313c",
+   "merged_at": "2026-03-17T10:09:17Z",
+   "reviewed_commits": [
+    "4888c250d1a1d96fd745177a10d724dbad5cdc98",
+    "5422c5c659aba5d900effc63aed483a1b981dfdc",
+    "ecedca532e025eb71605407b36bf9c43a0f7d22b"
+   ],
+   "comments": [
+    {
+     "id": 2863570448,
+     "url": "https://github.com/nuxt/ui/pull/6115#discussion_r2863570448",
+     "path": "docs/app/components/content/examples/table/TableRowPinningExample.vue",
+     "start": 115,
+     "end": 120,
+     "commit": "ecedca532e025eb71605407b36bf9c43a0f7d22b",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2890240570,
+     "url": "https://github.com/nuxt/ui/pull/6115#discussion_r2890240570",
+     "path": "docs/content/docs/2.components/table.md",
+     "start": 519,
+     "end": 519,
+     "commit": "5422c5c659aba5d900effc63aed483a1b981dfdc",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2941333475,
+     "url": "https://github.com/nuxt/ui/pull/6115#discussion_r2941333475",
+     "path": "docs/content/docs/2.components/table.md",
+     "start": 317,
+     "end": 317,
+     "commit": "4888c250d1a1d96fd745177a10d724dbad5cdc98",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6112,
+   "url": "https://github.com/nuxt/ui/pull/6112",
+   "merge_sha": "fa25eec33e85e4e67e71366e60472bbf1e5a07c8",
+   "head_sha": "a215516394401e3b7ed76a837d90fc5f70d61fcf",
+   "merged_at": "2026-03-08T11:13:51Z",
+   "reviewed_commits": [
+    "a215516394401e3b7ed76a837d90fc5f70d61fcf"
+   ],
+   "comments": [
+    {
+     "id": 2861938517,
+     "url": "https://github.com/nuxt/ui/pull/6112#discussion_r2861938517",
+     "path": "playgrounds/nuxt/app/app.vue",
+     "start": 63,
+     "end": 65,
+     "commit": "a215516394401e3b7ed76a837d90fc5f70d61fcf",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2861938519,
+     "url": "https://github.com/nuxt/ui/pull/6112#discussion_r2861938519",
+     "path": "playgrounds/vue/src/app.vue",
+     "start": 73,
+     "end": 77,
+     "commit": "a215516394401e3b7ed76a837d90fc5f70d61fcf",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6111,
+   "url": "https://github.com/nuxt/ui/pull/6111",
+   "merge_sha": "0daacb02fa12e1037dc7db9e404cdb7909d0418d",
+   "head_sha": "cd5ac4b51534cd37b586780f9f04f13445b5da30",
+   "merged_at": "2026-04-21T16:06:33Z",
+   "reviewed_commits": [
+    "326148e575edc369505b5d0829d96bea359ccead"
+   ],
+   "comments": [
+    {
+     "id": 2861741987,
+     "url": "https://github.com/nuxt/ui/pull/6111#discussion_r2861741987",
+     "path": "src/runtime/components/PricingTable.vue",
+     "start": 206,
+     "end": 212,
+     "commit": "326148e575edc369505b5d0829d96bea359ccead",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6095,
+   "url": "https://github.com/nuxt/ui/pull/6095",
+   "merge_sha": "0e9198e927dbce30daf211eb9d352cea3d978f62",
+   "head_sha": "eb110f98be2fcaffce2cd88610e93089a7be6793",
+   "merged_at": "2026-03-02T11:46:58Z",
+   "reviewed_commits": [
+    "8d2cf6d1d6035f3855f1d0708b972892c1641601"
+   ],
+   "comments": [
+    {
+     "id": 2850282331,
+     "url": "https://github.com/nuxt/ui/pull/6095#discussion_r2850282331",
+     "path": "src/theme/tooltip.ts",
+     "start": 4,
+     "end": 4,
+     "commit": "8d2cf6d1d6035f3855f1d0708b972892c1641601",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 6089,
+   "url": "https://github.com/nuxt/ui/pull/6089",
+   "merge_sha": "2663deb61dfa0ce279bd7bf01138bdac87c56366",
+   "head_sha": "8bbcd19719301aecab7cc24a534c33321dabb832",
+   "merged_at": "2026-02-23T11:24:01Z",
+   "reviewed_commits": [
+    "e93563571717803a83b06b8896650b4d250a4a78"
+   ],
+   "comments": [
+    {
+     "id": 2838969358,
+     "url": "https://github.com/nuxt/ui/pull/6089#discussion_r2838969358",
+     "path": "src/runtime/components/DashboardSidebar.vue",
+     "start": 34,
+     "end": 37,
+     "commit": "e93563571717803a83b06b8896650b4d250a4a78",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2838969369,
+     "url": "https://github.com/nuxt/ui/pull/6089#discussion_r2838969369",
+     "path": "src/runtime/components/DashboardSidebar.vue",
+     "start": 119,
+     "end": 121,
+     "commit": "e93563571717803a83b06b8896650b4d250a4a78",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6081,
+   "url": "https://github.com/nuxt/ui/pull/6081",
+   "merge_sha": "bc49d3f9b3d1a56b868136463b9466e7779a1987",
+   "head_sha": "9a9381889a703b2a3589afe2d8732054094f2a3d",
+   "merged_at": "2026-02-20T22:09:31Z",
+   "reviewed_commits": [
+    "9a9381889a703b2a3589afe2d8732054094f2a3d"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6076,
+   "url": "https://github.com/nuxt/ui/pull/6076",
+   "merge_sha": "e8bc322cabcd29e1507d52bcb07cc01c59a8873c",
+   "head_sha": "363384c53677ea44f502260c35ec50d102449586",
+   "merged_at": "2026-02-23T09:28:02Z",
+   "reviewed_commits": [
+    "363384c53677ea44f502260c35ec50d102449586",
+    "a55b8979d20bfefcb9e76e85c8e0bc7d98b120f6"
+   ],
+   "comments": [
+    {
+     "id": 2829239040,
+     "url": "https://github.com/nuxt/ui/pull/6076#discussion_r2829239040",
+     "path": "src/module.ts",
+     "start": 161,
+     "end": 163,
+     "commit": "a55b8979d20bfefcb9e76e85c8e0bc7d98b120f6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 6074,
+   "url": "https://github.com/nuxt/ui/pull/6074",
+   "merge_sha": "8f5f44cd47e6cf822a49a5a14a93672c76807f09",
+   "head_sha": "40daa8eb2c1c96ba879f929a7c806023959eeb0d",
+   "merged_at": "2026-02-19T11:02:29Z",
+   "reviewed_commits": [
+    "40daa8eb2c1c96ba879f929a7c806023959eeb0d"
+   ],
+   "comments": [
+    {
+     "id": 2827164084,
+     "url": "https://github.com/nuxt/ui/pull/6074#discussion_r2827164084",
+     "path": "src/theme/input-number.ts",
+     "start": 22,
+     "end": 25,
+     "commit": "40daa8eb2c1c96ba879f929a7c806023959eeb0d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6064,
+   "url": "https://github.com/nuxt/ui/pull/6064",
+   "merge_sha": "401a2c031ae200d617f9a35207fd58741f73a753",
+   "head_sha": "b3148d392b89404f9e6a7003bc9cbc5e66b51764",
+   "merged_at": "2026-02-17T10:13:32Z",
+   "reviewed_commits": [
+    "d01a29c62ae4ce63e8fff3755c09fa620bbaffad"
+   ],
+   "comments": [
+    {
+     "id": 2815934878,
+     "url": "https://github.com/nuxt/ui/pull/6064#discussion_r2815934878",
+     "path": "src/runtime/components/NavigationMenu.vue",
+     "start": 321,
+     "end": 328,
+     "commit": "d01a29c62ae4ce63e8fff3755c09fa620bbaffad",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6062,
+   "url": "https://github.com/nuxt/ui/pull/6062",
+   "merge_sha": "89a4590f277e7e45f7a9d2565f6d05e830462772",
+   "head_sha": "95fc196986b38bc850b92886538f919370613e2c",
+   "merged_at": "2026-02-17T10:12:07Z",
+   "reviewed_commits": [
+    "60a0ab0a28ee4691761281715bc316f3baaa4cfc"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6060,
+   "url": "https://github.com/nuxt/ui/pull/6060",
+   "merge_sha": "cd3432b2970f265fde5638e977771470073c0a62",
+   "head_sha": "01c22f8d2e652f555d5e1040ded5351a6ece1f40",
+   "merged_at": "2026-02-18T13:13:00Z",
+   "reviewed_commits": [
+    "aa73d7e0a9bf93ac0b2b5e4ef2d662a46cd70d26",
+    "ae88320fd4fac049fa55327eaebc08cf05d65688",
+    "dd360c123f38fe2e7512b2ae2c11ab6c94790443",
+    "f04e2dd780f29eb050aca2de3d97d1f83bc540f1"
+   ],
+   "comments": [
+    {
+     "id": 2814787536,
+     "url": "https://github.com/nuxt/ui/pull/6060#discussion_r2814787536",
+     "path": "src/runtime/types/input.ts",
+     "start": 14,
+     "end": 17,
+     "commit": "dd360c123f38fe2e7512b2ae2c11ab6c94790443",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2814787538,
+     "url": "https://github.com/nuxt/ui/pull/6060#discussion_r2814787538",
+     "path": "src/runtime/types/utils.ts",
+     "start": 63,
+     "end": 64,
+     "commit": "dd360c123f38fe2e7512b2ae2c11ab6c94790443",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2814838120,
+     "url": "https://github.com/nuxt/ui/pull/6060#discussion_r2814838120",
+     "path": "src/runtime/components/InputNumber.vue",
+     "start": 134,
+     "end": 137,
+     "commit": "aa73d7e0a9bf93ac0b2b5e4ef2d662a46cd70d26",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2814856411,
+     "url": "https://github.com/nuxt/ui/pull/6060#discussion_r2814856411",
+     "path": "src/runtime/components/InputNumber.vue",
+     "start": 111,
+     "end": 114,
+     "commit": "ae88320fd4fac049fa55327eaebc08cf05d65688",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6044,
+   "url": "https://github.com/nuxt/ui/pull/6044",
+   "merge_sha": "22cf1eadaf3378534d946ddc6bb0a9dd0ffc11be",
+   "head_sha": "554507a32975861f00587ffcca0319fbd970158c",
+   "merged_at": "2026-02-16T17:46:31Z",
+   "reviewed_commits": [
+    "5393ac5ac43ec2157052eecdc10e70453293669d",
+    "554507a32975861f00587ffcca0319fbd970158c"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6043,
+   "url": "https://github.com/nuxt/ui/pull/6043",
+   "merge_sha": "e67f77e62af77ff4af89d98e38388636242222ca",
+   "head_sha": "9915cc332ad23d518921cd54cd427474b594f90b",
+   "merged_at": "2026-02-16T11:58:33Z",
+   "reviewed_commits": [
+    "9915cc332ad23d518921cd54cd427474b594f90b"
+   ],
+   "comments": []
+  },
+  {
+   "number": 6040,
+   "url": "https://github.com/nuxt/ui/pull/6040",
+   "merge_sha": "1262016057e7a674f5d7a8cd5fe19c1ccf6b4f4e",
+   "head_sha": "b4abe04147190e6cc86833613cc5f328764bd710",
+   "merged_at": "2026-02-16T17:11:55Z",
+   "reviewed_commits": [
+    "b4abe04147190e6cc86833613cc5f328764bd710",
+    "d3c54ebe499e172f944d60cc866947aefe177e9b"
+   ],
+   "comments": [
+    {
+     "id": 2807806767,
+     "url": "https://github.com/nuxt/ui/pull/6040#discussion_r2807806767",
+     "path": "src/theme/select.ts",
+     "start": 61,
+     "end": 61,
+     "commit": "b4abe04147190e6cc86833613cc5f328764bd710",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6038,
+   "url": "https://github.com/nuxt/ui/pull/6038",
+   "merge_sha": "51a1f8519c148ea7ead6e5c308497b79db0bd5b6",
+   "head_sha": "0686ed21c0452ff908638db1b8427fa91cb97826",
+   "merged_at": "2026-03-10T13:24:14Z",
+   "reviewed_commits": [
+    "02b1c05391c5dab3d1d25d43fc098a6b17e7e078",
+    "27faaf5a6770c8f9fefa5bb4709db4dc4b412187",
+    "7e569786ac6d2b5b3476909238b9219800c3e30f",
+    "a413db2871e8385bc06cc1791b969521f8024651"
+   ],
+   "comments": [
+    {
+     "id": 2896971006,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971006",
+     "path": "docs/app/components/chat/Chat.vue",
+     "start": 53,
+     "end": 61,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2896971022,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971022",
+     "path": "docs/app/components/content/examples/sidebar/SidebarChatExample.vue",
+     "start": 34,
+     "end": 39,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2896971027,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971027",
+     "path": "docs/app/components/content/examples/sidebar/SidebarOpenExample.vue",
+     "start": 40,
+     "end": 45,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2896971038,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971038",
+     "path": "docs/app/components/content/examples/sidebar/SidebarPropsExample.vue",
+     "start": 26,
+     "end": 26,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2896971041,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971041",
+     "path": "docs/app/components/content/examples/sidebar/SidebarWidthExample.vue",
+     "start": 36,
+     "end": 41,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2896971046,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971046",
+     "path": "docs/app/composables/useTheme.ts",
+     "start": 264,
+     "end": 281,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2896971048,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971048",
+     "path": "docs/server/api/ai.post.ts",
+     "start": 67,
+     "end": 68,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2896971059,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971059",
+     "path": "playgrounds/nuxt/app/pages/components/sidebar.vue",
+     "start": 36,
+     "end": 36,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\ud83d\udee0\ufe0f Refactor suggestion",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2896971062,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971062",
+     "path": "playgrounds/nuxt/app/pages/components/sidebar.vue",
+     "start": 60,
+     "end": 73,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2896971066,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971066",
+     "path": "src/runtime/components/Sidebar.vue",
+     "start": 293,
+     "end": 300,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2896971068,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2896971068",
+     "path": "src/runtime/types/locale.ts",
+     "start": 123,
+     "end": 126,
+     "commit": "7e569786ac6d2b5b3476909238b9219800c3e30f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2898345318,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2898345318",
+     "path": "docs/app/composables/useTheme.ts",
+     "start": 291,
+     "end": 305,
+     "commit": "a413db2871e8385bc06cc1791b969521f8024651",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2898345321,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2898345321",
+     "path": "docs/app/composables/useTheme.ts",
+     "start": 323,
+     "end": 325,
+     "commit": "a413db2871e8385bc06cc1791b969521f8024651",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2898345333,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2898345333",
+     "path": "docs/app/composables/useTheme.ts",
+     "start": 357,
+     "end": 361,
+     "commit": "a413db2871e8385bc06cc1791b969521f8024651",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2899565619,
+     "url": "https://github.com/nuxt/ui/pull/6038#discussion_r2899565619",
+     "path": "playgrounds/nuxt/app/pages/components/sidebar.vue",
+     "start": 29,
+     "end": 31,
+     "commit": "02b1c05391c5dab3d1d25d43fc098a6b17e7e078",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6031,
+   "url": "https://github.com/nuxt/ui/pull/6031",
+   "merge_sha": "71c008e56eb62a7da7f7ae134b211daec1c0d4ff",
+   "head_sha": "ffc484f9309070274941c5724a588bb294ba21cf",
+   "merged_at": "2026-05-04T09:43:43Z",
+   "reviewed_commits": [
+    "09b8dfe1cd8da6b29712f23021d40db35e5dd058",
+    "4d138d4f362e19c0707f52640b5169e2e14c93c6",
+    "c47bac7dcf3ad6fc685cf7e7a64ce2de2ab085ff",
+    "e8f624273e7a66599de3ef071ddabef570bb1792"
+   ],
+   "comments": [
+    {
+     "id": 2802068603,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r2802068603",
+     "path": "src/runtime/composables/useComponentVariant.ts",
+     "start": 32,
+     "end": 39,
+     "commit": "e8f624273e7a66599de3ef071ddabef570bb1792",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 3162147311,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162147311",
+     "path": ".github/contributing/component-structure.md",
+     "start": 60,
+     "end": 63,
+     "commit": "09b8dfe1cd8da6b29712f23021d40db35e5dd058",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3162147319,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162147319",
+     "path": "AGENTS.md",
+     "start": 93,
+     "end": 93,
+     "commit": "09b8dfe1cd8da6b29712f23021d40db35e5dd058",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3162147324,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162147324",
+     "path": "cli/templates.mjs",
+     "start": 61,
+     "end": 66,
+     "commit": "09b8dfe1cd8da6b29712f23021d40db35e5dd058",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3162147332,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162147332",
+     "path": "cli/templates.mjs",
+     "start": 85,
+     "end": 87,
+     "commit": "09b8dfe1cd8da6b29712f23021d40db35e5dd058",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3162484355,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162484355",
+     "path": "src/runtime/components/Button.vue",
+     "start": 62,
+     "end": 70,
+     "commit": "4d138d4f362e19c0707f52640b5169e2e14c93c6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3162484372,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162484372",
+     "path": "src/runtime/components/ChatPrompt.vue",
+     "start": 114,
+     "end": 114,
+     "commit": "4d138d4f362e19c0707f52640b5169e2e14c93c6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3162484391,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162484391",
+     "path": "src/runtime/components/ColorPicker.vue",
+     "start": 81,
+     "end": 85,
+     "commit": "4d138d4f362e19c0707f52640b5169e2e14c93c6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3162484393,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162484393",
+     "path": "src/runtime/components/CommandPalette.vue",
+     "start": 337,
+     "end": 337,
+     "commit": "4d138d4f362e19c0707f52640b5169e2e14c93c6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3162484397,
+     "url": "https://github.com/nuxt/ui/pull/6031#discussion_r3162484397",
+     "path": "src/runtime/components/PinInput.vue",
+     "start": 77,
+     "end": 77,
+     "commit": "4d138d4f362e19c0707f52640b5169e2e14c93c6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6026,
+   "url": "https://github.com/nuxt/ui/pull/6026",
+   "merge_sha": "ee8a248d4293ec79bdf7db820879503dcec70547",
+   "head_sha": "81237307049a66e65b97490c8ca33cbf94de5b1e",
+   "merged_at": "2026-03-05T11:34:14Z",
+   "reviewed_commits": [
+    "81237307049a66e65b97490c8ca33cbf94de5b1e",
+    "828653b4a6defc8f4b57dce816a46e57084bc21a",
+    "9e23e5df7c1464048e3d8b2796f5422ad3df34af",
+    "deef2665e98390004139c4ff1fde85600a1fca17"
+   ],
+   "comments": [
+    {
+     "id": 2883004292,
+     "url": "https://github.com/nuxt/ui/pull/6026#discussion_r2883004292",
+     "path": "docs/content/docs/2.components/input-menu.md",
+     "start": 269,
+     "end": 269,
+     "commit": "deef2665e98390004139c4ff1fde85600a1fca17",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2883004305,
+     "url": "https://github.com/nuxt/ui/pull/6026#discussion_r2883004305",
+     "path": "src/runtime/components/InputMenu.vue",
+     "start": 278,
+     "end": 283,
+     "commit": "deef2665e98390004139c4ff1fde85600a1fca17",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2884179150,
+     "url": "https://github.com/nuxt/ui/pull/6026#discussion_r2884179150",
+     "path": "docs/content/docs/2.components/input-menu.md",
+     "start": 258,
+     "end": 266,
+     "commit": "828653b4a6defc8f4b57dce816a46e57084bc21a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2884179165,
+     "url": "https://github.com/nuxt/ui/pull/6026#discussion_r2884179165",
+     "path": "src/runtime/components/InputMenu.vue",
+     "start": 385,
+     "end": 387,
+     "commit": "828653b4a6defc8f4b57dce816a46e57084bc21a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2889221072,
+     "url": "https://github.com/nuxt/ui/pull/6026#discussion_r2889221072",
+     "path": "src/runtime/components/InputMenu.vue",
+     "start": 159,
+     "end": 164,
+     "commit": "9e23e5df7c1464048e3d8b2796f5422ad3df34af",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2889221081,
+     "url": "https://github.com/nuxt/ui/pull/6026#discussion_r2889221081",
+     "path": "src/runtime/components/InputMenu.vue",
+     "start": 383,
+     "end": 390,
+     "commit": "9e23e5df7c1464048e3d8b2796f5422ad3df34af",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 6023,
+   "url": "https://github.com/nuxt/ui/pull/6023",
+   "merge_sha": "bc06ce22f4d8d17728b2672e791269c4d4c26e46",
+   "head_sha": "3463e37b4246662252cf562d65117b4f2efcaa42",
+   "merged_at": "2026-02-12T15:07:39Z",
+   "reviewed_commits": [
+    "6e8246655900703c55f838c1bb1bca21a4423def",
+    "d393e228d4ce20288f6f3f6c1d39f8e2532d28ad"
+   ],
+   "comments": [
+    {
+     "id": 2787862822,
+     "url": "https://github.com/nuxt/ui/pull/6023#discussion_r2787862822",
+     "path": "src/runtime/components/Table.vue",
+     "start": 259,
+     "end": 259,
+     "commit": "d393e228d4ce20288f6f3f6c1d39f8e2532d28ad",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2787945219,
+     "url": "https://github.com/nuxt/ui/pull/6023#discussion_r2787945219",
+     "path": "src/runtime/components/Table.vue",
+     "start": 259,
+     "end": 259,
+     "commit": "6e8246655900703c55f838c1bb1bca21a4423def",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6008,
+   "url": "https://github.com/nuxt/ui/pull/6008",
+   "merge_sha": "6dd0fc4ef3f22f2c8343650cbf93241ad051e220",
+   "head_sha": "7a747c4f88692057c3e3ff361a55bd6dd238b6b1",
+   "merged_at": "2026-03-04T10:25:02Z",
+   "reviewed_commits": [
+    "569b4e9a39e152859387f80386dd44e76d728f1f",
+    "5ebe6e070cd1eb86f664f8e741b9de1bf5901a32",
+    "eb82d2019eb1090cb9925eaa5ba0d9ce1d3d061a"
+   ],
+   "comments": [
+    {
+     "id": 2779458437,
+     "url": "https://github.com/nuxt/ui/pull/6008#discussion_r2779458437",
+     "path": "src/runtime/components/Avatar.vue",
+     "start": 73,
+     "end": 78,
+     "commit": "eb82d2019eb1090cb9925eaa5ba0d9ce1d3d061a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2779546187,
+     "url": "https://github.com/nuxt/ui/pull/6008#discussion_r2779546187",
+     "path": "src/runtime/components/Avatar.vue",
+     "start": 75,
+     "end": 75,
+     "commit": "569b4e9a39e152859387f80386dd44e76d728f1f",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 6002,
+   "url": "https://github.com/nuxt/ui/pull/6002",
+   "merge_sha": "ed552fca32d11fefb91596fd8d69fa2e43617a75",
+   "head_sha": "ad58c53addb78b58b6ef24e9d7d28d7c2935aca4",
+   "merged_at": "2026-02-15T13:21:36Z",
+   "reviewed_commits": [
+    "d0cdb2701712b58f3e391edc8498a35212ee3ace",
+    "e2d34351ca1cf3abe930348748ed89e6a84e8979"
+   ],
+   "comments": [
+    {
+     "id": 2777171060,
+     "url": "https://github.com/nuxt/ui/pull/6002#discussion_r2777171060",
+     "path": "test/components/Form.spec.ts",
+     "start": 647,
+     "end": 650,
+     "commit": "e2d34351ca1cf3abe930348748ed89e6a84e8979",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    }
+   ]
+  },
+  {
+   "number": 5972,
+   "url": "https://github.com/nuxt/ui/pull/5972",
+   "merge_sha": "ac9e7b32066e65f837fbabc579bef5073002d8f4",
+   "head_sha": "ac942a0ce9532a7b7198f0a5c5a2fce97ecc89cb",
+   "merged_at": "2026-02-06T15:24:31Z",
+   "reviewed_commits": [
+    "1ea304370d13824667d072c498be5dd193b98c87",
+    "ac942a0ce9532a7b7198f0a5c5a2fce97ecc89cb",
+    "c4558f82d8b98b6bffe1efa46093e5a721a58657"
+   ],
+   "comments": [
+    {
+     "id": 2744143209,
+     "url": "https://github.com/nuxt/ui/pull/5972#discussion_r2744143209",
+     "path": "src/runtime/locale/be.ts",
+     "start": 16,
+     "end": 23,
+     "commit": "1ea304370d13824667d072c498be5dd193b98c87",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2744170933,
+     "url": "https://github.com/nuxt/ui/pull/5972#discussion_r2744170933",
+     "path": "src/runtime/locale/be.ts",
+     "start": 106,
+     "end": 109,
+     "commit": "c4558f82d8b98b6bffe1efa46093e5a721a58657",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 5966,
+   "url": "https://github.com/nuxt/ui/pull/5966",
+   "merge_sha": "d077ac0c6eb914f0c47108c77a914158eee1f73a",
+   "head_sha": "d11b5118ba24895908cca32b53356b743f88a78e",
+   "merged_at": "2026-01-29T10:07:17Z",
+   "reviewed_commits": [
+    "703aa3180243187e32927a2f30021ed82f5edcb6",
+    "d11b5118ba24895908cca32b53356b743f88a78e"
+   ],
+   "comments": [
+    {
+     "id": 2740533954,
+     "url": "https://github.com/nuxt/ui/pull/5966#discussion_r2740533954",
+     "path": "docs/content/docs/1.getting-started/7.ai/1.mcp.md",
+     "start": 185,
+     "end": 205,
+     "commit": "703aa3180243187e32927a2f30021ed82f5edcb6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2740533958,
+     "url": "https://github.com/nuxt/ui/pull/5966#discussion_r2740533958",
+     "path": "docs/content/docs/1.getting-started/7.ai/1.mcp.md",
+     "start": 187,
+     "end": 204,
+     "commit": "703aa3180243187e32927a2f30021ed82f5edcb6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2740803133,
+     "url": "https://github.com/nuxt/ui/pull/5966#discussion_r2740803133",
+     "path": "docs/content/docs/1.getting-started/7.ai/1.mcp.md",
+     "start": 187,
+     "end": 198,
+     "commit": "d11b5118ba24895908cca32b53356b743f88a78e",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 5960,
+   "url": "https://github.com/nuxt/ui/pull/5960",
+   "merge_sha": "ed60193cdfaeed50d9bce4f110bab1a1e1a42407",
+   "head_sha": "09a4bb7ad12c87de8579c76fcac4cd2af46a5f86",
+   "merged_at": "2026-01-29T15:08:48Z",
+   "reviewed_commits": [
+    "2597e4a05b36fcfff75dd29c336b550883f9e891",
+    "5b6e015a9ed20ce66e435c49f788ed5a979a6ca6",
+    "611c6f66ea560a4c5b7533211365b31360affcf3",
+    "c61980418a49e3fc2b91bed3e456994dcee9f710"
+   ],
+   "comments": [
+    {
+     "id": 2736097708,
+     "url": "https://github.com/nuxt/ui/pull/5960#discussion_r2736097708",
+     "path": "src/runtime/components/EditorDragHandle.vue",
+     "start": 42,
+     "end": 44,
+     "commit": "5b6e015a9ed20ce66e435c49f788ed5a979a6ca6",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2738973453,
+     "url": "https://github.com/nuxt/ui/pull/5960#discussion_r2738973453",
+     "path": "src/runtime/components/EditorDragHandle.vue",
+     "start": 41,
+     "end": 43,
+     "commit": "2597e4a05b36fcfff75dd29c336b550883f9e891",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 5757,
+   "url": "https://github.com/nuxt/ui/pull/5757",
+   "merge_sha": "cba2c2c40c23d7a3624f7948357a70c3d35846fe",
+   "head_sha": "e0713dc7e76bc3a5b00c06f5ad444b706ada8068",
+   "merged_at": "2026-06-25T15:31:18Z",
+   "reviewed_commits": [
+    "daed82d9ff99c88cfaa558d22cae35748e28cd1c"
+   ],
+   "comments": []
+  },
+  {
+   "number": 5746,
+   "url": "https://github.com/nuxt/ui/pull/5746",
+   "merge_sha": "df080ce8a1c1031b60cfcaca91c85927ec81cd9d",
+   "head_sha": "f312e7ac17aa33840e5bb107db03fc0bd489bbd9",
+   "merged_at": "2026-03-17T17:30:39Z",
+   "reviewed_commits": [
+    "2d32c406236faef704511cdf6c917ea5bd5a8deb",
+    "51093b4e5efea654d48c7b81c2b5010ef2aae198",
+    "f312e7ac17aa33840e5bb107db03fc0bd489bbd9"
+   ],
+   "comments": [
+    {
+     "id": 2873455780,
+     "url": "https://github.com/nuxt/ui/pull/5746#discussion_r2873455780",
+     "path": "docs/content/docs/2.components/content-toc.md",
+     "start": 157,
+     "end": 198,
+     "commit": "51093b4e5efea654d48c7b81c2b5010ef2aae198",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2947880480,
+     "url": "https://github.com/nuxt/ui/pull/5746#discussion_r2947880480",
+     "path": "docs/content/docs/2.components/content-toc.md",
+     "start": 103,
+     "end": 108,
+     "commit": "2d32c406236faef704511cdf6c917ea5bd5a8deb",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 5721,
+   "url": "https://github.com/nuxt/ui/pull/5721",
+   "merge_sha": "548b7115a2bcf08ef1605c2f1c046b5c135ffe3b",
+   "head_sha": "7af7b655a505cd9bba8c97ac559ad42be5b835de",
+   "merged_at": "2026-02-17T13:30:00Z",
+   "reviewed_commits": [
+    "265d18445a2de62985a4c90aa118c404d38976a1",
+    "291a5912cf7b472d0e98320b5e76bc3a7bcb065b",
+    "7af7b655a505cd9bba8c97ac559ad42be5b835de",
+    "e65edf2d3cc04ac2920b0026be42daf7a9a622bd"
+   ],
+   "comments": [
+    {
+     "id": 2816107461,
+     "url": "https://github.com/nuxt/ui/pull/5721#discussion_r2816107461",
+     "path": "src/runtime/components/ScrollArea.vue",
+     "start": 208,
+     "end": 230,
+     "commit": "291a5912cf7b472d0e98320b5e76bc3a7bcb065b",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 5702,
+   "url": "https://github.com/nuxt/ui/pull/5702",
+   "merge_sha": "eee9dfeef53d01c23455d86a3ee4f25eab239d79",
+   "head_sha": "bb3c89a4324da235bba56e0b9076702cb60cb436",
+   "merged_at": "2026-01-28T13:31:15Z",
+   "reviewed_commits": [
+    "2f29d0c79e41aecdf0c22d714fe2c6a7744a446d",
+    "49fce449bba9f3e68ceff08da5ae3d53327844e6",
+    "64f833d14a7f70c10dddf6b707328854d961bdb5",
+    "7c3df10bc429286ed13202073f652c07d20ea1ac",
+    "e4812ae3b55c740f5b20aea615d2bc445a8367d5"
+   ],
+   "comments": [
+    {
+     "id": 2735816358,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2735816358",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 402,
+     "end": 405,
+     "commit": "2f29d0c79e41aecdf0c22d714fe2c6a7744a446d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2735816374,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2735816374",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 462,
+     "end": 499,
+     "commit": "2f29d0c79e41aecdf0c22d714fe2c6a7744a446d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2735816382,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2735816382",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 526,
+     "end": 545,
+     "commit": "2f29d0c79e41aecdf0c22d714fe2c6a7744a446d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2735816388,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2735816388",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 591,
+     "end": 591,
+     "commit": "2f29d0c79e41aecdf0c22d714fe2c6a7744a446d",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2735858263,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2735858263",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 530,
+     "end": 530,
+     "commit": "7c3df10bc429286ed13202073f652c07d20ea1ac",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2735858270,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2735858270",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 540,
+     "end": 540,
+     "commit": "7c3df10bc429286ed13202073f652c07d20ea1ac",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2735858281,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2735858281",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 543,
+     "end": 544,
+     "commit": "7c3df10bc429286ed13202073f652c07d20ea1ac",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2736237799,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2736237799",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 465,
+     "end": 468,
+     "commit": "e4812ae3b55c740f5b20aea615d2bc445a8367d5",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2736326408,
+     "url": "https://github.com/nuxt/ui/pull/5702#discussion_r2736326408",
+     "path": "docs/content/docs/1.getting-started/3.migration/2.v3.md",
+     "start": 646,
+     "end": 653,
+     "commit": "64f833d14a7f70c10dddf6b707328854d961bdb5",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 5695,
+   "url": "https://github.com/nuxt/ui/pull/5695",
+   "merge_sha": "e2c038c146a8fba02e1f50900683ca2a0d71f972",
+   "head_sha": "06e40f889bd90a4c1cb6efadf80fa4ce3554555f",
+   "merged_at": "2026-01-28T14:10:43Z",
+   "reviewed_commits": [
+    "28feeefc2e85b0e538b5a2a258bdf86cdaf62377"
+   ],
+   "comments": [
+    {
+     "id": 2735925233,
+     "url": "https://github.com/nuxt/ui/pull/5695#discussion_r2735925233",
+     "path": "src/runtime/utils/overlay.ts",
+     "start": 22,
+     "end": 30,
+     "commit": "28feeefc2e85b0e538b5a2a258bdf86cdaf62377",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 5682,
+   "url": "https://github.com/nuxt/ui/pull/5682",
+   "merge_sha": "f46b504b95ae95843405b701a67cdd115b6e8c4e",
+   "head_sha": "48ce8e5044093bf1a9286242e13b67caad006b98",
+   "merged_at": "2026-02-17T13:13:49Z",
+   "reviewed_commits": [
+    "17991debf7aa334e0893c493416af85a52fe4835",
+    "4bba4e156a8f17f3cb2703a432dfc5aa557e59d7",
+    "898165de3ec07ee1c18e5fe4fa1ebabffb3a5311",
+    "c3a54fa17d810830c5f0d9b22bd91f5d1d77c2f5",
+    "f704e3c2bed1fafba71245288dc19f9ee2084204"
+   ],
+   "comments": [
+    {
+     "id": 2812173513,
+     "url": "https://github.com/nuxt/ui/pull/5682#discussion_r2812173513",
+     "path": "src/runtime/components/NavigationMenu.vue",
+     "start": 262,
+     "end": 262,
+     "commit": "898165de3ec07ee1c18e5fe4fa1ebabffb3a5311",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 5537,
+   "url": "https://github.com/nuxt/ui/pull/5537",
+   "merge_sha": "92cfda0f9f14619e388b2baa9f370e363c9fa73f",
+   "head_sha": "4ca5bc7707453e0dcae30fe61bb5823b04a65bfd",
+   "merged_at": "2026-04-17T15:49:29Z",
+   "reviewed_commits": [
+    "27b9ced6be42383e0f07679521b3652f384cf5db",
+    "4ca5bc7707453e0dcae30fe61bb5823b04a65bfd",
+    "6503cde4d7a0df8c2e97082b44c2f511a3255847"
+   ],
+   "comments": [
+    {
+     "id": 3101451483,
+     "url": "https://github.com/nuxt/ui/pull/5537#discussion_r3101451483",
+     "path": "docs/content/docs/2.components/link.md",
+     "start": 102,
+     "end": 104,
+     "commit": "27b9ced6be42383e0f07679521b3652f384cf5db",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3101485190,
+     "url": "https://github.com/nuxt/ui/pull/5537#discussion_r3101485190",
+     "path": "src/runtime/components/Link.vue",
+     "start": 149,
+     "end": 168,
+     "commit": "4ca5bc7707453e0dcae30fe61bb5823b04a65bfd",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 5384,
+   "url": "https://github.com/nuxt/ui/pull/5384",
+   "merge_sha": "dd3f5c53b3e59e02e3f90eebd97fb58fb41451e3",
+   "head_sha": "7aae05fbc7e4dfb9324b26e8e39868d94aa616cf",
+   "merged_at": "2026-03-04T21:28:37Z",
+   "reviewed_commits": [
+    "7aae05fbc7e4dfb9324b26e8e39868d94aa616cf"
+   ],
+   "comments": []
+  },
+  {
+   "number": 5284,
+   "url": "https://github.com/nuxt/ui/pull/5284",
+   "merge_sha": "0d23d8c8b5517e09c59c231c8119b37e2ad67d55",
+   "head_sha": "26f69cfccecc86f955cdb3884ca1fc8f558c3a81",
+   "merged_at": "2026-04-28T13:21:12Z",
+   "reviewed_commits": [
+    "5df99df4f62336b04602686358ebd7587127cbb5",
+    "6c7c1e231564669998947f19c8c258742915560a"
+   ],
+   "comments": [
+    {
+     "id": 3153490078,
+     "url": "https://github.com/nuxt/ui/pull/5284#discussion_r3153490078",
+     "path": "docs/app/components/content/examples/form/FormExampleErrorPattern.vue",
+     "start": 7,
+     "end": 7,
+     "commit": "6c7c1e231564669998947f19c8c258742915560a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3153490105,
+     "url": "https://github.com/nuxt/ui/pull/5284#discussion_r3153490105",
+     "path": "docs/content/docs/2.components/form-field.md",
+     "start": 146,
+     "end": 146,
+     "commit": "6c7c1e231564669998947f19c8c258742915560a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3153490125,
+     "url": "https://github.com/nuxt/ui/pull/5284#discussion_r3153490125",
+     "path": "docs/content/docs/2.components/form.md",
+     "start": 79,
+     "end": 79,
+     "commit": "6c7c1e231564669998947f19c8c258742915560a",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 4387,
+   "url": "https://github.com/nuxt/ui/pull/4387",
+   "merge_sha": "c97047da46c7511f35382a007ef4f90ded333dd9",
+   "head_sha": "e59be151d6546796f88bd1dc6456914a4453f4ca",
+   "merged_at": "2026-02-11T13:02:20Z",
+   "reviewed_commits": [
+    "1c8ee51d272cf9a79d71aad8aa18e27e6c1dfb25",
+    "725d6ee48432328732e980fec2b33c2b1ef49dee",
+    "81401cc15648a0400efe95c4777c8af849a2a429"
+   ],
+   "comments": [
+    {
+     "id": 2774669313,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2774669313",
+     "path": "src/runtime/components/DashboardSearchButton.vue",
+     "start": 86,
+     "end": 86,
+     "commit": "81401cc15648a0400efe95c4777c8af849a2a429",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2774669319,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2774669319",
+     "path": "src/runtime/components/NavigationMenu.vue",
+     "start": 456,
+     "end": 456,
+     "commit": "81401cc15648a0400efe95c4777c8af849a2a429",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2774669335,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2774669335",
+     "path": "src/runtime/components/prose/H3.vue",
+     "start": 40,
+     "end": 43,
+     "commit": "81401cc15648a0400efe95c4777c8af849a2a429",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2774669343,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2774669343",
+     "path": "src/runtime/components/prose/H4.vue",
+     "start": 39,
+     "end": 40,
+     "commit": "81401cc15648a0400efe95c4777c8af849a2a429",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2774669354,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2774669354",
+     "path": "src/runtime/components/SelectMenu.vue",
+     "start": 519,
+     "end": 527,
+     "commit": "81401cc15648a0400efe95c4777c8af849a2a429",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2774669363,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2774669363",
+     "path": "test/components/Theme.spec.ts",
+     "start": 86,
+     "end": 90,
+     "commit": "81401cc15648a0400efe95c4777c8af849a2a429",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2775253054,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2775253054",
+     "path": "src/runtime/components/Link.vue",
+     "start": 130,
+     "end": 131,
+     "commit": "725d6ee48432328732e980fec2b33c2b1ef49dee",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2775253073,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2775253073",
+     "path": "src/runtime/components/prose/AccordionItem.vue",
+     "start": 12,
+     "end": 12,
+     "commit": "725d6ee48432328732e980fec2b33c2b1ef49dee",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 2775253083,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2775253083",
+     "path": "src/runtime/components/prose/Badge.vue",
+     "start": 10,
+     "end": 10,
+     "commit": "725d6ee48432328732e980fec2b33c2b1ef49dee",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2775253096,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2775253096",
+     "path": "src/runtime/components/prose/Em.vue",
+     "start": 10,
+     "end": 10,
+     "commit": "725d6ee48432328732e980fec2b33c2b1ef49dee",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 2775253100,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2775253100",
+     "path": "src/runtime/components/prose/FieldGroup.vue",
+     "start": 34,
+     "end": 36,
+     "commit": "725d6ee48432328732e980fec2b33c2b1ef49dee",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2775253106,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2775253106",
+     "path": "src/runtime/components/prose/Icon.vue",
+     "start": 11,
+     "end": 11,
+     "commit": "725d6ee48432328732e980fec2b33c2b1ef49dee",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2775253119,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2775253119",
+     "path": "src/runtime/components/prose/Li.vue",
+     "start": 10,
+     "end": 10,
+     "commit": "725d6ee48432328732e980fec2b33c2b1ef49dee",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udd34 Critical"
+    },
+    {
+     "id": 2775253126,
+     "url": "https://github.com/nuxt/ui/pull/4387#discussion_r2775253126",
+     "path": "src/runtime/components/prose/Ul.vue",
+     "start": 10,
+     "end": 10,
+     "commit": "725d6ee48432328732e980fec2b33c2b1ef49dee",
+     "category": "\u26a0\ufe0f Potential issue",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  }
+ ],
+ "branch": "v4"
+}

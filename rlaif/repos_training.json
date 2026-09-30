@@ -1,6 +1,21 @@
 {
   "_comment": "High-quality training repos for RLAIF governance model. Mix of AI-signal (vibe-coded) and enterprise (production-grade) repos for diverse drift patterns.",
-  "_eval_repos_DO_NOT_ADD": ["lodash/lodash", "pallets/flask", "django/django", "tiangolo/fastapi", "shadcn-ui/ui", "TanStack/query"],
+  "_eval_repos_DO_NOT_ADD": [
+    "lodash/lodash",
+    "pallets/flask",
+    "django/django",
+    "tiangolo/fastapi",
+    "shadcn-ui/ui",
+    "TanStack/query",
+    "TanStack/router",
+    "trpc/trpc",
+    "heroui-inc/heroui",
+    "triggerdotdev/trigger.dev",
+    "mastra-ai/mastra",
+    "supabase/supabase",
+    "appsmithorg/appsmith",
+    "nuxt/ui"
+  ],
   "_selection_criteria": "Two tracks: (A) vibe-coded repos with AI co-authorship for real AI-drift patterns, (B) enterprise repos for production governance patterns (auth, payments, APIs, infra). All repos: 200+ stars, active, CI/CD, tests, permissive license.",
   "_categories": {
     "ts_ai_apps": "lobehub/lobe-chat, ItzCrazyKns/Perplexica, FlowiseAI/Flowise, mckaywrigley/chatbot-ui, rashadphz/farfalle (5)",
@@ -23,54 +38,44 @@
     "FlowiseAI/Flowise",
     "mckaywrigley/chatbot-ui",
     "rashadphz/farfalle",
-
     "calcom/cal.com",
     "twentyhq/twenty",
     "makeplane/plane",
     "formbricks/formbricks",
     "documenso/documenso",
-
-    "triggerdotdev/trigger.dev",
     "payloadcms/payload",
     "Infisical/infisical",
     "maybe-finance/maybe",
-
     "vercel/ai",
     "continuedev/continue",
-
     "crewAIInc/crewAI",
     "pydantic/pydantic-ai",
     "BerriAI/litellm",
     "agno-agi/agno",
-
     "langchain-ai/langchain",
     "run-llama/llama_index",
     "openai/openai-python",
-
     "assafelovic/gpt-researcher",
     "Yidadaa/ChatGPT-Next-Web",
-
     "supertokens/supertokens-core",
     "lucia-auth/lucia",
     "casdoor/casdoor",
-
-    "trpc/trpc",
     "honojs/hono",
     "encode/starlette",
-
     "containers/podman",
     "grafana/k6",
     "pulumi/pulumi",
-
     "prisma/prisma",
     "drizzle-team/drizzle-orm",
     "sqlalchemy/sqlalchemy",
-
     "medusajs/medusa",
     "killbill/killbill",
-
-    "supabase/supabase",
     "appwrite/appwrite",
-    "nocodb/nocodb"
+    "nocodb/nocodb",
+    "solidjs/solid-router",
+    "solidjs/solid-start",
+    "vuejs/pinia",
+    "vueuse/vueuse",
+    "web-infra-dev/rsbuild"
   ]
 }

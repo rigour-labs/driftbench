@@ -1,0 +1,865 @@
+{
+ "repo": "triggerdotdev/trigger.dev",
+ "fixes": {
+  "04c8375696bacab65ad7bb2d9cf2b9df616b1343": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "Compaction was fed turn usage summed across tool steps, and the head-start handover replacement never matched the spliced run."
+  },
+  "051d7080d64514ac8ae76b99c5f52e0f66b2950a": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The reverted PR's fetch interception treated every Remix data request, including actions, as a navigation and hard-reloaded tabs during deploys."
+  },
+  "07374a9db8ec720f7a61f16a692770150cc9d936": {
+   "real": "no",
+   "needs": null,
+   "reason": "Making the health check fail when the worker pool has no live workers is a new operational safeguard; the blamed line was only a return-statement restructure."
+  },
+  "0754931cca708fc7334470b81c0f446afed7ef0a": {
+   "real": "no",
+   "needs": null,
+   "reason": "Trace span restructuring for visibility; an observability enhancement."
+  },
+  "08fdfc808d9a30e79a880c03d838260bcd8ab585": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "The append path treated conflicts as non-retryable, but the real cause was the S2 basin deleting idle empty streams under a short default age."
+  },
+  "0a44b88b39be43aaae7ac274f0cd35149f33ca34": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The SSO settings route from 3911 and the slug resolver from 3948 scoped orgs by slug only, relying on an ability check that is not a tenant floor."
+  },
+  "0d3e54dcd06b0a1e1acb01f327ac5071408c7625": {
+   "real": "no",
+   "needs": null,
+   "reason": "The missing billing permission and non-atomic allocation logic existed before the blamed PRs, which only touched surrounding lines."
+  },
+  "0ee1461d86b41c3c297c345745a61f99957e924a": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The PR introduced a scheduled suffix on worker queues but region read sites kept treating the raw worker queue as the region, exposing a phantom region."
+  },
+  "1034b618a43df3126c58fe473fcb7eed6c012e08": {
+   "real": "no",
+   "needs": null,
+   "reason": "Adds an impersonation bypass to the queue metrics feature gate, which is new feature work rather than a bug fix."
+  },
+  "1065251ca74e312d3279d81ded5cd9f00653a753": {
+   "real": "partial",
+   "needs": "local",
+   "reason": "The PR added in-sequence filtering of stale turn completions only for fresh sends, leaving the reconnect path (and the pre-existing stale-replay problem) unprotected."
+  },
+  "1114d9d6f963d46ab4ba7f62dd33bee568642e87": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed PR only reformatted code; the slot-leak logic predates it."
+  },
+  "11d8a05fa6733ee6ea7181df45cccb074ec645cb": {
+   "real": "no",
+   "needs": null,
+   "reason": "Adds copy controls and restores a debug panel; enhancement work over lines that were only restyled."
+  },
+  "11ea1f8ba98c4a8a9895b9d6e39a7b272c18d996": {
+   "real": "no",
+   "needs": null,
+   "reason": "Removing a render-time current-time fallback for bucket timestamps is a render-purity cleanup; callers already supplied explicit start times."
+  },
+  "12d2125148fad906df680a8a5384c1f6899b38c1": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "3543 silently skipped hydration when the handover header was missing, and 3542 set retry defaults that retried permanent client errors."
+  },
+  "14824b09556ac3310643174ec33a405d909bb129": {
+   "real": "partial",
+   "needs": "execution",
+   "reason": "Mostly a layout redesign, but the new metrics layout from 4131 let a wide table's overflow escape into the page scroller and drag the charts sideways."
+  },
+  "1b0f2c71dd18ac607983ae4c8f1d60bbe4c2658f": {
+   "real": "partial",
+   "needs": "local",
+   "reason": "The cursor PR rewrote the backward pagination but kept the wrong slice and cursor index that already existed."
+  },
+  "1d55693c0fc76279e7e8275fe41f959b65d5ea99": {
+   "real": "no",
+   "needs": null,
+   "reason": "Moving search and pagination controls above the table is a layout/UX change."
+  },
+  "1e14e29d7183d6e8badd78a71b45522aae3b6c17": {
+   "real": "no",
+   "needs": null,
+   "reason": "Visual restyle of dialogs with no behaviour change."
+  },
+  "1e4b896c3006ad3d687eb871fd5e8aefbed9c3ca": {
+   "real": "no",
+   "needs": null,
+   "reason": "Style update PR; the blamed lines were only restyled."
+  },
+  "1f1a3666ee36fbb009e9afa9a39208a5c7008c80": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The custom agent loop paths from the PR did not seed the resume cursor, propagate a message id, or bind the chat id for subtasks, unlike the main agent path."
+  },
+  "20a676d2ed1f23078aa189a70d1b05d33a3a10e2": {
+   "real": "no",
+   "needs": null,
+   "reason": "The string-only concurrency key schema predates 3753, which only touched the call-site line."
+  },
+  "20f9c781f6ecd509220f27f298c624096d747979": {
+   "real": "no",
+   "needs": null,
+   "reason": "The seed failure stems from ESM/CJS interop in the runtime environment and is fixed by a file rename; the blamed line was unrelated exit handling."
+  },
+  "22f8fb2b5b1d05ac1741facb87873454b7805eac": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The management API route added by the PR accepted a branch header for key rotation, crossing the scoped token boundary the RBAC layer expects; the span triggered-runs leak itself predates the other blamed PR."
+  },
+  "23c5619dd1f3f8fe55e6dfa62282812508173cc6": {
+   "real": "no",
+   "needs": null,
+   "reason": "Extracting the column resize handle into a component with a lint suppression is accessibility-lint enforcement, not a bug fix."
+  },
+  "25254d0201e7516e1cc38f0ba9c528eef2ec5613": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The chat runtime declared a public inferred type in an unexported module, breaking declaration emit for consumers."
+  },
+  "2b6d2492fe7a7d0333a019803de1ae5c9c0f459b": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The head-start splice skipped the hydrate path and the boot cursor drained an SSE stream that only closes after inactivity, both introduced in the chat agent PRs."
+  },
+  "2c720f6cb48160e75af7c3dc75523a35b592bdc8": {
+   "real": "yes",
+   "needs": "intent",
+   "reason": "The snapshot URL route shared JWT allowance between read and upload, letting public session tokens mint upload URLs."
+  },
+  "3039bc14d6038741ea813535faf555982ee2fc91": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "The misspelled connect-timeout parameter already existed and the topology PR copied it into its new client builders."
+  },
+  "32e5edbd040cc90452f7e308a2d4eb594a98b01a": {
+   "real": "no",
+   "needs": null,
+   "reason": "The uncommitted flash read and the set-instead-of-flash error storage predate both blamed PRs, which only touched surrounding lines."
+  },
+  "34211e664928d91ce0307408571000b71e4a2215": {
+   "real": "no",
+   "needs": null,
+   "reason": "Deriving expiry status from a loader timestamp is a render-consistency cleanup."
+  },
+  "34c2d6947031a970ff70bcf0c9b26c1ba2868942": {
+   "real": "yes",
+   "needs": "execution",
+   "reason": "The stream client reset its retry counter on every successful response and the chat transport's stall timer fired before the server timeout, so empty streams retried forever; only running it exposes the timing."
+  },
+  "3a091eb764f9be11c86f0dac5de2017f63e8cef7": {
+   "real": "no",
+   "needs": null,
+   "reason": "Accessibility lint enforcement, not a behaviour defect."
+  },
+  "3dcafbd65369f37d0b410f723c88f6adad8dce99": {
+   "real": "no",
+   "needs": null,
+   "reason": "The change reworks the preview branch auto-archive UI and empty state; it is UX improvement work."
+  },
+  "3fba04573d7a53cc238f24f5088437c25d031857": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "The PR deliberately failed open on read errors, dropping an engaged brake when the source became unreachable; the fix reverses that design choice."
+  },
+  "3ffd123d273d9d655e6b5b4bb32207c466670c4a": {
+   "real": "partial",
+   "needs": "local",
+   "reason": "3820 added a new unassociated label, following the file's existing label pattern."
+  },
+  "43250522a5b135addcf9c43151e86592f7519863": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "4255 built the batch idempotency UNION with one generated client's SQL helpers and ran it on the separate run-ops client, which does not recognise those fragments."
+  },
+  "436b7a9ea1f67bcc91c0b8e82325b8282b785e65": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The PR added a new op to the token scope while the cache key ignored scope, so previously cached tokens without that op were served for up to a day after deploy."
+  },
+  "447471843cbe7759f64beb616d5db5f05696ea13": {
+   "real": "no",
+   "needs": null,
+   "reason": "The success redirect already ignored the submitted return path before 4023, which only added a dev-branch path variant."
+  },
+  "4711adef8490e2377c3655129b2e313ff607a0e4": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed hook already ignored inspector params; the unwanted reload came from route revalidation and the hook change is a refactor."
+  },
+  "47834198fc813ed14cc1d29b460c95bde8430caa": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The session loop from 3543 awaited the AI SDK usage promise that never settles after a stop abort, and ran continuation boots with no message."
+  },
+  "4c163874260585f4711d98cc2ab6833281f73ab3": {
+   "real": "no",
+   "needs": null,
+   "reason": "The ungated staging input, the build-settings guard and the dead notification panels all existed before the layout rework, which only moved them."
+  },
+  "518978bc520804d8e71fe2fd4e7bcec519ae3928": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed PR only reformatted the line; the 64-character shortcut predates it."
+  },
+  "52320679abf1c0d45b148e1cb43d2b76d8d4b8e5": {
+   "real": "no",
+   "needs": null,
+   "reason": "The locked-task replica read predates 3625, which only moved it behind a cache."
+  },
+  "5619acf266f6cd5fa1370cabf48e2da7ec468383": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "The partial-response PR carried over the pattern of appending queued custom parts at the end instead of in stream order, a behaviour inherited from the original chat runtime."
+  },
+  "56823c390f4c49c41d0aa6bdccf18249c6027a20": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "Branch management routes were authorized against unrelated resource permissions because the shared PAT helper from the PR had no branches resource; a permission-model intent gap."
+  },
+  "56e301eb4b6c36760f3244ab5b2d31d1f221a155": {
+   "real": "yes",
+   "needs": "intent",
+   "reason": "The SSO PR gated its UI on managed-cloud instead of on the plugin actually being available."
+  },
+  "56f875680c892a400d5443fa4f3c936a1fcc82e6": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "The agent PR assumed the agent project runs on the webapp's own origin, which breaks when it lives on another instance."
+  },
+  "5ae24710e41345ffb9813a23e510d3abd1d89413": {
+   "real": "no",
+   "needs": null,
+   "reason": "Keyboard-accessibility improvement to sortable headers; the Tailwind migration only restyled the pre-existing span."
+  },
+  "5b01ebdb61ad680fd7b31a86b89931a896ac354a": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The PR used conform properties that do not exist in the current conform API for the intent and form error, so invite errors did not render correctly."
+  },
+  "5ddb81ac8d3c63e71f500890c5a68b01db4088c7": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "3546 added a second skill-discovery indexer in dev that ran with only the CLI process env, so task files reading env at import made it skip skills."
+  },
+  "63176a6d691d25d9a4230fb96ed0bb26f1865359": {
+   "real": "no",
+   "needs": null,
+   "reason": "The parent-based sampler inheriting sampled remote parents predates 4372, which only touched the provider registration line."
+  },
+  "639eaf6e824040aa0d1f8b229acd3882f3a879ac": {
+   "real": "no",
+   "needs": null,
+   "reason": "Applying an invite's role to an existing member predates the blamed PRs, which only extracted that code into a helper and reworked the invite loop."
+  },
+  "63b8e6e1f57316f05687eb8cb1969a08f7028590": {
+   "real": "no",
+   "needs": null,
+   "reason": "The batches list only lacked legs for additional run-ops stores that were introduced later; the blamed PRs predate those stores, so this is feature extension."
+  },
+  "65b4eff4d0c804eb406e2ff017f3a071b455439a": {
+   "real": "no",
+   "needs": null,
+   "reason": "Contrast adjustments for later light themes; the Tailwind migration only touched those class lines."
+  },
+  "69f396fbefd23daaa880afcedfd97b8d3a7d2c6e": {
+   "real": "no",
+   "needs": null,
+   "reason": "Pushing the stored limit without honouring the paused flag predates 4236, which only dropped the MARQS branch around the same call."
+  },
+  "6afc9bfa4c293ebd9aa5c9c393c96563b667094c": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed testcontainers lines were refactored into helpers to support new replica-lag tests; the actual fix concerns replica-lag handling elsewhere."
+  },
+  "6b46a34c468ee2d375772d5531edddf7eb5f58b6": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "The new session routes copied the existing pattern of throwing a plain error for a missing environment, which Remix turns into a 500."
+  },
+  "6e5f0f0fe74fceb2f8462e7fd354790572d5f03c": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "3851 copied the existing error-level logging into its streaming query path; routing customer query errors to alerts is a log-level policy issue that predates it."
+  },
+  "6f5c49c02145309152b6736c54a07e927469ad84": {
+   "real": "partial",
+   "needs": "execution",
+   "reason": "Follow-ups mix a policy change (dropping the compaction fingerprint) with persisting empty assistant responses from the original chat agent code; most blamed lines were only re-indented."
+  },
+  "7246f677dbeab6668d485a2ccca88a0498d8213a": {
+   "real": "no",
+   "needs": null,
+   "reason": "NUL bytes in keys failing the insert predates the mollifier PR, which only created the chokepoint where the fix now sits."
+  },
+  "73c8a4d975c76425bad85585a1831cf493e39b0f": {
+   "real": "no",
+   "needs": null,
+   "reason": "Accessibility upgrade from click-only spans to buttons; the span-based controls predate the Tailwind migration and tooltip PRs that last touched those lines."
+  },
+  "75679c7518e7900721853ba0f2f1840ed2b74670": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The per-turn merge replaced the whole hydrated message with the wire copy, so slim or oversized continuations lost tool inputs or exceeded the append cap and broke the next model call."
+  },
+  "7621601ecdfaf3dbe426846ff40545c71f6d6fea": {
+   "real": "partial",
+   "needs": "execution",
+   "reason": "3669 wrapped the disabled debug-log route in wide-event handling, adding cost to a path whose body parsing already existed."
+  },
+  "7682a215dbfa0aced04e4865988dd1ced54fc9e8": {
+   "real": "no",
+   "needs": null,
+   "reason": "Snapshotting the time when the history menu opens is a render-stability cleanup rather than a defect repair."
+  },
+  "771937adf5d6b72943a006ec86b5bfe1057804e7": {
+   "real": "no",
+   "needs": null,
+   "reason": "Unbounded priority multiplication into a 32-bit column existed before the blamed PR, which only moved that line."
+  },
+  "7f2224dca08ef5b30a9ddb58b39caa0b3e4a9339": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed line was only touched by a lint PR; the path-parsing hardening addresses code that predates it."
+  },
+  "7f3e6073ca76acfdfcad24ab0335b47569a413f3": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The split-mode wiring probed batch residency on a replica in a read-after-write path, so lag could route a new batch to the legacy writer."
+  },
+  "802d23836d621800806171e612bb500dc8653c5e": {
+   "real": "partial",
+   "needs": "external_semantics",
+   "reason": "The lost toast comes from a pre-existing redirect target, though the conform v1 upgrade in 4044 left two forms sharing one submission result."
+  },
+  "80cbc46bf6f8dd4177398503e9d7885d351f7730": {
+   "real": "no",
+   "needs": null,
+   "reason": "Downgrading transient Attio failures to warn level is alert-noise tuning, not a functional bug."
+  },
+  "80d4819a031d6364f7c405b7a4cd3882e8f12eca": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "4117 added and 4118 wired a project-delete cascade whose relation filter compiles to an unbounded scan over the run table."
+  },
+  "82bdd1fe0efa3f04e0c5ebd194d0073cb6700f0d": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The dashboard-agent migration runner used Drizzle's default shared journal table, so another app's rows could make migrations be skipped."
+  },
+  "859f30e224197b39f31d9080dbfce238631996c0": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The PR registered report catalogs via a bare side-effect import, which the production bundler drops under sideEffects false, breaking the health report in production."
+  },
+  "8819e25751e2ae6ee90002c7110c3f838df24dab": {
+   "real": "no",
+   "needs": null,
+   "reason": "The client-side redirect chain after org creation predates the blamed PRs, which only adjusted the redirect target and form result wiring."
+  },
+  "8947c07a0c4c8683ee501edb85ef73aeb07c251b": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The billing-limits PR's NOT filter on a nullable column excludes NULL rows, blocking resume of manually paused environments."
+  },
+  "89d085a4965a3190903d411b6538e8a500cad5b9": {
+   "real": "no",
+   "needs": null,
+   "reason": "These are type errors in reference example code after an SDK wire-shape change, not a product defect."
+  },
+  "8b98e21b4bc8e188af3e78767aea8c8672bdc50b": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "The session stream instance copied the per-call credential PUT pattern, producing one initialize request per chunk."
+  },
+  "8bf27a62937b5858f4963d65a9d7802982f1724e": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The server-side chat client from 3543 closed its output on the first stream EOF instead of resubscribing like the browser transport."
+  },
+  "8d5cf313bbbbd50fe95a6ef762b73ebfb416330f": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "3679 moved snapshot writes onto a protocol-qualified key while the session presenter still read a bare key, so the dashboard missed the snapshot."
+  },
+  "8dc77c0ccde7cf0e127f3d3da04d892d4aa54e6d": {
+   "real": "no",
+   "needs": null,
+   "reason": "Loading every environment's values was already there before the performance PR, which just rearranged the presenter."
+  },
+  "8f66af6e18b73ceaf4a8c2d198bb662a7bb85202": {
+   "real": "no",
+   "needs": null,
+   "reason": "The feedback dialog was already nested inside the help popover before 4066, which only swapped the trigger button."
+  },
+  "94b30fc1a69e979156801d6dd9442cafe2000264": {
+   "real": "no",
+   "needs": null,
+   "reason": "Rejecting zstd layers in Docker manifests extends the image verification feature to a new failure mode rather than fixing a bug in the original check."
+  },
+  "95307ba33c80226fa596bda3b003ab90afa6361b": {
+   "real": "no",
+   "needs": null,
+   "reason": "Label wording and hiding the tier marker for enterprise are product tweaks, and the marker predates the billing-limits PR."
+  },
+  "954ee5c572c187ba8cec600958bf76bfdc4cf03b": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The new realtime backend hydrated changes from a lagging read replica, delivering content one change behind."
+  },
+  "9818ad5240d90aa92b72a57be11828b7ef0a36c3": {
+   "real": "partial",
+   "needs": "execution",
+   "reason": "The transport assumed a restored session always exists, failing with 404 when persisted state pointed at another environment."
+  },
+  "9868110089cb08817801bc4e1026dd6c781be1be": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "Persisting the incoming message only at turn end was the original design; showing it on mid-answer reload is closer to a behavior change than a clear defect."
+  },
+  "9b3a7bd7b29f854c7cc782191e7cd7b0db05270e": {
+   "real": "partial",
+   "needs": "execution",
+   "reason": "The transport's design of closing the response stream on the first turn-complete (from the original chat transport work) cannot distinguish an earlier turn's completion, a race only visible at runtime."
+  },
+  "9baebbd1a629b772b0c0595651b7a078e9042e03": {
+   "real": "no",
+   "needs": null,
+   "reason": "The regression came from a later PR that repointed the agent origin; 4018's lines were correct when merged."
+  },
+  "9cb5028ce1bc2e70a797379aeec675afcdf6c81a": {
+   "real": "no",
+   "needs": null,
+   "reason": "Raising the session tag cap to match runs is a limit alignment, and the blamed lines carried the intended five-tag cap."
+  },
+  "9cb6fd17c3766d9e4351759c8d499ad56f051369": {
+   "real": "no",
+   "needs": null,
+   "reason": "Non-idempotent worker creation predates both blamed PRs, which only touched nearby lines."
+  },
+  "9d57aff5426be111bbf3315c8167c754d4c25c10": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The queue metrics PR fed the paginated queue list into the hero chart filter, so the environment charts only covered the current page."
+  },
+  "9d7a60bc144d3ac03820bfe6b01cd4ba37349db1": {
+   "real": "no",
+   "needs": null,
+   "reason": "Product policy change making directory sync additive and allowing Owner mapping, not a repair of a defect in the blamed PRs."
+  },
+  "9ef5cf00556ed8d970e2e4e4f5378ab7c244ccad": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "4018 deliberately let admins bypass the dashboard agent flag; the fix reverses that rollout decision."
+  },
+  "9f01e315c1b8ec26484fc01e073afb034d6db1c8": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "Mostly a UX reordering of plan and role gates plus removing a client guard; only the replica read for authorization scope is a real flaw from 3911."
+  },
+  "a04cdffda6dc536677ac4f079b8873def66b7eab": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The sessions PR probed run liveness and resolved sessions on the replica only, so lag caused 404s and duplicate runs."
+  },
+  "a11e5ffbc6bb2d2326e1cf7c58d0129eed6ad2bd": {
+   "real": "no",
+   "needs": null,
+   "reason": "Replacing hard clipping with a fade on selector labels is a visual polish change, not a defect introduced by the blamed PRs."
+  },
+  "a1ca64613b32a427cfee5d1abf15fdc3cfdf85ef": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "The PR always opened an independent legacy pool, which doubles connections when the legacy DSN points at the primary database; wasteful rather than functionally wrong."
+  },
+  "a3af29fd8000e284f2f03c519071619b94b91044": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The recovery boot default added by the PR spliced the single in-flight user into the chain without re-dispatching it, so the new run waited forever for a message that had already arrived."
+  },
+  "a3f3fc09b5fa6d0409ae40a33de8a57cbc5b04f2": {
+   "real": "no",
+   "needs": null,
+   "reason": "Removes optional onboarding questions as a product simplification; the blamed lines were only restyled by the Tailwind migration."
+  },
+  "add0a7da0ae490677a67ad613958bc1d079bb5f1": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The original chat runtime only dispatched the first buffered message per turn and left the resume cursor stale, losing messages."
+  },
+  "afc8f9e21071fd83ca5a037e08fc629cb93cecc0": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The login rework imported a server-only cookie module into a route, so its env read leaked into the client bundle and crashed navigation."
+  },
+  "b082e44389337dc6505d590737a6df70867cc8f4": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "The sidebar customization PR made the hidden-items write replace the whole map, which only drops entries once a dialog with a narrower section list (the profile page) submits."
+  },
+  "b20806247fe9f8dad6f33dd98163175cefdb3313": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "4164 wrapped single-write run creation in an interactive Prisma transaction whose default wall-clock budget expires under brief write stalls."
+  },
+  "b28c6d0b907317a980a323e07f8129fd453c0c56": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The agent view rendered streamed URLs directly into links and images, allowing javascript: URLs."
+  },
+  "b3b1441df9348872b3e965dfa87a50e7261b981b": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The PR registered a prom-client counter at module scope, which re-registers and throws under dev hot module reloading unless wrapped in the singleton helper."
+  },
+  "b42e5c37716f0238efaf190a8cb47c8319b4c755": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The backpressure PR relied on a cached, per-replica apiserver metric that disagrees across replicas, making the pod count unreliable."
+  },
+  "b82d100483a96e65b7cacd3d721702de9a4de9bd": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The blamed PRs added snapshot-url routes without an authorization block, allowed session tokens to write the out channel, and drained waitpoints without environment scoping."
+  },
+  "b83cf671de036c96c4a251fceeb0e327b9c589bb": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "The per-SDK fallback trace id predates the blamed PR, which fixed the warm-start leak for external context but left the constructor-level fallback shared across runs."
+  },
+  "bc3a33be24241f3c6422d95bffd81f4554c34227": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "3996's billing-limit count looped one sequential ClickHouse query per billable environment, including all archived previews, with no timeout."
+  },
+  "be45cf9e61d53d7455eaa9a549fe77deb8dd19d2": {
+   "real": "partial",
+   "needs": "intent",
+   "reason": "Dropping streamed partial output on a failed turn was the original documented behaviour of the chat loop, so this is closer to extending recovery than repairing a regression."
+  },
+  "c00fb9c36c039e13d11430c6d69e562e2e61ec73": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The health report added in 4131 coerced a missing start-latency measurement to zero and graded it healthy."
+  },
+  "c0365d36fbcdba932f497eec8dc3752979aa32be": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed line is a conservative body-size constant in the playground route; raising it to a precise cap is an improvement rather than a defect repair."
+  },
+  "c719f84f03bfa2bb4f13fa35251725ed5046a139": {
+   "real": "no",
+   "needs": null,
+   "reason": "The cursor-folding bug came from a later change; the recovery PR's blamed lines were only restructured."
+  },
+  "c8d085a5414b5823fbdd999d28fe256614399db8": {
+   "real": "no",
+   "needs": null,
+   "reason": "Returning an expected billing-limit guard result instead of throwing only changes error-reporting noise; user-facing behavior was already correct."
+  },
+  "c9a1b998818365ab8eb3715032f783855bf43d41": {
+   "real": "no",
+   "needs": null,
+   "reason": "The missing per-user ownership check on the query update predates the security release, which only added a length cap on the blamed lines."
+  },
+  "c9f427e21f1a500483b31dfe34b25b9740ad37ce": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "Keying the leader lock on the client name predates the fan-in PR, but its per-source naming made names change across deploys while slots stayed the same."
+  },
+  "cbec61309a4d9b4494a76c689059c469cdd712dd": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The promo page stretched a heading primitive that hard-codes a small line height to display sizes, so wrapped lines overlapped."
+  },
+  "cbf421575f74e28748f37cf06e499b66291800b1": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The worker pool added in 4232 started the timeout at enqueue and reaped whichever worker held a timed-out task, killing healthy workers under queue backlog."
+  },
+  "cd9d20cc99422bb8fe821e07b04a7aaadd8a8e28": {
+   "real": "no",
+   "needs": null,
+   "reason": "The per-project work inside the invite transaction predates the RBAC PR, which only wrapped role assignment outside it."
+  },
+  "ce123c13e1694c92eb44115cbd5526660aa9d18d": {
+   "real": "no",
+   "needs": null,
+   "reason": "The fix stops formatter churn on generated catalog files, which is tooling configuration, not a code defect."
+  },
+  "d3437270210504d3d348b3ad827b95dc4613b55c": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "The PR had the SDK use the generic packet presign endpoints for snapshots, which resolve reads and writes against different stores when a named default protocol is configured."
+  },
+  "d54bcaa29cceab293e4a20330274f12a1d2b5ad0": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "Mid-turn messages were handed to steering handlers so the router treated them as consumed and advanced the resume floor; this spans several chat PRs and depends on router semantics in another package."
+  },
+  "d97769121937ff46c1243a64173f8463b8c17f62": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The routing run store introduced by the PR forwarded a caller's control-plane client to reads of rows residing in a different store, hitting the wrong database and losing read-your-writes."
+  },
+  "dc8f90e66e9a80c268b291ab857e2788d47f763a": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The control-plane resolver from 4117/4116 cached the current worker version for 30s with nothing invalidating it on promotion or rollback."
+  },
+  "e0208f3a273578c9c0c8d21b12396a22c1302a15": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "3545 built the playground transport URL from the API origin while targeting same-origin dashboard routes, triggering CORS when the origins differ."
+  },
+  "e394b5acf5b2fe6db640cd0509e908c4de235763": {
+   "real": "yes",
+   "needs": "local",
+   "reason": "The queue metrics PR judged gauge freshness from the wall clock at render, so cached or old responses could be trusted as live."
+  },
+  "e57fd9ce90ee68e7f34c45602dace3cb341d922c": {
+   "real": "no",
+   "needs": null,
+   "reason": "Only changes the log level of retryable failures; an alerting tweak, not a code defect."
+  },
+  "e6ec2c4e8d5450668c95eaf84c1567c9eb9abb87": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed line is an unrelated timeout argument in the handover wait, not the route-wait loop the fix rewrote."
+  },
+  "e7537b559cebd6f355e889ffe9f6bc58d677fd34": {
+   "real": "no",
+   "needs": null,
+   "reason": "The fix deletes an unused, already-deprecated dequeue endpoint and client method; this is dead-code cleanup rather than a bug repair."
+  },
+  "e76cbc012b00d439ef9417277e966d4b2e672ec8": {
+   "real": "no",
+   "needs": null,
+   "reason": "The falsy identifier check that lets empty buffers through was copied unchanged from the existing exporter into the new transform module."
+  },
+  "e7de1206614e0eb57c4c7141ab49dcb64b0fe442": {
+   "real": "no",
+   "needs": null,
+   "reason": "Removing the Enterprise badge is a product/UI decision."
+  },
+  "e87d814a586286054862424bc7ae6746fa07b921": {
+   "real": "no",
+   "needs": null,
+   "reason": "Rewording and simplifying metric cards for clarity is a design change, not a defect fix."
+  },
+  "e9e2ec1cfc83596aa7e9928e42640a106b489400": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "The chat runtime converted persisted UI history without the tool set, so tool output transforms were skipped from the second turn."
+  },
+  "ea0e89cd53ea6f7c77e80d7c7303af3495c0bbae": {
+   "real": "no",
+   "needs": null,
+   "reason": "Dropping the redacted host from a migration log line is diagnostic-data hardening; credentials were already masked."
+  },
+  "eaa9050c9455e100fdf8e13655e0167c8f26e40a": {
+   "real": "yes",
+   "needs": "external_semantics",
+   "reason": "3542 issued realtime session tokens scoped to a whole prefix with trim rights, not to the single requested stream."
+  },
+  "ec562c0e68c1ef3f82227b865b2edc8f900695db": {
+   "real": "no",
+   "needs": null,
+   "reason": "Deletes dead routes and helpers; cleanup rather than a defect repair."
+  },
+  "ed37e19c9f70495ba2a067245f8a4a83aaace2c3": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The payload offload PRs built the storage path from the task id, whose encoded slashes are decoded server-side into invalid paths."
+  },
+  "ef04cc39efaa42d7fb135cd060088f698514dc96": {
+   "real": "no",
+   "needs": null,
+   "reason": "The single-column cursor predicate lives in the repository and predates the live-updates PR that merely passed a cursor."
+  },
+  "ef998a518ba1a39ebce9f206d58d8e3f736e3bad": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "Defensive hardening: 3864 left lazy init outside the publish try/catch on a hot run-lifecycle path, a latent rather than observed failure."
+  },
+  "f5f29ceb264862a58c36768b92c3411cc5fb0235": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The initial chat runtime and session stream PRs double-delivered messages during streaming and dropped errored-turn state."
+  },
+  "f78261a606362cf5480679e7286585367d744d08": {
+   "real": "no",
+   "needs": null,
+   "reason": "Pollers running in hidden tabs was the pre-existing default; the blamed lines only opted specific pollers into pausing."
+  },
+  "fb25c0149c6c734f942f6f41210b197ed4b1f736": {
+   "real": "no",
+   "needs": null,
+   "reason": "The blamed line only swallowed a write error; the floating rejection that killed the process lives in core writers outside the blamed change."
+  },
+  "fc77bfc9a2005159b64f0f51777f4ab8e79ba6a9": {
+   "real": "yes",
+   "needs": "cross_file",
+   "reason": "The compaction path from 3543 appended the full captured response, including already-summarized steps, to later turns' model context."
+  },
+  "fd4f02b2f85cf68196476141d220277084c5c79b": {
+   "real": "no",
+   "needs": null,
+   "reason": "Onboarding and plan-selection behaviour change, not a defect in the HIPAA add-on lines."
+  },
+  "fdbc2e37979610c2b6f79754249e52d29875f1c7": {
+   "real": "no",
+   "needs": null,
+   "reason": "Replacing whole snapshot objects in log metadata with scalar fields is logging hygiene, not a functional defect."
+  },
+  "fdec5a09a72fae962f3db9b3dcf8af08d34d06ad": {
+   "real": "partial",
+   "needs": "cross_file",
+   "reason": "The SSO PR put the revalidation throttle on the main Redis with a blocking write, so a slow SET delayed requests."
+  }
+ },
+ "pairs": {
+  "coderabbit|3542|3215573246|6b46a34c468ee2d375772d5531edddf7eb5f58b6": {
+   "describes": true,
+   "reason": "Says the missing-environment branch should return a 404 instead of throwing a generic error, which is exactly what the fix did."
+  },
+  "coderabbit|3543|3241450786|8bf27a62937b5858f4963d65a9d7802982f1724e": {
+   "describes": false,
+   "reason": "About an unawaited turn-complete callback, not closing the stream on a mid-turn EOF."
+  },
+  "coderabbit|3543|3241450794|12d2125148fad906df680a8a5384c1f6899b38c1": {
+   "describes": true,
+   "reason": "Says the transport should fail fast when the handover response lacks the access token header, which the fix implemented."
+  },
+  "coderabbit|3545|3242109628|b28c6d0b907317a980a323e07f8129fd453c0c56": {
+   "describes": true,
+   "reason": "Flags exactly the unsanitized streamed URLs in href/src that the fix gates."
+  },
+  "coderabbit|3644|3253662108|436b7a9ea1f67bcc91c0b8e82325b8282b785e65": {
+   "describes": false,
+   "reason": "The comment argues client tokens are over-scoped with trim, not that the cache key ignores scope changes."
+  },
+  "coderabbit|3671|3269549293|c719f84f03bfa2bb4f13fa35251725ed5046a139": {
+   "describes": false,
+   "reason": "About draining recovered turns after an error, not the cursor advancing past unanswered messages."
+  },
+  "coderabbit|3679|3275814293|2c720f6cb48160e75af7c3dc75523a35b592bdc8": {
+   "describes": false,
+   "reason": "Suggests using the json helper for a 405, not public tokens being able to upload."
+  },
+  "coderabbit|3679|3275814323|b82d100483a96e65b7cacd3d721702de9a4de9bd": {
+   "describes": false,
+   "reason": "The comment is about a swallowed error when persisting the snapshot path, not the missing per-session authorization on the route."
+  },
+  "coderabbit|3855|3368004367|6afc9bfa4c293ebd9aa5c9c393c96563b667094c": {
+   "describes": false,
+   "reason": "The comment is about cleaning up cloned test databases, not replica-lag snapshot lookups."
+  },
+  "coderabbit|3864|3371923837|ef998a518ba1a39ebce9f206d58d8e3f736e3bad": {
+   "describes": false,
+   "reason": "About gating subscriptions behind the enable flag, not publish calls throwing into the run lifecycle."
+  },
+  "coderabbit|3891|3389385147|be45cf9e61d53d7455eaa9a549fe77deb8dd19d2": {
+   "describes": false,
+   "reason": "Flags loss of the user's input message on the error path, not loss of the partial assistant output."
+  },
+  "coderabbit|3962|3419963034|20f9c781f6ecd509220f27f298c624096d747979": {
+   "describes": false,
+   "reason": "The comment is about process exit skipping client disconnect, not the ESM/CJS seed import failure."
+  },
+  "coderabbit|3963|3420386394|04c8375696bacab65ad7bb2d9cf2b9df616b1343": {
+   "describes": false,
+   "reason": "Concerns skipping the splice when the id already exists, not the failed replacement match or summed usage."
+  },
+  "coderabbit|3963|3420386408|d54bcaa29cceab293e4a20330274f12a1d2b5ad0": {
+   "describes": false,
+   "reason": "The comment concerns guarding a no-source turn completion, not mid-turn messages being consumed past the resume floor."
+  },
+  "coderabbit|4023|3459427383|11d8a05fa6733ee6ea7181df45cccb074ec645cb": {
+   "describes": false,
+   "reason": "About a blank default branch label, not the debug tooltip or copyability."
+  },
+  "coderabbit|4027|3466613591|b42e5c37716f0238efaf190a8cb47c8319b4c755": {
+   "describes": false,
+   "reason": "About negative values in the regex, not the metric being unreliable across replicas."
+  },
+  "coderabbit|4027|3466613608|b42e5c37716f0238efaf190a8cb47c8319b4c755": {
+   "describes": false,
+   "reason": "About a missing request timeout, not the cached per-replica metric."
+  },
+  "coderabbit|4117|3515170429|63b8e6e1f57316f05687eb8cb1969a08f7028590": {
+   "describes": false,
+   "reason": "The comment is about possible credential leakage in the probe failure message, not the missing shard legs in the batches list."
+  },
+  "coderabbit|4182|3537445120|afc8f9e21071fd83ca5a037e08fc629cb93cecc0": {
+   "describes": false,
+   "reason": "Raises email-in-URL privacy, not the server module leaking into the client bundle."
+  },
+  "coderabbit|4260|3579629231|051d7080d64514ac8ae76b99c5f52e0f66b2950a": {
+   "describes": false,
+   "reason": "Style suggestion about passing a production flag as a prop, unrelated to the navigation and overlay problems."
+  },
+  "coderabbit|4379|3652782509|4c163874260585f4711d98cc2ab6833281f73ab3": {
+   "describes": false,
+   "reason": "Points out stale staging entries in atomic builds, which the fix did not address."
+  },
+  "rigour-branch|3543|side-effect-analysis@packages/trigger-sdk/src/v3/chat-client.ts:695|8bf27a62937b5858f4963d65a9d7802982f1724e": {
+   "describes": false,
+   "reason": "Same finding as the 6.4.0 run: Warns about unbounded retries, the opposite of the bug where the client stopped reading too early."
+  },
+  "rigour-branch|3911|promise-safety@apps/webapp/app/routes/_app.orgs.$organizationSlug.settings.sso/route.tsx:48|0a44b88b39be43aaae7ac274f0cd35149f33ca34": {
+   "describes": false,
+   "reason": "Same finding as the 6.4.0 run: Flags an async function without await, unrelated to the missing membership scoping."
+  },
+  "rigour-branch|3911|promise-safety@apps/webapp/app/routes/_app.orgs.$organizationSlug.settings.sso/route.tsx:48|9f01e315c1b8ec26484fc01e073afb034d6db1c8": {
+   "describes": false,
+   "reason": "Same finding as the 6.4.0 run: Flags an async function without await, unrelated to the missing membership scoping."
+  },
+  "rigour-branch|4117|promise-safety@apps/webapp/app/v3/runOpsMigration/runOpsCascadeCleanup.server.ts:194|80d4819a031d6364f7c405b7a4cd3882e8f12eca": {
+   "describes": false,
+   "reason": "Same finding as the 6.4.0 run: Generic missing-catch warning; says nothing about the unbounded scan that made deletion slow."
+  },
+  "rigour-branch|4260|promise-safety@apps/webapp/app/components/StaleAssetRecovery.tsx:206|051d7080d64514ac8ae76b99c5f52e0f66b2950a": {
+   "describes": false,
+   "reason": "Same finding as the 6.4.0 run: Generic missing-catch warning, not the reverted behaviour."
+  },
+  "rigour-branch|4260|security-patterns@apps/webapp/app/components/StaleAssetRecovery.tsx:271|051d7080d64514ac8ae76b99c5f52e0f66b2950a": {
+   "describes": false,
+   "reason": "Same finding as the 6.4.0 run: Generic inline HTML warning, not the fetch interception behaviour that caused the revert."
+  },
+  "rigour-default|3543|side-effect-analysis@packages/trigger-sdk/src/v3/chat-client.ts:695|8bf27a62937b5858f4963d65a9d7802982f1724e": {
+   "describes": false,
+   "reason": "Warns about unbounded retries, the opposite of the bug where the client stopped reading too early."
+  },
+  "rigour-default|3911|promise-safety@apps/webapp/app/routes/_app.orgs.$organizationSlug.settings.sso/route.tsx:48|0a44b88b39be43aaae7ac274f0cd35149f33ca34": {
+   "describes": false,
+   "reason": "Flags an async function without await, unrelated to the missing membership scoping."
+  },
+  "rigour-default|3911|promise-safety@apps/webapp/app/routes/_app.orgs.$organizationSlug.settings.sso/route.tsx:48|9f01e315c1b8ec26484fc01e073afb034d6db1c8": {
+   "describes": false,
+   "reason": "Flags an async function without await, unrelated to the missing membership scoping."
+  },
+  "rigour-default|4117|promise-safety@apps/webapp/app/v3/runOpsMigration/runOpsCascadeCleanup.server.ts:194|80d4819a031d6364f7c405b7a4cd3882e8f12eca": {
+   "describes": false,
+   "reason": "Generic missing-catch warning; says nothing about the unbounded scan that made deletion slow."
+  },
+  "rigour-default|4260|promise-safety@apps/webapp/app/components/StaleAssetRecovery.tsx:206|051d7080d64514ac8ae76b99c5f52e0f66b2950a": {
+   "describes": false,
+   "reason": "Generic missing-catch warning, not the reverted behaviour."
+  },
+  "rigour-default|4260|security-patterns@apps/webapp/app/components/StaleAssetRecovery.tsx:271|051d7080d64514ac8ae76b99c5f52e0f66b2950a": {
+   "describes": false,
+   "reason": "Generic inline HTML warning, not the fetch interception behaviour that caused the revert."
+  }
+ },
+ "spot_check": {}
+}

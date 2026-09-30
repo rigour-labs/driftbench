@@ -17,6 +17,7 @@ from arena.repos import clone, ensure_commits
 from arena.score import Finding, PrResult, ToolScore, in_scope, score
 from arena.tools import coderabbit
 from arena.tools.rigour import RigourConfig, review
+from arena.verdicts import Verdicts
 
 ROOT = Path(__file__).parent
 
@@ -70,16 +71,43 @@ def run_rigour(corpus: Corpus, cfg: RigourConfig) -> dict:
     return {"tool": cfg.name, "flags": list(cfg.flags), "config": str(cfg.config or ""), "prs": prs}
 
 
-def score_tool(labels: dict, results: dict, scope: str = "code") -> ToolScore:
-    rows = []
-    for number, bugs in labels["prs"].items():
-        entry = results["prs"].get(number)
-        if entry is None or entry.get("status") == "error":
-            continue
-        findings = [Finding(f["path"], f["line"], f.get("correct")) for f in entry["findings"] if in_scope(f["path"], scope)]
-        located = [(b["path"], b["lines"]) for b in bugs if in_scope(b["path"], scope)]
-        rows.append(PrResult(number, located, findings))
-    return score(rows)
+#: Repos whose misses the rules were designed from: scored, never used for claims.
+DESIGN_SETS = {"TanStack/router"}
+
+
+def score_tool(labels: dict, results: dict, scope: str = "code", verdicts: Verdicts | None = None) -> ToolScore:
+    """Proximity score, or with `verdicts` the judged score: real bugs only, hits only by findings
+    judged to describe the bug (unjudged counts as not describing; `verdicts.unjudged` reports them)."""
+    return pooled_score([(labels, results, verdicts)], scope)
+
+
+def pooled_score(repos: list[tuple[dict, dict, Verdicts | None]], scope: str = "code") -> ToolScore:
+    """One tool's score over several repos' PRs, bootstrapped over all of them together.
+
+    Each entry is (labels, results, verdicts); verdicts must be given for all or none.
+    """
+    rows: list[PrResult] = []
+    judges: dict[str, tuple[Verdicts, str]] = {}
+    for index, (labels, results, verdicts) in enumerate(repos):
+        for number, bugs in labels["prs"].items():
+            entry = results["prs"].get(number)
+            if entry is None or entry.get("status") == "error":
+                continue
+            findings = [Finding(f["path"], f["line"], f.get("correct"), str(f.get("id", "")), f.get("message", ""))
+                        for f in entry["findings"] if in_scope(f["path"], scope)]
+            located = [(b["path"], b["lines"], b["fix_sha"]) for b in bugs
+                       if in_scope(b["path"], scope) and (verdicts is None or verdicts.is_real(b["fix_sha"]))]
+            key = f"{index}#{number}"
+            rows.append(PrResult(key, located, findings))
+            if verdicts is not None:
+                judges[key] = (verdicts, results["tool"])
+    if not judges:
+        return score(rows)
+
+    def describes(key: str, finding: Finding, bug: tuple) -> bool:
+        verdicts, tool = judges[key]
+        return bool(verdicts.describes(tool, key.split("#", 1)[1], finding.id, bug[2]))
+    return score(rows, describes=describes)
 
 
 def write_json(path: Path, data: dict) -> None:

@@ -12,12 +12,17 @@ changed. Metrics are per tool, with 95% bootstrap intervals over PRs:
   later does not count);
 - precision: from hand labels, when a labelled sample exists;
 - comments_per_pr.
+
+With judged verdicts (arena.verdicts), only bugs judged real are counted and a
+finding hits a bug only if it was judged to describe it: proximity alone
+credits comments that land near a bug but are about something else.
 """
 from __future__ import annotations
 
 import random
 import re
 from dataclasses import dataclass, field
+from typing import Callable
 
 DEFAULT_TOLERANCE = 3
 BOOTSTRAP_ROUNDS = 1000
@@ -37,13 +42,16 @@ class Finding:
     line: int
     #: Hand label when sampled: True correct, False wrong, None unlabelled.
     correct: bool | None = None
+    #: Stable id within the tool's results for the PR (a comment id, a rule and location).
+    id: str = ""
+    message: str = ""
 
 
 @dataclass
 class PrResult:
     pr: str
-    #: Each bug: (path, lines in the merge commit).
-    bugs: list[tuple[str, list[int]]] = field(default_factory=list)
+    #: Each bug: (path, lines in the merge commit[, fixing commit]).
+    bugs: list[tuple] = field(default_factory=list)
     findings: list[Finding] = field(default_factory=list)
 
 
@@ -65,26 +73,30 @@ class ToolScore:
     comments_per_pr: Metric
 
 
-def hits(finding: Finding, bug: tuple[str, list[int]], tolerance: int = DEFAULT_TOLERANCE) -> bool:
-    path, lines = bug
+#: (PR, finding, bug) -> whether the finding describes that bug.
+Describes = Callable[[str, Finding, tuple], bool]
+
+
+def hits(finding: Finding, bug: tuple, tolerance: int = DEFAULT_TOLERANCE) -> bool:
+    path, lines = bug[0], bug[1]
     return finding.path == path and any(abs(finding.line - line) <= tolerance for line in lines)
 
 
-def _counts(result: PrResult, tolerance: int) -> tuple[int, int, int, int, int, int]:
+def _counts(result: PrResult, tolerance: int, describes: Describes | None) -> tuple[int, int, int, int, int, int]:
     """(bugs, bugs hit, comments, comments hitting a bug, labelled, labelled correct)."""
-    caught = _matched(result, tolerance)
+    caught = _matched(result, tolerance, describes)
     labelled = [f for f in result.findings if f.correct is not None]
     return len(result.bugs), caught, len(result.findings), caught, len(labelled), sum(1 for f in labelled if f.correct)
 
 
-def _matched(result: PrResult, tolerance: int) -> int:
+def _matched(result: PrResult, tolerance: int, describes: Describes | None = None) -> int:
     """Bugs matched one-to-one: each bug is claimed by at most one comment, each comment
     claims at most one bug, so a burst of comments around one bug earns one hit."""
     used: set[int] = set()
     matched = 0
     for bug in result.bugs:
         for index, finding in enumerate(result.findings):
-            if index not in used and hits(finding, bug, tolerance):
+            if index not in used and hits(finding, bug, tolerance) and (describes is None or describes(result.pr, finding, bug)):
                 used.add(index)
                 matched += 1
                 break
@@ -97,8 +109,9 @@ def _ratios(rows: list[tuple[int, int, int, int, int, int]]) -> tuple[float | No
     return ratio(caught, bugs), ratio(on_bug, comments), ratio(correct, labelled), comments / len(rows) if rows else 0.0
 
 
-def score(results: list[PrResult], tolerance: int = DEFAULT_TOLERANCE, seed: int = 7) -> ToolScore:
-    rows = [_counts(r, tolerance) for r in results]
+def score(results: list[PrResult], tolerance: int = DEFAULT_TOLERANCE, seed: int = 7,
+          describes: Describes | None = None) -> ToolScore:
+    rows = [_counts(r, tolerance, describes) for r in results]
     point = _ratios(rows)
     rng = random.Random(seed)
     samples = [_ratios([rows[rng.randrange(len(rows))] for _ in rows]) for _ in range(BOOTSTRAP_ROUNDS)] if rows else []

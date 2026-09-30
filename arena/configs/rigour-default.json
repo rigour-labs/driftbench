@@ -1,1 +1,1 @@
-{ "note": "Rigour's shipped defaults (semantic_bugs off): deterministic gates only.", "config": "rigour-default.yml" }
+{ "note": "Rigour's shipped defaults (semantic-bugs on from 6.4.0).", "config": "rigour-default.yml" }

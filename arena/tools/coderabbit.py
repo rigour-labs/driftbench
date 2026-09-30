@@ -36,4 +36,4 @@ def _locate(git: Git, merge_sha: str, comment: BotComment) -> Located | None:
         return None
     hunks = git.hunks(comment.commit, merge_sha, comment.path)
     line, _ = map_line(hunks, comment.end)
-    return Located(Finding(comment.path, line), touches(hunks, comment.start, comment.end))
+    return Located(Finding(comment.path, line, id=str(comment.id)), touches(hunks, comment.start, comment.end))

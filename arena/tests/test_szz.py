@@ -85,3 +85,40 @@ def test_a_fix_is_blamed_once_for_every_pr_that_shares_it(repo: Path):
 
     assert [[(b.path, b.lines) for b in found] for found in bugs] == [[("src/a.ts", [2])], [("src/a.ts", [3])]]
     assert Counting.blames == 1
+
+
+FN = ("export function normalizeRoutePath(dir: string, routePath: string) {\n"
+      "  const joined = `/${dir}${routePath}`.replace(/\\/+/g, '/');\n"
+      "  return joined.endsWith('/') && joined.length > 1 ? joined.slice(0, -1) : joined;\n"
+      "}\n")
+
+
+def test_a_function_the_pr_moved_between_files_is_not_blamed_on_the_pr(repo: Path):
+    _commit(repo, "init", {"src/a.ts": "export const a = 1;\n" + FN, "src/b.ts": "export const b = 2;\n"})
+    merge = _commit(repo, "refactor: move path helpers (#20)", {"src/a.ts": "export const a = 1;\n",
+                                                                 "src/b.ts": "export const b = 2;\n" + FN})
+    head = _commit(repo, "fix: keep trailing slash for root", {"src/b.ts": "export const b = 2;\n" + FN.replace("joined.length > 1", "joined.length > 2")})
+    assert bugs_introduced(Git(repo), merge, set(), head) == []
+
+
+def test_code_the_pr_copied_unchanged_is_not_blamed_but_its_edited_line_is(repo: Path):
+    _commit(repo, "init", {"src/a.ts": FN})
+    edited = FN.replace("replace(/\\/+/g, '/')", "replace(/\\/\\//g, '/')")
+    merge = _commit(repo, "feat: second copy for virtual routes (#21)", {"src/virtual.ts": edited})
+    fixed = edited.replace("replace(/\\/\\//g, '/')", "replace(/\\/+/g, '/')").replace("joined.length > 1", "joined.length > 2")
+    head = _commit(repo, "fix: collapse repeated slashes in virtual routes", {"src/virtual.ts": fixed})
+    bugs = bugs_introduced(Git(repo), merge, set(), head)
+    assert [(b.path, b.lines) for b in bugs] == [("src/virtual.ts", [2])]
+
+
+def test_a_real_merge_attributes_lines_written_on_its_branch(repo: Path):
+    _commit(repo, "init", {"src/total.ts": BASE})
+    subprocess.run(["git", "-C", str(repo), "checkout", "-qb", "feature"], check=True)
+    _commit(repo, "sum items", {"src/total.ts": PR})
+    subprocess.run(["git", "-C", str(repo), "checkout", "-q", "main"], check=True)
+    _commit(repo, "chore: unrelated", {"README.md": "x\n"})
+    subprocess.run(["git", "-C", str(repo), "merge", "-q", "--no-ff", "-m", "Merge pull request #13", "feature"], check=True)
+    merge = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+    head = _commit(repo, "fix: off-by-one in total limit", {"src/total.ts": PR.replace("items.length - 1", "items.length")})
+    bugs = bugs_introduced(Git(repo), merge, set(), head)
+    assert [(b.path, b.lines) for b in bugs] == [("src/total.ts", [4])]

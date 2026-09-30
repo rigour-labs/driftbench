@@ -42,12 +42,18 @@ class RigourRun:
 
 
 def review(git: Git, merge_sha: str, cfg: RigourConfig) -> RigourRun:
+    """The PR as merged: its merge commit against the merge's first parent."""
+    return review_range(git, git.parent(merge_sha), merge_sha, cfg)
+
+
+def review_range(git: Git, base: str, head: str, cfg: RigourConfig) -> RigourRun:
+    """Review the change base..head with `head` checked out (a PR as merged, or as reviewed)."""
     workdir = Path(tempfile.mkdtemp(prefix="arena-rigour-"))
     tree = workdir / "tree"
     try:
-        git.run("worktree", "add", "-q", "--detach", str(tree), merge_sha)
+        git.run("worktree", "add", "-q", "--detach", str(tree), head)
         diff = workdir / "pr.diff"
-        diff.write_text(git.run("diff", "--no-color", git.parent(merge_sha), merge_sha))
+        diff.write_text(git.run("diff", "--no-color", base, head))
         return _run(tree, diff, cfg)
     finally:
         git.run("worktree", "remove", "--force", str(tree), check=False)
@@ -72,8 +78,16 @@ def _run(tree: Path, diff: Path, cfg: RigourConfig) -> RigourRun:
         # A run that did not review (bad config, deep analysis that could not start)
         # is an error, never "no findings".
         return RigourRun([], seconds, "error", json.dumps(report)[:500])
-    findings = [Finding(f["file"], int(f["line"])) for f in report.get("failures", []) if f.get("file")]
+    findings = [_finding(f) for f in report.get("failures", []) if f.get("file")]
     return RigourRun(findings, seconds, status)
+
+
+def _finding(failure: dict) -> Finding:
+    """A located failure, keeping what a judge needs to tell whether it describes a bug."""
+    line = int(failure["line"])
+    rule = failure.get("id") or failure.get("gate", "")
+    message = f"[{failure.get('severity', '')}/{failure.get('gate', '')}] {failure.get('message', '')}"
+    return Finding(failure["file"], line, id=f"{rule}@{failure['file']}:{line}", message=message)
 
 
 def _cli() -> list[str]:
