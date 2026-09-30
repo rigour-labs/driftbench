@@ -71,6 +71,11 @@
     "medusajs/medusa",
     "killbill/killbill",
     "appwrite/appwrite",
-    "nocodb/nocodb"
+    "nocodb/nocodb",
+    "solidjs/solid-router",
+    "solidjs/solid-start",
+    "vuejs/pinia",
+    "vueuse/vueuse",
+    "web-infra-dev/rsbuild"
   ]
 }
