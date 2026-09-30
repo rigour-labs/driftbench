@@ -327,6 +327,43 @@
    "reason": "Stripping the virtual prefix predates the PR's file move."
   }
  },
- "pairs": {},
+ "pairs": {
+  "coderabbit|6389|2700498720|40ed6832c6edf6135fd11301ddac2a05a2dd0961": {
+   "describes": false,
+   "reason": "A different defect (re-parsing decoded characters) in the same function."
+  },
+  "coderabbit|6505|2725522756|ebd96af43572e170b26d70a06a8da679cdf29f00": {
+   "describes": false,
+   "reason": "About operand order for test overrides, not the stripInternal declaration break."
+  },
+  "coderabbit|6516|2725964481|40ed6832c6edf6135fd11301ddac2a05a2dd0961": {
+   "describes": false,
+   "reason": "A lint note on a control-character regex, not the missing redirect."
+  },
+  "coderabbit|6803|2875078775|b80781ede404bf776f67f7f3fcd9001c59073109": {
+   "describes": false,
+   "reason": "Suggests pinning iterations; not the runner import failure."
+  },
+  "coderabbit|6803|2875078793|b80781ede404bf776f67f7f3fcd9001c59073109": {
+   "describes": false,
+   "reason": "Suggests pinning iterations; not the runner import failure."
+  },
+  "coderabbit|6803|2875078798|b80781ede404bf776f67f7f3fcd9001c59073109": {
+   "describes": false,
+   "reason": "Suggests pinning iterations; not the runner import failure."
+  },
+  "coderabbit|7191|3083575808|9c09bca59e9613e9a6fd9b7149b0737898e705d6": {
+   "describes": false,
+   "reason": "About the manifest export shape, not IIFE sibling chunks."
+  },
+  "coderabbit|7549|3358639960|ac10815f387d25b15163ff711b4049e8f8482d01": {
+   "describes": true,
+   "reason": "Describes the nested collector losing retain/strip metadata, the defect the fix repairs."
+  },
+  "rigour-default|7253|security-patterns@packages/react-router/src/Asset.tsx:99|cf166d160e6397007a979bfc7065b45ff69ea543": {
+   "describes": false,
+   "reason": "Generic XSS warning on dangerouslySetInnerHTML, not the per-render identity rewrite."
+  }
+ },
  "spot_check": {}
 }
