@@ -64,3 +64,24 @@ def test_first_parent_history_lists_subjects_parents_and_files(repo: Path):
     second = _commit(repo, "fix: b", {"a.ts": "2\n", "dir/b.ts": "x\n"})
     [commit] = Git(repo).first_parent_history(first, second)
     assert (commit.sha, commit.parent, commit.subject, commit.files) == (second, first, "fix: b", ("a.ts", "dir/b.ts"))
+
+
+def test_a_fix_is_blamed_once_for_every_pr_that_shares_it(repo: Path):
+    _commit(repo, "init", {"src/a.ts": "a1\na2\n", "src/b.ts": "b1\n"})
+    first = _commit(repo, "feat: a (#1)", {"src/a.ts": "a1\nA2 = 1\n"})
+    second = _commit(repo, "feat: a again (#2)", {"src/a.ts": "a1\nA2 = 1\nA3 = 2\n"})
+    head = _commit(repo, "fix: a values", {"src/a.ts": "a1\nA2 = 10\nA3 = 20\n"})
+
+    class Counting(Git):
+        blames = 0
+
+        def blame_ranges(self, *args):
+            Counting.blames += 1
+            return super().blame_ranges(*args)
+
+    git = Counting(repo)
+    history, cache = git.first_parent_history(git.parent(first), head), {}
+    bugs = [bugs_introduced(git, merge, set(), head, history, cache) for merge in (first, second)]
+
+    assert [[(b.path, b.lines) for b in found] for found in bugs] == [[("src/a.ts", [2])], [("src/a.ts", [3])]]
+    assert Counting.blames == 1

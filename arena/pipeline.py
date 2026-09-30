@@ -30,10 +30,10 @@ def label(corpus: Corpus) -> dict:
     git = clone(corpus.repo)
     oldest = min(corpus.prs, key=lambda p: p.merged_at).merge_sha
     history = git.first_parent_history(git.parent(oldest), corpus.snapshot_sha)
-    prs, skipped = {}, []
+    prs, skipped, blame_cache = {}, [], {}
     for pr in corpus.prs:
         try:
-            bugs = szz.bugs_introduced(git, pr.merge_sha, set(), corpus.snapshot_sha, history)
+            bugs = szz.bugs_introduced(git, pr.merge_sha, set(), corpus.snapshot_sha, history, blame_cache)
         except ValueError:
             skipped.append(pr.number)  # merge commit not on the default branch's first-parent chain
             continue
