@@ -71,3 +71,6 @@ htmlcov/
 
 # mypy
 .mypy_cache/
+
+# Mined training examples (published to Hugging Face, not committed)
+rlaif/intent/data/
