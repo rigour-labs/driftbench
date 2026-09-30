@@ -72,8 +72,16 @@ def _run(tree: Path, diff: Path, cfg: RigourConfig) -> RigourRun:
         # A run that did not review (bad config, deep analysis that could not start)
         # is an error, never "no findings".
         return RigourRun([], seconds, "error", json.dumps(report)[:500])
-    findings = [Finding(f["file"], int(f["line"])) for f in report.get("failures", []) if f.get("file")]
+    findings = [_finding(f) for f in report.get("failures", []) if f.get("file")]
     return RigourRun(findings, seconds, status)
+
+
+def _finding(failure: dict) -> Finding:
+    """A located failure, keeping what a judge needs to tell whether it describes a bug."""
+    line = int(failure["line"])
+    rule = failure.get("id") or failure.get("gate", "")
+    message = f"[{failure.get('severity', '')}/{failure.get('gate', '')}] {failure.get('message', '')}"
+    return Finding(failure["file"], line, id=f"{rule}@{failure['file']}:{line}", message=message)
 
 
 def _cli() -> list[str]:
