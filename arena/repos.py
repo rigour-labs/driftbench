@@ -22,8 +22,13 @@ def clone(repo: str) -> Git:
 
 
 def ensure_commits(git: Git, pr_number: int, shas: list[str]) -> None:
-    """Fetch the PR's head ref when any of its commits (e.g. a reviewed commit) is missing."""
-    missing = [sha for sha in shas if not git.has_commit(sha)]
-    if missing:
-        git.run("fetch", "-q", "origin", f"pull/{pr_number}/head")
+    """Fetch commits a comment was made on: the PR's head ref first, then any commit that was
+    force-pushed off the branch, by SHA (GitHub still serves it). Unfetchable commits stay missing;
+    callers drop what cannot be located."""
+    missing = {sha for sha in shas if not git.has_commit(sha)}
+    if not missing:
+        return
+    git.run("fetch", "-q", "origin", f"pull/{pr_number}/head", check=False)
+    for sha in sorted(sha for sha in missing if not git.has_commit(sha)):
+        git.run("fetch", "-q", "origin", sha, check=False)
 

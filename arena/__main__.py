@@ -22,6 +22,8 @@ def main() -> None:
     for name in ("label", "run", "score"):
         p = sub.add_parser(name)
         p.add_argument("--repo", required=True)
+        if name != "score":
+            p.add_argument("--sample", type=int, default=0, help="Only the first N PRs of the corpus (a smoke run)")
     sub.choices["run"].add_argument("--tool", required=True, help="coderabbit, or a name from arena/configs (e.g. rigour-semantic)")
     sub.choices["score"].add_argument("--scope", choices=["code", "all"], default="code")
     args = parser.parse_args()
@@ -41,20 +43,26 @@ def _mine(args) -> None:
 
 def _label(args) -> None:
     corpus_path, labels_path, _ = _paths(args.repo)
-    labels = pipeline.label(Corpus.load(corpus_path))
+    labels = pipeline.label(_sampled(Corpus.load(corpus_path), args.sample))
     pipeline.write_json(labels_path, labels)
     print(f"{sum(len(b) for b in labels['prs'].values())} later-fixed bugs across {len(labels['prs'])} PRs")
 
 
 def _run(args) -> None:
     corpus_path, _, results_dir = _paths(args.repo)
-    corpus = Corpus.load(corpus_path)
+    corpus = _sampled(Corpus.load(corpus_path), args.sample)
     if args.tool == "coderabbit":
         results = pipeline.run_coderabbit(corpus)
     else:
         results = pipeline.run_rigour(corpus, _rigour_config(args.tool))
     pipeline.write_json(results_dir / f"{args.tool}.json", results)
     print(f"{args.tool}: {sum(len(p['findings']) for p in results['prs'].values())} findings on {len(results['prs'])} PRs")
+
+
+def _sampled(corpus: Corpus, sample: int) -> Corpus:
+    if sample > 0:
+        corpus.prs = corpus.prs[:sample]
+    return corpus
 
 
 def _rigour_config(name: str) -> RigourConfig:

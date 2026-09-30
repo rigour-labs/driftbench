@@ -36,9 +36,12 @@ def test_attributes_a_later_fix_to_the_line_the_pr_wrote(repo: Path):
     _commit(repo, "refactor: rename sum", {"src/total.ts": PR.replace("  return sum;", "  return sum; // total")})
     head = _commit(repo, "fix: off-by-one in total limit", {"src/total.ts": PR.replace("items.length - 1", "items.length").replace("  return sum;", "  return sum; // total")})
 
-    bugs = bugs_introduced(Git(repo), merge, set(), head)
+    git = Git(repo)
+    bugs = bugs_introduced(git, merge, set(), head)
+    shared = bugs_introduced(git, merge, set(), head, git.first_parent_history(git.parent(merge), head))
 
     assert [(b.path, b.lines, b.fix_subject) for b in bugs] == [("src/total.ts", [4], "fix: off-by-one in total limit")]
+    assert shared == bugs
 
 
 def test_does_not_blame_the_pr_for_lines_it_did_not_write(repo: Path):
@@ -54,3 +57,10 @@ def test_classifies_fix_subjects_conservatively():
     assert not is_fix("fix typo in README")
     assert not is_fix("fix(deps): bump vite")
     assert not is_fix("feat: add loader")
+
+
+def test_first_parent_history_lists_subjects_parents_and_files(repo: Path):
+    first = _commit(repo, "init", {"a.ts": "1\n"})
+    second = _commit(repo, "fix: b", {"a.ts": "2\n", "dir/b.ts": "x\n"})
+    [commit] = Git(repo).first_parent_history(first, second)
+    assert (commit.sha, commit.parent, commit.subject, commit.files) == (second, first, "fix: b", ("a.ts", "dir/b.ts"))

@@ -4,7 +4,17 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from dataclasses import dataclass
+
 from arena.diffmap import Hunk, parse_hunks
+
+
+@dataclass(frozen=True)
+class Commit:
+    sha: str
+    parent: str
+    subject: str
+    files: tuple[str, ...]
 
 
 class Git:
@@ -39,10 +49,20 @@ class Git:
     def parent(self, sha: str) -> str:
         return self.run("rev-parse", f"{sha}^").strip()
 
-    def commits_after(self, sha: str, until: str) -> list[tuple[str, str]]:
-        """(sha, subject) of first-parent commits after `sha` up to `until`, oldest first."""
-        out = self.run("log", "--first-parent", "--reverse", "--format=%H%x00%s", f"{sha}..{until}")
-        return [tuple(line.split("\x00", 1)) for line in out.splitlines() if line]  # type: ignore[misc]
+    def first_parent_history(self, since: str, until: str) -> list[Commit]:
+        """First-parent commits after `since` up to `until`, oldest first, with changed files.
+
+        One `git log` pass, so SZZ over many PRs does not spawn a process per commit.
+        """
+        out = self.run("log", "--first-parent", "--reverse", "--no-renames", "--name-only",
+                       "--format=%x01%H%x00%P%x00%s", f"{since}..{until}")
+        commits: list[Commit] = []
+        for record in out.split("\x01")[1:]:
+            header, _, body = record.partition("\n")
+            sha, parents, subject = header.split("\x00", 2)
+            files = tuple(f for f in body.splitlines() if f)
+            commits.append(Commit(sha, parents.split(" ")[0] if parents else "", subject, files))
+        return commits
 
     def blame(self, sha: str, path: str, first: int, last: int) -> list[tuple[str, int, str]]:
         """(origin commit, line number in that commit, text) for lines first..last of path at sha."""

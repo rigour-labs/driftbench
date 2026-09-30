@@ -31,7 +31,8 @@ def locate(git: Git, pr: Pr) -> tuple[list[Located], int]:
 
 
 def _locate(git: Git, merge_sha: str, comment: BotComment) -> Located | None:
-    if not git.exists(merge_sha, comment.path):
+    """None when the comment cannot be placed: its commit is gone or its file no longer exists."""
+    if not git.has_commit(comment.commit) or not git.exists(merge_sha, comment.path):
         return None
     hunks = git.hunks(comment.commit, merge_sha, comment.path)
     line, _ = map_line(hunks, comment.end)

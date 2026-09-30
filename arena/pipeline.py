@@ -28,14 +28,21 @@ def slug(repo: str) -> str:
 def label(corpus: Corpus) -> dict:
     """SZZ bugs for every PR, fixed after merge up to the corpus snapshot."""
     git = clone(corpus.repo)
-    prs = {}
+    oldest = min(corpus.prs, key=lambda p: p.merged_at).merge_sha
+    history = git.first_parent_history(git.parent(oldest), corpus.snapshot_sha)
+    prs, skipped = {}, []
     for pr in corpus.prs:
-        bugs = szz.bugs_introduced(git, pr.merge_sha, set(), corpus.snapshot_sha)
+        try:
+            bugs = szz.bugs_introduced(git, pr.merge_sha, set(), corpus.snapshot_sha, history)
+        except ValueError:
+            skipped.append(pr.number)  # merge commit not on the default branch's first-parent chain
+            continue
         prs[str(pr.number)] = [asdict(b) for b in bugs]
     return {
         "repo": corpus.repo, "snapshot_sha": corpus.snapshot_sha,
         "params": {"fix_subject": szz.FIX_SUBJECT.pattern, "not_a_defect": szz.NOT_A_DEFECT.pattern,
                    "max_fix_files": szz.MAX_FIX_FILES},
+        "skipped": skipped,
         "prs": prs,
     }
 

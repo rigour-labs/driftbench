@@ -1,0 +1,93 @@
+name: Review Arena
+
+# Scores review tools on the committed, pinned corpora in arena/corpora.
+# No GitHub API calls: the corpus is mined once and committed; CI only clones,
+# labels, runs the tools and scores, so a run is reproducible.
+on:
+  workflow_dispatch:
+    inputs:
+      sample:
+        description: "Only the first N PRs of each corpus (0 = all)"
+        default: "0"
+      rigour_version:
+        description: "@rigour-labs/cli version to score"
+        default: "6.3.0"
+  schedule:
+    - cron: "0 3 * * 1" # Monday 03:00 UTC
+  pull_request:
+    paths:
+      - "arena/**"
+      - ".github/workflows/arena.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: arena-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  arena:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      RIGOUR_VERSION: ${{ inputs.rigour_version || '6.3.0' }}
+      # Pull requests check the pipeline on a few PRs; scheduled and manual runs score everything.
+      SAMPLE: ${{ github.event_name == 'pull_request' && '5' || inputs.sample || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install test runner
+        run: pip install pytest
+
+      - name: Unit tests
+        run: python -m pytest arena/tests -q
+
+      - name: Cache clones
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/driftbench/arena/repos
+          key: arena-repos-${{ hashFiles('arena/corpora/*.json') }}
+          restore-keys: arena-repos-
+
+      - name: Pre-install the pinned Rigour CLI
+        run: npx --yes "@rigour-labs/cli@${RIGOUR_VERSION}" --version
+
+      - name: Label, run and score every corpus
+        run: |
+          set -euo pipefail
+          for corpus in arena/corpora/*.json; do
+            repo=$(python -c "import json,sys; print(json.load(open(sys.argv[1]))['repo'])" "$corpus")
+            echo "::group::$repo"
+            python -m arena label --repo "$repo" --sample "$SAMPLE"
+            python -m arena run   --repo "$repo" --sample "$SAMPLE" --tool coderabbit
+            python -m arena run   --repo "$repo" --sample "$SAMPLE" --tool rigour-default
+            python -m arena run   --repo "$repo" --sample "$SAMPLE" --tool rigour-semantic
+            echo "::endgroup::"
+            {
+              echo "## $repo (Rigour ${RIGOUR_VERSION}, sample ${SAMPLE})"
+              echo '```'
+              python -m arena score --repo "$repo" --scope code
+              echo
+              python -m arena score --repo "$repo" --scope all
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Upload labels and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arena-${{ github.run_id }}
+          path: |
+            arena/labels
+            arena/results
+          if-no-files-found: ignore
