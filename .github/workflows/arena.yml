@@ -30,8 +30,10 @@ on:
 permissions:
   contents: read
 
+# A new push cancels a stale run of the same configuration; runs of different
+# Rigour versions or tools (a baseline next to a candidate) run side by side.
 concurrency:
-  group: arena-${{ github.ref }}
+  group: arena-${{ github.ref }}-${{ inputs.rigour_ref || inputs.rigour_version || 'default' }}-${{ inputs.tools || 'default' }}
   cancel-in-progress: true
 
 env:
