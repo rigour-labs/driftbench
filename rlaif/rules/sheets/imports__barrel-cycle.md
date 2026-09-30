@@ -1,9 +1,11 @@
 # imports/barrel-cycle
 
-fixes scanned 1634, catches 0, HEAD hits 1 in 301710 lines (0.02 per 5k)
+fixes scanned 1634, catches 2, HEAD hits 1 in 301710 lines (0.02 per 5k)
 
 ## Catches (fires before the fix, less after)
 
+- https://github.com/solidjs/solid-start/commit/65eee5171602946a1dff32cfcad035f647ad9b36 `packages/start/data/index.tsx:3`
+- https://github.com/solidjs/solid-start/commit/65eee5171602946a1dff32cfcad035f647ad9b36 `packages/start/index.tsx:18`
 
 ## HEAD sample: mark [y] right or [n] wrong
 

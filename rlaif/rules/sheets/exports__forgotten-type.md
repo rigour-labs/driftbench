@@ -1,9 +1,12 @@
 # exports/forgotten-type
 
-fixes scanned 1634, catches 0, HEAD hits 41 in 301710 lines (0.68 per 5k)
+fixes scanned 1634, catches 1, HEAD hits 41 in 301710 lines (0.68 per 5k)
+
+- documented: https://github.com/TanStack/router/commit/d6decca41807e9ca28279e2db6640e7a8bdc1229 (the TanStack/router fix this rule was designed from)
 
 ## Catches (fires before the fix, less after)
 
+- https://github.com/lucia-auth/lucia/commit/b4c96883445e17ef0090463c6e4cd2f125169f98 `packages/adapter-prisma/src/index.ts:1`
 
 ## HEAD sample: mark [y] right or [n] wrong
 

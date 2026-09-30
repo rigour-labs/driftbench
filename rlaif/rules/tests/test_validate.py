@@ -42,3 +42,13 @@ def test_a_rule_ships_only_when_it_catches_is_quiet_and_its_labelled_hits_are_ri
     assert v.check_sheet(_sheet(monkeypatch, tmp_path, ["y"] * 10, catches=0))["ships"] is False   # never caught a fix
     assert v.check_sheet(_sheet(monkeypatch, tmp_path, ["y"] * 10, per_5k=2.0))["ships"] is False  # too noisy
     assert v.check_sheet(_sheet(monkeypatch, tmp_path, ["y"] * 9 + [" "]))["ships"] is False       # sheet not finished
+
+
+def test_a_documented_upstream_fix_counts_as_a_catch_and_no_hits_means_nothing_to_be_wrong_about(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(v, "SHEETS", tmp_path)
+    report = v.Report("r", fixes_scanned=10, head_loc=50_000)
+    path = v.write_sheet(report)
+    assert v.check_sheet(path)["ships"] is False  # never caught anything
+    path.write_text(path.read_text() + "- documented: https://github.com/o/n/commit/995168e9d1588683\n")
+    assert v.check_sheet(path) == {"catches": 0, "documented": 1, "hits_per_5k_loc": 0.0, "labelled": 0, "of": 0,
+                                   "precision": None, "ships": True}

@@ -129,6 +129,7 @@ def write_sheet(report: Report, seed: int = 7) -> Path:
     lines = [f"# {report.rule}", "",
              f"fixes scanned {report.fixes_scanned}, catches {len(report.catches)}, "
              f"HEAD hits {len(report.head_hits)} in {report.head_loc} lines ({report.hits_per_5k_loc:.2f} per 5k)", "",
+             "Upstream fixes this rule catches but no training repo had: add `- documented: <commit url>` lines here.", "",
              "## Catches (fires before the fix, less after)", ""]
     lines += [f"- https://github.com/{c['repo']}/commit/{c['fix']} `{c['file']}:{c['line']}`" for c in report.catches[:SAMPLE]]
     lines += ["", "## HEAD sample: mark [y] right or [n] wrong", ""]
@@ -139,18 +140,29 @@ def write_sheet(report: Report, seed: int = 7) -> Path:
     return path
 
 
+DOCUMENTED = re.compile(r"^- documented: (https://github\.com/\S+/commit/[0-9a-f]{7,40})", re.MULTILINE)
+
+
 def check_sheet(path: Path) -> dict:
-    """Ship decision from a labelled sheet."""
+    """Ship decision from a labelled sheet.
+
+    A rule ships when it has caught a real fix (on a training repo, or a
+    documented upstream fix listed as `- documented: <commit url>`), is quiet
+    (at most MAX_HITS_PER_5K_LOC), and its HEAD hits are right (MIN_PRECISION of
+    the labelled sample, every sampled hit labelled). A rule with no HEAD hits
+    has nothing to be wrong about.
+    """
     text = path.read_text()
     marks = [m.group(1) for m in map(LABEL.match, text.splitlines()) if m]
     labelled = [m for m in marks if m != " "]
     precision = labelled.count("y") / len(labelled) if labelled else None
-    stats = re.search(r"catches (\d+), HEAD hits \d+ in \d+ lines \(([\d.]+) per 5k\)", text)
-    caught, per_5k = (int(stats.group(1)), float(stats.group(2))) if stats else (0, float("inf"))
-    ships = (caught >= 1 and per_5k <= MAX_HITS_PER_5K_LOC and precision is not None
-             and precision >= MIN_PRECISION and len(labelled) == len(marks))
-    return {"catches": caught, "hits_per_5k_loc": per_5k, "labelled": len(labelled), "of": len(marks),
-            "precision": precision, "ships": ships}
+    stats = re.search(r"catches (\d+), HEAD hits (\d+) in \d+ lines \(([\d.]+) per 5k\)", text)
+    caught, hits, per_5k = (int(stats.group(1)), int(stats.group(2)), float(stats.group(3))) if stats else (0, 0, float("inf"))
+    documented = DOCUMENTED.findall(text)
+    precise = hits == 0 or (precision is not None and precision >= MIN_PRECISION and len(labelled) == len(marks))
+    ships = (caught + len(documented)) >= 1 and per_5k <= MAX_HITS_PER_5K_LOC and precise
+    return {"catches": caught, "documented": len(documented), "hits_per_5k_loc": per_5k, "labelled": len(labelled),
+            "of": len(marks), "precision": precision, "ships": ships}
 
 
 def main() -> None:

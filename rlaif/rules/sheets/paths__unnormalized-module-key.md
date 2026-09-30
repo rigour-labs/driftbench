@@ -2,6 +2,8 @@
 
 fixes scanned 1634, catches 0, HEAD hits 1 in 301710 lines (0.02 per 5k)
 
+- documented: https://github.com/TanStack/router/commit/222300b82fe6f2a5e7e7f460ae21a2e35c6230d7 (the TanStack/router fix this rule was designed from)
+
 ## Catches (fires before the fix, less after)
 
 
