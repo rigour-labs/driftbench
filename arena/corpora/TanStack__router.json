@@ -1,0 +1,126 @@
+{
+ "repo": "TanStack/router",
+ "snapshot_sha": "41ebd288677beacb8eb56953f5f8c26e9d33313e",
+ "mined_at": "2026-09-30T03:26:21+00:00",
+ "min_age_days": 60,
+ "prs": [
+  {
+   "number": 7886,
+   "url": "https://github.com/TanStack/router/pull/7886",
+   "merge_sha": "3a5575627d46e765f7fab2e5488657d2b739273c",
+   "head_sha": "bd43d6980c82ff2aa98549f13422bf7a277fd385",
+   "merged_at": "2026-07-23T20:13:21Z",
+   "reviewed_commits": [
+    "bd43d6980c82ff2aa98549f13422bf7a277fd385"
+   ],
+   "comments": [
+    {
+     "id": 3640545655,
+     "url": "https://github.com/TanStack/router/pull/7886#discussion_r3640545655",
+     "path": "packages/react-start-client/src/tests/hydrateStart.test.ts",
+     "start": 19,
+     "end": 19,
+     "commit": "bd43d6980c82ff2aa98549f13422bf7a277fd385",
+     "category": "\ud83d\udcd0 Maintainability & Code Quality",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  },
+  {
+   "number": 7867,
+   "url": "https://github.com/TanStack/router/pull/7867",
+   "merge_sha": "179d9b9b5eec50dc7833b4e2ef91b735d34bbc07",
+   "head_sha": "111f193d6e95aa81f9b8a6a48757ef82ce85bc57",
+   "merged_at": "2026-07-26T16:53:49Z",
+   "reviewed_commits": [
+    "111f193d6e95aa81f9b8a6a48757ef82ce85bc57",
+    "21c0e8bc39a852523d549d8c96641fc3135650f2",
+    "289dd2d5ccd0f388818d3a1c229160001a171a51"
+   ],
+   "comments": [
+    {
+     "id": 3649305741,
+     "url": "https://github.com/TanStack/router/pull/7867#discussion_r3649305741",
+     "path": "packages/react-start/skills/_artifacts/domain_map.yaml",
+     "start": 207,
+     "end": 239,
+     "commit": "289dd2d5ccd0f388818d3a1c229160001a171a51",
+     "category": "\ud83d\uddc4\ufe0f Data Integrity & Integration",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3649305743,
+     "url": "https://github.com/TanStack/router/pull/7867#discussion_r3649305743",
+     "path": "packages/router-core/skills/router-core/auth-and-guards/SKILL.md",
+     "start": 412,
+     "end": 413,
+     "commit": "289dd2d5ccd0f388818d3a1c229160001a171a51",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3649305747,
+     "url": "https://github.com/TanStack/router/pull/7867#discussion_r3649305747",
+     "path": "packages/router-core/skills/router-core/data-loading/SKILL.md",
+     "start": 218,
+     "end": 223,
+     "commit": "289dd2d5ccd0f388818d3a1c229160001a171a51",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3649305757,
+     "url": "https://github.com/TanStack/router/pull/7867#discussion_r3649305757",
+     "path": "packages/start-client-core/skills/start-core/server-functions/SKILL.md",
+     "start": 104,
+     "end": 108,
+     "commit": "289dd2d5ccd0f388818d3a1c229160001a171a51",
+     "category": "\ud83d\udd12 Security & Privacy",
+     "severity": "\ud83d\udfe1 Minor"
+    },
+    {
+     "id": 3649305762,
+     "url": "https://github.com/TanStack/router/pull/7867#discussion_r3649305762",
+     "path": "packages/start-server-core/skills/start-server-core/SKILL.md",
+     "start": 185,
+     "end": 188,
+     "commit": "289dd2d5ccd0f388818d3a1c229160001a171a51",
+     "category": "\ud83d\udd12 Security & Privacy",
+     "severity": "\ud83d\udfe0 Major"
+    },
+    {
+     "id": 3651838945,
+     "url": "https://github.com/TanStack/router/pull/7867#discussion_r3651838945",
+     "path": "packages/start-server-core/skills/start-server-core/SKILL.md",
+     "start": 172,
+     "end": 178,
+     "commit": "21c0e8bc39a852523d549d8c96641fc3135650f2",
+     "category": "\ud83d\udd12 Security & Privacy",
+     "severity": "\ud83d\udfe0 Major"
+    }
+   ]
+  },
+  {
+   "number": 7856,
+   "url": "https://github.com/TanStack/router/pull/7856",
+   "merge_sha": "edf55759d8e9e5e7954945fdda2ee81c48e8c713",
+   "head_sha": "bceaf8ca6426003379f8067f28f0bc2d165072ca",
+   "merged_at": "2026-07-19T20:34:06Z",
+   "reviewed_commits": [
+    "bceaf8ca6426003379f8067f28f0bc2d165072ca"
+   ],
+   "comments": [
+    {
+     "id": 3610357323,
+     "url": "https://github.com/TanStack/router/pull/7856#discussion_r3610357323",
+     "path": "scripts/benchmarks/bundle-size/pr-report.mjs",
+     "start": 271,
+     "end": 280,
+     "commit": "bceaf8ca6426003379f8067f28f0bc2d165072ca",
+     "category": "\ud83c\udfaf Functional Correctness",
+     "severity": "\ud83d\udfe1 Minor"
+    }
+   ]
+  }
+ ]
+}
