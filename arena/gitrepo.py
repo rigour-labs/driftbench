@@ -64,22 +64,38 @@ class Git:
             commits.append(Commit(sha, parents.split(" ")[0] if parents else "", subject, files))
         return commits
 
-    def blame(self, sha: str, path: str, first: int, last: int) -> list[tuple[str, int, str]]:
-        """(origin commit, line number in that commit, text) for lines first..last of path at sha."""
+    def branch_commits(self, merge_sha: str) -> set[str]:
+        """Commits a merge brought in from its second parent: a PR's own commits. Empty for squash merges."""
+        parents = self.run("rev-list", "--parents", "-n", "1", merge_sha).split()[1:]
+        if len(parents) < 2:
+            return set()
+        return set(self.run("rev-list", f"{parents[0]}..{parents[1]}").split())
+
+    def blame(self, sha: str, path: str, first: int, last: int) -> list[tuple[str, int, str, str]]:
+        """(origin commit, line in that commit, text, path in that commit) for lines first..last of path at sha."""
         return self.blame_ranges(sha, path, [(first, last)])
 
-    def blame_ranges(self, sha: str, path: str, ranges: list[tuple[int, int]]) -> list[tuple[str, int, str]]:
-        """Like blame, for several line ranges in one git process."""
+    def blame_ranges(self, sha: str, path: str, ranges: list[tuple[int, int]]) -> list[tuple[str, int, str, str]]:
+        """Like blame, for several line ranges in one git process.
+
+        -M follows lines moved within the file; -C -C follows lines moved or copied from
+        other files (any file, when the commit created this one), so a refactor that
+        relocates code is not taken as its author.
+        """
         if not ranges:
             return []
         args = [arg for first, last in ranges for arg in ("-L", f"{first},{last}")]
-        out = self.run("blame", "-w", "-M", "--porcelain", *args, sha, "--", path)
-        rows: list[tuple[str, int, str]] = []
+        out = self.run("blame", "-w", "-M", "-C", "-C", "--porcelain", *args, sha, "--", path)
+        rows: list[tuple[str, int, str, str]] = []
         origin: tuple[str, int] | None = None
+        origin_path = path
         for line in out.splitlines():
             if line.startswith("\t"):
                 if origin:
-                    rows.append((origin[0], origin[1], line[1:]))
+                    rows.append((origin[0], origin[1], line[1:], origin_path))
+                continue
+            if line.startswith("filename "):
+                origin_path = line[len("filename "):]
                 continue
             parts = line.split(" ")
             if len(parts) >= 3 and len(parts[0]) == 40 and parts[1].isdigit():

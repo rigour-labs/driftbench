@@ -45,7 +45,7 @@ def bugs_introduced(git: Git, merge_sha: str, pr_shas: set[str], until: str,
     are shared across PRs; without them each PR reads and blames on its own.
     """
     pr_files = set(git.changed_files(git.parent(merge_sha), merge_sha))
-    origins = pr_shas | {merge_sha}
+    origins = pr_shas | {merge_sha} | git.branch_commits(merge_sha)
     bugs: list[Bug] = []
     for fix in _after(history, merge_sha) if history is not None else git.first_parent_history(merge_sha, until):
         if not is_fix(fix.subject) or len(fix.files) > MAX_FIX_FILES:
@@ -67,13 +67,14 @@ def _after(history: list[Commit], merge_sha: str) -> list[Commit]:
 def _introduced_lines(git: Git, fix: Commit, path: str, origins: set[str], merge_sha: str,
                       cache: dict | None = None) -> list[int]:
     lines: list[int] = []
-    for origin, line, text in _fix_blame(git, fix, path, cache):
-        if origin in origins and not TRIVIAL_LINE.match(text):
+    for origin, line, text, origin_path in _fix_blame(git, fix, path, cache):
+        # A line blamed to another file came there by a copy git followed; it is not locatable here.
+        if origin in origins and origin_path == path and not TRIVIAL_LINE.match(text):
             lines.append(line if origin == merge_sha else _to_merge(git, origin, merge_sha, path, line))
     return lines
 
 
-def _fix_blame(git: Git, fix: Commit, path: str, cache: dict | None) -> list[tuple[str, int, str]]:
+def _fix_blame(git: Git, fix: Commit, path: str, cache: dict | None) -> list[tuple[str, int, str, str]]:
     """Blame of every line the fix removed or replaced in `path`, just before the fix.
 
     It does not depend on the PR being labelled, so one run is shared by every
