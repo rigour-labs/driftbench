@@ -1,0 +1,27 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install pytest
+      - name: Unit tests (arena, eval gate)
+        run: python -m pytest arena/tests evalgate/tests -q
+      - name: Published data carries no answer-revealing comments
+        run: |
+          python -m kaggle_benchmark.export_dataset
+          if grep -qiE "(SECURITY|LOGIC|PATTERN|STALE|ARCHITECTURE) DRIFT" kaggle_benchmark/driftbench_dataset.jsonl; then
+            echo "Answer-revealing comments found in the exported dataset"; exit 1
+          fi

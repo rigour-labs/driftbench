@@ -13,16 +13,19 @@ import glob
 import os
 from pathlib import Path
 
+from evalgate.sanitize import sanitize_patch
+
 DATASETS_DIR = Path(__file__).parent.parent / "datasets"
 OUTPUT_PATH = Path(__file__).parent / "driftbench_dataset.jsonl"
 
 
 def _read_patch(patch_path: str) -> str:
-    """Read patch file content, resolve relative to repo root."""
+    """Patch content relative to the repo root, sanitized; a missing patch is an error, not an empty row."""
     full_path = Path(__file__).parent.parent / patch_path
-    if full_path.exists():
-        return full_path.read_text()
-    return ""
+    if not full_path.exists():
+        raise FileNotFoundError(f"benchmark patch missing: {patch_path}")
+    # Published data must not carry comments that state the answer.
+    return sanitize_patch(full_path.read_text())
 
 
 def export():

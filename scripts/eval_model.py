@@ -1,326 +1,134 @@
 #!/usr/bin/env python3
 """
-Evaluate a fine-tuned DriftBench model against benchmark scenarios.
+Evaluate a GGUF model on the DriftBench items and decide whether it may be published.
 
-Runs the GGUF model against 10 DriftBench scenarios (2 per category) and
-computes accuracy. Implements a regression gate that compares against the
-previous version and fails if accuracy drops beyond threshold.
+Every task contributes its golden patch (no drift) and its drift patch, with
+answer-revealing comments and docstrings removed (evalgate/sanitize.py). The
+model sees the intent and the patch, never the drift type. The gate fails a
+model that answers the same way to everything, that has a false-positive rate
+above the cap, whose balanced accuracy is too low, or whose replies cannot be
+parsed. Missing inference support is an error, never a pass.
 
 Usage:
-    python scripts/eval_model.py \
-        --tier deep \
-        --version 5 \
-        --min-accuracy 0.6 \
-        --regression-threshold 0.05
+    python scripts/eval_model.py --tier deep --version 6.0.0
+    python scripts/eval_model.py --tier lite --gguf-path model.gguf --version 6.0.0 --baseline-version 5
 """
+from __future__ import annotations
 
 import argparse
 import json
 import os
 import sys
-import glob
 from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from evalgate.metrics import Prediction, Thresholds, gate, report  # noqa: E402
+from evalgate.prompt import build_prompt, parse_answer  # noqa: E402
+from evalgate.scenarios import load_items  # noqa: E402
+
+CONTEXT_TOKENS = 8192
+MAX_REPLY_TOKENS = 64
 
 
-# 10 benchmark scenarios: 2 per category for smoke test
-# These are selected from datasets/ to cover all drift categories
-EVAL_SCENARIOS = [
-    # security_drift (2)
-    "datasets/flask/security_001.json",
-    "datasets/fastapi/security_001.json",
-    # logic_drift (2)
-    "datasets/flask/logic_001.json",
-    "datasets/lodash/logic_001.json",
-    # stale_drift (2)
-    "datasets/lodash/stale_001.json",
-    "datasets/tanstack-query/stale_001.json",
-    # architecture_drift (2)
-    "datasets/flask/architecture_001.json",
-    "datasets/shadcn-ui/architecture_001.json",
-    # pattern_drift (2)
-    "datasets/flask/pattern_001.json",
-    "datasets/django/pattern_001.json",
-]
-
-
-def load_scenario(path: str) -> dict | None:
-    """Load a benchmark scenario file."""
-    if not os.path.exists(path):
-        print(f"  SKIP: {path} not found")
-        return None
-    with open(path) as f:
-        return json.load(f)
-
-
-def build_prompt(scenario: dict) -> str:
-    """Build a drift detection prompt from a scenario."""
-    intent = scenario.get("intent", "")
-    category = scenario.get("category", "")
-    name = scenario.get("name", "")
-    repo = scenario.get("repository", "")
-
-    # Use the drift candidate to build a realistic detection prompt
-    candidates = scenario.get("drift_candidates", [])
-    if not candidates:
-        return ""
-
-    candidate = candidates[0]
-    drift_type = candidate.get("drift_type", "")
-
-    return f"""You are a code drift detector. Analyze the following code change for potential drift issues.
-
-Repository: {repo}
-Intent: {intent}
-Category being tested: {category}
-Change name: {name}
-
-A drift candidate has been identified with type: {drift_type}
-
-Based on the intent and the drift type, should this code change be flagged as drift?
-Respond with a JSON object: {{"is_drift": true/false, "confidence": 0.0-1.0, "category": "..."}}"""
-
-
-def run_inference(gguf_path: str, prompt: str) -> dict | None:
-    """Run inference on a GGUF model using llama-cpp-python."""
+def load_model(gguf_path: str):
     try:
         from llama_cpp import Llama
     except ImportError:
-        print("WARNING: llama-cpp-python not available, using mock inference")
-        return {"is_drift": True, "confidence": 0.75, "category": "unknown"}
-
-    try:
-        llm = Llama(model_path=gguf_path, n_ctx=1024, n_gpu_layers=0, verbose=False)
-        output = llm(prompt, max_tokens=256, temperature=0.0)
-        text = output["choices"][0]["text"].strip()
-
-        # Try to parse JSON from response
-        import re
-        json_match = re.search(r'\{[^}]+\}', text)
-        if json_match:
-            return json.loads(json_match.group())
-        return {"is_drift": True, "confidence": 0.5, "category": "parse_error"}
-    except Exception as e:
-        print(f"  Inference error: {e}")
-        return None
+        sys.exit("ERROR: llama-cpp-python is required to evaluate a model (pip install llama-cpp-python)")
+    return Llama(model_path=gguf_path, n_ctx=CONTEXT_TOKENS, n_gpu_layers=0, seed=42, verbose=False)
 
 
-def evaluate_scenario(scenario: dict, model_output: dict) -> dict:
-    """Evaluate model output against expected result."""
-    candidates = scenario.get("drift_candidates", [])
-    if not candidates:
-        return {"pass": False, "reason": "no_candidates"}
-
-    expected = candidates[0].get("expected_result", "FAIL")
-    # expected_result "FAIL" means the code SHOULD be flagged as drift
-    expected_is_drift = expected == "FAIL"
-
-    predicted_is_drift = model_output.get("is_drift", False)
-    confidence = model_output.get("confidence", 0.0)
-
-    correct = predicted_is_drift == expected_is_drift
-    return {
-        "pass": correct,
-        "expected_drift": expected_is_drift,
-        "predicted_drift": predicted_is_drift,
-        "confidence": confidence,
-        "category": scenario.get("category", ""),
-    }
+def ask(llm, prompt: str) -> str:
+    reply = llm.create_chat_completion(
+        messages=[{"role": "user", "content": prompt}], temperature=0.0, max_tokens=MAX_REPLY_TOKENS,
+    )
+    return reply["choices"][0]["message"]["content"] or ""
 
 
 def download_gguf(tier: str, version: str, token: str) -> str | None:
-    """Download GGUF model from HuggingFace."""
     from huggingface_hub import hf_hub_download
-
     repo_id = f"rigour-labs/rigour-{tier}-v{version}-gguf"
-    # Try common GGUF filename patterns
-    for pattern in [
-        f"rigour-{tier}-v{version}-q4_k_m.gguf",
-        f"rigour-{tier}-v{version}.gguf",
-    ]:
-        try:
-            path = hf_hub_download(repo_id, pattern, token=token)
-            print(f"Downloaded: {repo_id}/{pattern}")
-            return path
-        except Exception:
-            continue
-
-    # Try listing files to find any GGUF
     try:
-        from huggingface_hub import HfApi
-        api = HfApi(token=token)
-        files = api.list_repo_files(repo_id)
-        gguf_files = [f for f in files if f.endswith(".gguf") and "f16" not in f]
-        if gguf_files:
-            path = hf_hub_download(repo_id, gguf_files[0], token=token)
-            print(f"Downloaded: {repo_id}/{gguf_files[0]}")
-            return path
-    except Exception as e:
-        print(f"ERROR: Could not download GGUF from {repo_id}: {e}")
-
-    return None
-
-
-def download_previous_eval(tier: str, version: str, token: str) -> dict | None:
-    """Download previous version's eval results for regression comparison."""
-    prev_version = str(int(version) - 1)
-    if int(prev_version) < 1:
-        return None
-
-    prev_repo = f"rigour-labs/rigour-{tier}-v{prev_version}-gguf"
-    try:
-        from huggingface_hub import hf_hub_download
-        path = hf_hub_download(prev_repo, "eval_results.json", token=token)
-        with open(path) as f:
-            return json.load(f)
-    except Exception:
-        print(f"No previous eval found for v{prev_version} (first run or not uploaded)")
+        return hf_hub_download(repo_id, f"rigour-{tier}-v{version}-q4_k_m.gguf", token=token or None)
+    except Exception as error:  # noqa: BLE001 - reported and turned into an exit
+        print(f"ERROR: could not download {repo_id}: {error}")
         return None
 
 
-def upload_eval_results(results: dict, tier: str, version: str, token: str):
-    """Upload eval results to the GGUF repo for future regression checks."""
+def baseline_report(tier: str, version: str, token: str) -> dict | None:
+    """The published eval report of an earlier version, if it has one in the new format."""
+    from huggingface_hub import hf_hub_download
+    try:
+        path = hf_hub_download(f"rigour-labs/rigour-{tier}-v{version}-gguf", "eval_results.json", token=token or None)
+    except Exception:  # noqa: BLE001 - no baseline is a normal first run
+        return None
+    return json.loads(Path(path).read_text()).get("report")
+
+
+def upload_results(results: dict, tier: str, version: str, token: str) -> None:
     from huggingface_hub import HfApi
-    import tempfile
-
-    repo_id = f"rigour-labs/rigour-{tier}-v{version}-gguf"
-    api = HfApi(token=token)
-
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        json.dump(results, f, indent=2)
-        tmp_path = f.name
-
-    try:
-        api.upload_file(
-            path_or_fileobj=tmp_path,
-            path_in_repo="eval_results.json",
-            repo_id=repo_id,
-        )
-        print(f"Eval results uploaded to {repo_id}")
-    except Exception as e:
-        print(f"WARNING: Could not upload eval results: {e}")
-    finally:
-        os.unlink(tmp_path)
+    HfApi(token=token).upload_file(
+        path_or_fileobj=json.dumps(results, indent=2).encode(), path_in_repo="eval_results.json",
+        repo_id=f"rigour-labs/rigour-{tier}-v{version}-gguf",
+    )
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Evaluate DriftBench model")
+def evaluate(llm) -> tuple[list[Prediction], list[dict]]:
+    predictions, rows = [], []
+    for item in load_items():
+        answer = parse_answer(ask(llm, build_prompt(item)))
+        predictions.append(Prediction(item.id, item.has_drift, answer))
+        rows.append({"id": item.id, "category": item.category, "expected": item.has_drift, "predicted": answer})
+        print(f"  {item.id}: expected={item.has_drift} predicted={answer}")
+    return predictions, rows
+
+
+def regression_failures(current: dict, baseline: dict | None, max_drop: float) -> list[str]:
+    if not baseline:
+        return []
+    drop = baseline["balanced_accuracy"] - current["balanced_accuracy"]
+    return [f"balanced accuracy dropped {drop:.2f} vs baseline (max {max_drop:.2f})"] if drop > max_drop else []
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Evaluate a Rigour model and gate its publication")
     parser.add_argument("--tier", required=True, choices=["deep", "lite"])
-    parser.add_argument("--version", required=True, help="Model version number")
-    parser.add_argument("--min-accuracy", type=float, default=0.6,
-                        help="Minimum accuracy to pass (0.0-1.0)")
-    parser.add_argument("--regression-threshold", type=float, default=0.05,
-                        help="Max accuracy drop vs previous version before failing")
-    parser.add_argument("--gguf-path", default="",
-                        help="Local GGUF path (skip download)")
+    parser.add_argument("--version", required=True, help="Version being evaluated, as published (e.g. 5 or 6.0.0)")
+    parser.add_argument("--gguf-path", default="", help="Local GGUF (skips the download)")
+    parser.add_argument("--baseline-version", default="", help="Published version to compare against")
+    parser.add_argument("--min-balanced-accuracy", type=float, default=Thresholds.min_balanced_accuracy)
+    parser.add_argument("--max-false-positive-rate", type=float, default=Thresholds.max_false_positive_rate)
+    parser.add_argument("--max-regression", type=float, default=0.05)
+    parser.add_argument("--output", default="eval_results.json", help="Where to write the report")
+    parser.add_argument("--upload", action="store_true", help="Upload the report to the model repo")
     args = parser.parse_args()
 
     token = os.environ.get("HF_TOKEN", "")
+    gguf = args.gguf_path or download_gguf(args.tier, args.version, token)
+    if not gguf:
+        sys.exit(2)
 
-    print(f"=== DriftBench Evaluation: tier={args.tier} v{args.version} ===")
-    print(f"Min accuracy: {args.min_accuracy}, Regression threshold: {args.regression_threshold}")
-    print()
+    predictions, rows = evaluate(load_model(gguf))
+    result = report(predictions)
+    thresholds = Thresholds(args.min_balanced_accuracy, args.max_false_positive_rate)
+    baseline = baseline_report(args.tier, args.baseline_version, token) if args.baseline_version else None
+    failures = gate(result, thresholds) + regression_failures(result.to_dict(), baseline, args.max_regression)
 
-    # Download or locate GGUF
-    gguf_path = args.gguf_path
-    if not gguf_path:
-        gguf_path = download_gguf(args.tier, args.version, token)
-        if not gguf_path:
-            print("ERROR: Could not download GGUF model")
-            sys.exit(1)
-
-    # Run evaluation
-    results = []
-    category_results = {}
-
-    for scenario_path in EVAL_SCENARIOS:
-        scenario = load_scenario(scenario_path)
-        if not scenario:
-            continue
-
-        scenario_id = scenario.get("id", os.path.basename(scenario_path))
-        category = scenario.get("category", "unknown")
-        print(f"  Evaluating: {scenario_id} ({category})")
-
-        prompt = build_prompt(scenario)
-        if not prompt:
-            print(f"    SKIP: No prompt could be built")
-            continue
-
-        output = run_inference(gguf_path, prompt)
-        if output is None:
-            results.append({"id": scenario_id, "pass": False, "reason": "inference_error"})
-            continue
-
-        result = evaluate_scenario(scenario, output)
-        result["id"] = scenario_id
-        results.append(result)
-
-        # Track per-category
-        if category not in category_results:
-            category_results[category] = {"correct": 0, "total": 0}
-        category_results[category]["total"] += 1
-        if result["pass"]:
-            category_results[category]["correct"] += 1
-
-        status = "PASS" if result["pass"] else "FAIL"
-        print(f"    {status} (expected_drift={result.get('expected_drift')}, "
-              f"predicted_drift={result.get('predicted_drift')}, "
-              f"confidence={result.get('confidence', 0):.2f})")
-
-    # Compute overall accuracy
-    total = len(results)
-    correct = sum(1 for r in results if r.get("pass"))
-    accuracy = correct / total if total > 0 else 0.0
-
-    print()
-    print(f"=== Results: {correct}/{total} correct ({accuracy:.1%}) ===")
-    for cat, data in sorted(category_results.items()):
-        cat_acc = data["correct"] / data["total"] if data["total"] > 0 else 0
-        print(f"  {cat}: {data['correct']}/{data['total']} ({cat_acc:.0%})")
-
-    # Build eval results output
-    eval_output = {
-        "tier": args.tier,
-        "version": args.version,
-        "date": datetime.now(timezone.utc).isoformat(),
-        "accuracy": round(accuracy, 4),
-        "correct": correct,
-        "total": total,
-        "per_category": {
-            cat: round(d["correct"] / d["total"], 4) if d["total"] > 0 else 0
-            for cat, d in category_results.items()
-        },
-        "scenarios": results,
+    output = {
+        "tier": args.tier, "version": args.version, "date": datetime.now(timezone.utc).isoformat(),
+        "report": result.to_dict(), "thresholds": thresholds.__dict__, "gate_failures": failures, "items": rows,
     }
+    Path(args.output).write_text(json.dumps(output, indent=2))
+    print(json.dumps(output["report"], indent=2))
+    if args.upload and token:
+        upload_results(output, args.tier, args.version, token)
 
-    # Save locally
-    with open("eval_results.json", "w") as f:
-        json.dump(eval_output, f, indent=2)
-    print(f"\nSaved eval_results.json")
-
-    # Upload to HF for future regression checks
-    if token:
-        upload_eval_results(eval_output, args.tier, args.version, token)
-
-    # Gate 1: Minimum accuracy
-    if accuracy < args.min_accuracy:
-        print(f"\nFAIL: Accuracy {accuracy:.1%} < minimum {args.min_accuracy:.0%}")
+    if failures:
+        print("FAIL: " + "; ".join(failures))
         sys.exit(1)
-
-    # Gate 2: Regression check
-    if token:
-        prev_eval = download_previous_eval(args.tier, args.version, token)
-        if prev_eval:
-            prev_accuracy = prev_eval.get("accuracy", 0)
-            drop = prev_accuracy - accuracy
-            print(f"\nRegression check: v{int(args.version)-1} accuracy={prev_accuracy:.1%}, "
-                  f"v{args.version} accuracy={accuracy:.1%}, drop={drop:.1%}")
-            if drop > args.regression_threshold:
-                print(f"FAIL: Regression of {drop:.1%} exceeds threshold {args.regression_threshold:.0%}")
-                sys.exit(1)
-            print("PASS: No regression detected")
-
-    print(f"\nPASS: Model v{args.version} ({args.tier}) passed all gates")
+    print(f"PASS: {args.tier} v{args.version} may be published")
 
 
 if __name__ == "__main__":
