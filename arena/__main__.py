@@ -20,6 +20,7 @@ def main() -> None:
     m.add_argument("--repo", required=True)
     m.add_argument("--limit", type=int, default=50)
     m.add_argument("--min-age-days", type=int, default=60)
+    m.add_argument("--branch", default="", help="Branch the reviewed PRs merged into (default: the repo's default branch)")
     for name in ("label", "run", "score"):
         p = sub.add_parser(name)
         p.add_argument("--repo", required=name != "score")
@@ -54,7 +55,7 @@ def _results(results_dir: Path) -> dict[str, dict]:
 
 
 def _mine(args) -> None:
-    corpus = mine(args.repo, args.limit, args.min_age_days)
+    corpus = mine(args.repo, args.limit, args.min_age_days, args.branch)
     corpus.save(_paths(args.repo)[0])
     print(f"{len(corpus.prs)} PRs, {sum(len(p.comments) for p in corpus.prs)} bot comments, snapshot {corpus.snapshot_sha[:10]}")
 

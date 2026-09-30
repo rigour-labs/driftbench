@@ -52,6 +52,8 @@ class Corpus:
     mined_at: str
     min_age_days: int
     prs: list[Pr] = field(default_factory=list)
+    #: The branch PRs merged into; empty means the default branch at mining time.
+    branch: str = ""
 
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -64,14 +66,17 @@ class Corpus:
         return Corpus(**raw, prs=prs)
 
 
-def mine(repo: str, limit: int, min_age_days: int) -> Corpus:
+def mine(repo: str, limit: int, min_age_days: int, branch: str = "") -> Corpus:
     """Newest `limit` merged PRs the bot reviewed, merged at least `min_age_days` before now."""
     info = github.api(f"repos/{repo}")
-    snapshot = github.api(f"repos/{repo}/commits/{info['default_branch']}")["sha"]
+    # A repo can move its default branch after the reviewed PRs merged elsewhere
+    # (heroui: reviewed on canary, default now v3); SZZ needs the branch they merged into.
+    branch = branch or info["default_branch"]
+    snapshot = github.api(f"repos/{repo}/commits/{branch}")["sha"]
     cutoff = datetime.now(timezone.utc) - timedelta(days=min_age_days)
-    corpus = Corpus(repo, snapshot, datetime.now(timezone.utc).isoformat(timespec="seconds"), min_age_days)
+    corpus = Corpus(repo, snapshot, datetime.now(timezone.utc).isoformat(timespec="seconds"), min_age_days, branch=branch)
     for number in _reviewed_prs(repo, cutoff):
-        pr = _pr(repo, number, info["default_branch"])
+        pr = _pr(repo, number, branch)
         if pr:
             corpus.prs.append(pr)
         if len(corpus.prs) >= limit:

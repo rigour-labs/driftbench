@@ -13,7 +13,8 @@
     "triggerdotdev/trigger.dev",
     "mastra-ai/mastra",
     "supabase/supabase",
-    "appsmithorg/appsmith"
+    "appsmithorg/appsmith",
+    "nuxt/ui"
   ],
   "_selection_criteria": "Two tracks: (A) vibe-coded repos with AI co-authorship for real AI-drift patterns, (B) enterprise repos for production governance patterns (auth, payments, APIs, infra). All repos: 200+ stars, active, CI/CD, tests, permissive license.",
   "_categories": {
