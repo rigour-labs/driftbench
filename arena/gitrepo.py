@@ -66,7 +66,14 @@ class Git:
 
     def blame(self, sha: str, path: str, first: int, last: int) -> list[tuple[str, int, str]]:
         """(origin commit, line number in that commit, text) for lines first..last of path at sha."""
-        out = self.run("blame", "-w", "-M", "--porcelain", "-L", f"{first},{last}", sha, "--", path)
+        return self.blame_ranges(sha, path, [(first, last)])
+
+    def blame_ranges(self, sha: str, path: str, ranges: list[tuple[int, int]]) -> list[tuple[str, int, str]]:
+        """Like blame, for several line ranges in one git process."""
+        if not ranges:
+            return []
+        args = [arg for first, last in ranges for arg in ("-L", f"{first},{last}")]
+        out = self.run("blame", "-w", "-M", "--porcelain", *args, sha, "--", path)
         rows: list[tuple[str, int, str]] = []
         origin: tuple[str, int] | None = None
         for line in out.splitlines():
