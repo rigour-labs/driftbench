@@ -37,3 +37,11 @@ def test_the_report_shows_pre_emption_and_the_funnel_per_model(tmp_path: Path):
     [row] = report.summarize(tmp_path)
     assert (row["model"], row["prs"], row["errors"], row["targets"], row["raised"], row["minutes_per_pr"]) == ("qwen-coder-7b", 2, 1, 1, 1, 2.0)
     assert (row["findings_proposed"], row["findings_withdrawn"], row["findings_count"]) == (3, 2, 1)
+
+
+def test_the_newest_release_of_the_node_line_is_chosen(monkeypatch):
+    import io
+    from kaggle_arena import run
+    index = json.dumps([{"version": "v26.1.0"}, {"version": "v24.21.0"}, {"version": "v24.20.0"}, {"version": "v22.23.3"}])
+    monkeypatch.setattr(run.urllib.request, "urlopen", lambda *a, **k: io.BytesIO(index.encode()))
+    assert run.latest_node("v24") == "v24.21.0"

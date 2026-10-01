@@ -25,7 +25,8 @@ PARAMS_JSON = r'''__PARAMS__'''
 PARAMS = json.loads(PARAMS_JSON) if PARAMS_JSON.startswith("{") else {}
 WORK = Path("/kaggle/working")
 SRC = Path("/kaggle/tmp") if Path("/kaggle").exists() else Path.cwd() / ".kaggle-local"
-NODE_VERSION = "v22.12.0"
+#: The Node LTS line Rigour builds on; the newest release of it is resolved at run time.
+NODE_MAJOR = "v24"
 PORT = 8000
 LLAMA_WHEELS = "https://abetlen.github.io/llama-cpp-python/whl/cu124"
 
@@ -35,12 +36,21 @@ def sh(*cmd: str, cwd: Path | None = None, env: dict | None = None) -> None:
     subprocess.run(cmd, cwd=cwd, env=env, check=True)
 
 
+def latest_node(major: str) -> str:
+    """The newest release of a Node major line: a pinned patch goes stale (old ones ship
+    corepack with npm's retired signing keys)."""
+    with urllib.request.urlopen("https://nodejs.org/dist/index.json", timeout=30) as response:
+        releases = json.load(response)
+    return next(r["version"] for r in releases if r["version"].startswith(major + "."))
+
+
 def setup() -> dict:
     """Node, Rigour built from a ref, driftbench, and the CUDA llama.cpp server. Returns the env for Rigour."""
     SRC.mkdir(parents=True, exist_ok=True)
-    node = SRC / f"node-{NODE_VERSION}-linux-x64"
+    version = latest_node(NODE_MAJOR)
+    node = SRC / f"node-{version}-linux-x64"
     if not node.exists():
-        sh("bash", "-c", f"curl -fsSL https://nodejs.org/dist/{NODE_VERSION}/node-{NODE_VERSION}-linux-x64.tar.xz | tar -xJ -C {SRC}")
+        sh("bash", "-c", f"curl -fsSL https://nodejs.org/dist/{version}/node-{version}-linux-x64.tar.xz | tar -xJ -C {SRC}")
     env = {**os.environ, "PATH": f"{node}/bin:{os.environ['PATH']}"}
     rigour = SRC / "rigour"
     sh("git", "clone", "-q", "https://github.com/rigour-labs/rigour.git", str(rigour))
