@@ -45,7 +45,10 @@ def setup() -> dict:
     rigour = SRC / "rigour"
     sh("git", "clone", "-q", "https://github.com/rigour-labs/rigour.git", str(rigour))
     sh("git", "checkout", "-q", PARAMS.get("rigour_ref", "main"), cwd=rigour)
-    sh("bash", "-c", "corepack enable && pnpm install --frozen-lockfile --silent && pnpm build", cwd=rigour, env=env)
+    # corepack in older Node 22 releases fails on npm's rotated signing keys: install the pinned pnpm with npm.
+    pnpm = json.loads((rigour / "package.json").read_text()).get("packageManager", "pnpm@10").split("+")[0]
+    sh("npm", "install", "-g", "--silent", pnpm, env=env)
+    sh("bash", "-c", "pnpm install --frozen-lockfile --silent && pnpm build", cwd=rigour, env=env)
     driftbench = SRC / "driftbench"
     sh("git", "clone", "-q", "https://github.com/rigour-labs/driftbench.git", str(driftbench))
     sh("git", "checkout", "-q", PARAMS.get("driftbench_ref", "main"), cwd=driftbench)
