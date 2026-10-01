@@ -1,7 +1,7 @@
 """Pre-emption on a free Kaggle GPU: which model size raises what reviewers flagged.
 
-Runs as a Kaggle script kernel (GPU T4, internet on). For each GGUF model in
-the ladder it starts a llama.cpp OpenAI-compatible server on the GPU, points
+Runs as a Kaggle script kernel (GPU, internet on). For each GGUF model in
+the ladder it serves the model on the GPU with Ollama (OpenAI-compatible), points
 Rigour at it (the same pipeline as --max and bring-your-own-key: reference
 pack, two passes, self-check), and runs the arena's pre-emption sample. Each
 model's results, with Rigour's funnel (proposed -> withdrawn -> kept), go to
@@ -27,8 +27,7 @@ WORK = Path("/kaggle/working")
 SRC = Path("/kaggle/tmp") if Path("/kaggle").exists() else Path.cwd() / ".kaggle-local"
 #: The Node LTS line Rigour builds on; the newest release of it is resolved at run time.
 NODE_MAJOR = "v24"
-PORT = 8000
-LLAMA_WHEELS = "https://abetlen.github.io/llama-cpp-python/whl/cu124"
+OLLAMA = "http://127.0.0.1:11434"
 
 
 def sh(*cmd: str, cwd: Path | None = None, env: dict | None = None) -> None:
@@ -62,30 +61,43 @@ def setup() -> dict:
     driftbench = SRC / "driftbench"
     sh("git", "clone", "-q", "https://github.com/rigour-labs/driftbench.git", str(driftbench))
     sh("git", "checkout", "-q", PARAMS.get("driftbench_ref", "main"), cwd=driftbench)
-    sh(sys.executable, "-m", "pip", "install", "-q", "llama-cpp-python[server]", "--extra-index-url", LLAMA_WHEELS)
+    sh("nvidia-smi")  # evidence of the GPU in the log
+    # Ollama bundles CUDA; a llama-cpp-python wheel without CUDA silently ran on the CPU.
+    sh("bash", "-c", "curl -fsSL https://ollama.com/install.sh | sh")
     env |= {"RIGOUR_CLI": str(rigour / "packages/rigour-cli/dist/cli.js"), "PYTHONPATH": str(driftbench),
             "ARENA_CACHE": str(SRC / "arena"), "ARENA_RIGOUR_TIMEOUT_S": str(PARAMS.get("timeout_s", 1800))}
     return env
 
 
 def serve(model: dict) -> subprocess.Popen:
-    """The model on the GPU behind an OpenAI-compatible API; returns once it answers."""
-    server = subprocess.Popen([
-        sys.executable, "-m", "llama_cpp.server", "--hf_model_repo_id", model["repo"], "--model", model["file"],
-        "--n_gpu_layers", "-1", "--n_ctx", str(model.get("n_ctx", 32768)), "--host", "127.0.0.1", "--port", str(PORT),
-        "--model_alias", "local",
-    ])
-    deadline = time.time() + 1800
+    """The model on the GPU behind Ollama's OpenAI-compatible API, as `local`; returns once
+    it answers and refuses to go on if the model is not on the GPU."""
+    env = {**os.environ, "OLLAMA_CONTEXT_LENGTH": str(model.get("n_ctx", 32768)), "OLLAMA_KEEP_ALIVE": "-1"}
+    server = subprocess.Popen(["ollama", "serve"], env=env)
+    wait_for(f"{OLLAMA}/api/version", 120, server, "ollama")
+    tag = f"hf.co/{model['repo']}:{model.get('quant', 'Q4_K_M')}"
+    sh("ollama", "pull", tag, env=env)
+    sh("ollama", "cp", tag, "local", env=env)
+    sh("ollama", "run", "local", "Reply with OK.", env=env)  # loads the model
+    placement = subprocess.run(["ollama", "ps"], capture_output=True, text=True, env=env).stdout
+    print(placement, flush=True)
+    if "100% GPU" not in placement:
+        server.terminate()
+        raise RuntimeError(f"{model['name']} is not fully on the GPU:\n{placement}")
+    return server
+
+
+def wait_for(url: str, seconds: int, process: subprocess.Popen, name: str) -> None:
+    deadline = time.time() + seconds
     while time.time() < deadline:
         try:
-            urllib.request.urlopen(f"http://127.0.0.1:{PORT}/v1/models", timeout=5)
-            return server
+            urllib.request.urlopen(url, timeout=5)
+            return
         except OSError:
-            if server.poll() is not None:
-                raise RuntimeError(f"llama.cpp server exited while loading {model['name']}")
-            time.sleep(10)
-    server.kill()
-    raise RuntimeError(f"{model['name']} did not come up")
+            if process.poll() is not None:
+                raise RuntimeError(f"{name} exited while starting")
+            time.sleep(3)
+    raise RuntimeError(f"{name} did not come up")
 
 
 def evaluate(model: dict, env: dict) -> None:
@@ -94,7 +106,7 @@ def evaluate(model: dict, env: dict) -> None:
     out = WORK / "results" / model["name"]
     config = driftbench / "arena" / "configs" / f"kaggle-{model['name']}.json"
     config.write_text(json.dumps({"note": f"{model['name']} on a Kaggle T4 via llama.cpp", "config": "rigour-default.yml", "flags": [
-        "--provider", "openai", "--api-base-url", f"http://127.0.0.1:{PORT}/v1", "--model-name", "local", "-k", "local"]}))
+        "--provider", "openai", "--api-base-url", f"{OLLAMA}/v1", "--model-name", "local", "-k", "local"]}))
     code = (
         "import json, sys; from pathlib import Path\n"
         "from arena import preemption; from arena.corpus import Corpus; from arena.repos import clone\n"
@@ -122,12 +134,17 @@ def main() -> None:
         return  # local: plan only
     env = setup()
     for model in PARAMS.get("models", []):
-        server = serve(model)
+        try:
+            server = serve(model)
+        except (RuntimeError, subprocess.CalledProcessError) as error:
+            print(f"{model['name']} could not be served: {error}", flush=True)
+            continue
         try:
             evaluate(model, env)
         except subprocess.CalledProcessError as error:
             print(f"{model['name']} failed: {error}", flush=True)  # the next model still runs
         finally:
+            subprocess.run(["ollama", "stop", "local"], check=False)
             server.terminate()
             server.wait(timeout=60)
 
