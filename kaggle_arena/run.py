@@ -63,6 +63,8 @@ def setup() -> dict:
     sh("git", "checkout", "-q", PARAMS.get("driftbench_ref", "main"), cwd=driftbench)
     sh("nvidia-smi")  # evidence of the GPU in the log
     # Ollama bundles CUDA; a llama-cpp-python wheel without CUDA silently ran on the CPU.
+    # The installer extracts with zstd and finds NVIDIA cards with lspci; Kaggle's image has neither.
+    sh("bash", "-c", "apt-get update -qq && apt-get install -y -qq zstd pciutils >/dev/null")
     sh("bash", "-c", "curl -fsSL https://ollama.com/install.sh | sh")
     env |= {"RIGOUR_CLI": str(rigour / "packages/rigour-cli/dist/cli.js"), "PYTHONPATH": str(driftbench),
             "ARENA_CACHE": str(SRC / "arena"), "ARENA_RIGOUR_TIMEOUT_S": str(PARAMS.get("timeout_s", 1800))}
