@@ -23,6 +23,7 @@ from arena.score import Finding
 #: Per-PR limit on one Rigour run. The local 7B tier (--max) reads each file
 #: twice and self-checks, so it needs longer: set ARENA_RIGOUR_TIMEOUT_S.
 TIMEOUT_S = 600
+DEEP_KEYS = ("status", "tier", "model", "chunks_total", "chunks_failed", "findings_proposed", "findings_withdrawn", "findings_count", "total_ms")
 
 
 def _timeout() -> int:
@@ -45,6 +46,8 @@ class RigourRun:
     seconds: float
     status: str
     error: str = ""
+    #: Deep-analysis stats when a model ran: proposed -> withdrawn -> kept, failed chunks.
+    deep: dict | None = None
 
 
 def review(git: Git, merge_sha: str, cfg: RigourConfig) -> RigourRun:
@@ -89,7 +92,10 @@ def _run(tree: Path, diff: Path, cfg: RigourConfig) -> RigourRun:
         # is an error, never "no findings".
         return RigourRun([], seconds, "error", json.dumps(report)[:500])
     findings = [_finding(f) for f in report.get("failures", []) if f.get("file")]
-    return RigourRun(findings, seconds, status)
+    deep = report.get("deep") or None
+    if deep:
+        deep = {k: deep.get(k) for k in DEEP_KEYS}
+    return RigourRun(findings, seconds, status, deep=deep)
 
 
 def _finding(failure: dict) -> Finding:

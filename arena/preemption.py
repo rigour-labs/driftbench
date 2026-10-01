@@ -53,6 +53,26 @@ def _placeable(git: Git, pr: Pr, comment: BotComment) -> bool:
     return git.has_commit(comment.commit) and git.exists(comment.commit, comment.path) and git.exists(pr.merge_sha, comment.path)
 
 
+#: CodeRabbit categories that are about behaviour, not style.
+CORRECTNESS = ("Potential issue", "Functional Correctness", "Stability", "Data Integrity", "Security")
+
+
+def select(git: Git, prs: list[Pr], per_repo: int, max_files: int = 4, seed: int = 7) -> list[Pr]:
+    """PRs whose acted-on targets include a correctness comment, touching at most `max_files`
+    files: a small, fixed sample where a model's review has something real to find."""
+    chosen = []
+    for pr in prs:
+        ensure_commits(git, pr.number, [c.commit for c in pr.comments])
+        _, targets = acted_on_targets(git, pr)
+        if not targets or len({t.path for t in targets}) > max_files:
+            continue
+        categories = {str(c.id): c.category or "" for c in pr.comments}
+        if any(k in categories.get(t.id, "") for t in targets for k in CORRECTNESS):
+            chosen.append(pr)
+    random.Random(seed).shuffle(chosen)
+    return chosen[:per_repo]
+
+
 def run(git: Git, prs: list[Pr], cfg: RigourConfig) -> dict:
     """Review each PR at its reviewed commit; record targets and findings."""
     out: dict[str, dict] = {}
@@ -67,6 +87,7 @@ def run(git: Git, prs: list[Pr], cfg: RigourConfig) -> dict:
             "commit": commit, "base": base, "status": result.status, "error": result.error, "seconds": round(result.seconds, 2),
             "targets": [t.__dict__ for t in targets],
             "findings": [{"path": f.path, "line": f.line, "id": f.id, "message": f.message} for f in result.findings],
+            "deep": result.deep,
         }
     return {"tool": cfg.name, "stage": "pre-pr", "repo": "", "prs": out}
 

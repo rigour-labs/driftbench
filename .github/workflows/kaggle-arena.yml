@@ -1,0 +1,93 @@
+name: Kaggle GPU Arena
+
+# Pre-emption for a ladder of model sizes on a free Kaggle GPU. The job pushes
+# kaggle_arena/run.py as a private GPU kernel, waits for it, and scores the
+# results here; nothing heavy runs on the GitHub runner or on anyone's laptop.
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "Comma-separated model names from kaggle_arena/params.json (empty = all)"
+        default: ""
+      per_repo:
+        description: "PRs per repository (correctness comments the developer acted on)"
+        default: "5"
+      rigour_ref:
+        description: "rigour-labs/rigour branch, tag or sha to review with"
+        default: "main"
+  pull_request:
+    paths:
+      - "kaggle_arena/**"
+      - ".github/workflows/kaggle-arena.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kaggle-arena
+  cancel-in-progress: false
+
+jobs:
+  arena:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      KAGGLE_KEY: ${{ secrets.KAGGLE_API_TOKEN }}
+      # Pull requests smoke-test the pipeline: the smallest model on one PR.
+      MODELS: ${{ github.event_name == 'pull_request' && 'qwen-coder-1.5b' || inputs.models }}
+      PER_REPO: ${{ github.event_name == 'pull_request' && '1' || inputs.per_repo || '5' }}
+      REPOS_OVERRIDE: ${{ github.event_name == 'pull_request' && 'trpc/trpc' || '' }}
+      RIGOUR_REF: ${{ inputs.rigour_ref || 'main' }}
+      DRIFTBENCH_REF: ${{ github.head_ref || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Kaggle CLI
+        run: pip install -q kaggle pytest && kaggle --version
+
+      - name: Build the kernel
+        run: python kaggle_arena/build.py --out "$RUNNER_TEMP/kernel"
+
+      - name: Push and wait
+        run: |
+          set -euo pipefail
+          kaggle kernels push -p "$RUNNER_TEMP/kernel"
+          slug="$KAGGLE_USERNAME/rigour-arena-gpu"
+          # External work the runner cannot be notified about: poll its status.
+          for _ in $(seq 1 330); do
+            status=$(kaggle kernels status "$slug" 2>&1 || true)
+            echo "$status"
+            case "$status" in
+              *COMPLETE*|*complete*) exit 0 ;;
+              *ERROR*|*error*|*CANCEL*|*cancel*) echo "kernel failed"; exit 1 ;;
+            esac
+            sleep 60
+          done
+          echo "kernel did not finish in time"; exit 1
+
+      - name: Download results
+        if: always()
+        run: kaggle kernels output "$KAGGLE_USERNAME/rigour-arena-gpu" -p kaggle-output || true
+
+      - name: Score per model
+        if: always()
+        run: |
+          {
+            echo "## Kaggle GPU arena (Rigour ${RIGOUR_REF}, ${PER_REPO} PRs per repo)"
+            echo '```'
+            PYTHONPATH=. python kaggle_arena/report.py kaggle-output/results
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kaggle-arena-${{ github.run_id }}
+          path: kaggle-output
+          if-no-files-found: ignore
