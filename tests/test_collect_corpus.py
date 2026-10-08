@@ -79,7 +79,7 @@ def test_every_human_review_is_kept_and_the_approved_head_survives():
     pr = pr_number(run_collection(max_prs=5)[0], 1)
     assert [(r["id"], r["substantive"], r["round"]) for r in pr["reviews"]] == [(10, True, 1), (12, True, 2), (13, False, None)]
     assert [(r["index"], r["head_sha"]) for r in pr["rounds"]] == [(1, "h1"), (2, "h2")]
-    assert pr["approved_head_sha"] == "h3"
+    assert pr["approved_head_sha"] == "h3" and pr["approval_overridden"] is False
     assert {r["commit_check"] for r in pr["reviews"]} == {"ok"}
 
 

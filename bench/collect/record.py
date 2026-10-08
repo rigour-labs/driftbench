@@ -9,7 +9,7 @@ import dataclasses
 import hashlib
 
 from bench.collect.rounds import ReviewRound, round_for_head, round_of_review
-from bench.collect.select import approved_head, is_bot, parse_time
+from bench.collect.select import approval_overridden, approved_head, is_bot, parse_time
 from bench.collect.timeline import head_at, head_history
 
 
@@ -103,6 +103,7 @@ def pr_record(fetch: PrFetch, substantive: set[int], rounds: list[ReviewRound]) 
         "base_sha": pr["base"]["sha"],
         "head_sha": pr["head"]["sha"],
         "approved_head_sha": approved_head(fetch.reviews),
+        "approval_overridden": approval_overridden(fetch.reviews),
         "merge_commit_sha": pr.get("merge_commit_sha"),
         "created_at": pr["created_at"],
         "merged_at": pr["merged_at"],

@@ -72,6 +72,12 @@ on is used, if it predates the review. Otherwise the review is marked
 approved head. In a 10-PR sample of tailscale/tailscale, 3 of 26 human
 reviews (all approvals) needed this rule.
 
+COMMIT-1 is one-sided. A committer date before the review shows the commit
+*could* have been reviewed, not that it had been pushed: a commit made at
+10:00 and pushed at 15:00 passes for a 12:00 review. Committer clocks can
+also be wrong, so a few `untrusted` reviews may be genuine. The untrusted
+count is reported per repository next to the headline.
+
 **Round k** is the k-th distinct trusted head that received a substantive
 review. A tool reviewing
 round k sees:
@@ -103,15 +109,42 @@ reported. Points are reported by head source (`push`, `review`,
 
 ### Review points
 
+`bench points` turns each frozen record into points. A point holds IDs, a
+character span and an anchor, never text. Text is fetched by ID and must match
+the frozen hash, or the point is dropped (TEXT-1).
+
 - Each inline review comment is one point, anchored to its file and line on
-  the commit it was posted on.
-- Each review body and each conversation comment is split into points on
-  paragraphs and list items. These points have no anchor.
-- Replies by the pull request author, acknowledgements (ACK-1) and commands
-  (CMD-1) are dropped by a documented rule. They stay in the corpus marked as
-  dropped, with the rule that dropped them.
-- **Acted on:** a point is acted on if a later commit in the same pull request
-  changed one of the lines it is anchored to (±3 lines) before merge.
+  the commit it was written on.
+- Each review body and each conversation comment is split into points
+  (SPLIT-1): paragraphs and list items. Fenced code stays with its paragraph.
+  These points have no anchor.
+
+Dropped points stay in the output, marked with the rule that dropped them:
+
+| Rule | Drops |
+|---|---|
+| AUTHOR-1 | comments by the pull request author |
+| THREAD-1 | inline replies: a thread is one point, its first comment |
+| ACK-1, CMD-1 | acknowledgements and commands (see Pull requests) |
+| QUOTE-1 | paragraphs that only quote earlier text (`>`) |
+| TEXT-1 | text deleted, or edited since the freeze |
+
+A point is **scorable** when it isn't dropped and has a round. Kept points
+with no round (a conversation comment on an unreviewed head) are counted and
+reported, but not scored.
+
+**Acted on (ACTED-1)**, for inline points on the new side of the diff: yes if
+the code within 3 lines of the anchor changed between the anchor commit and
+the merged head, or the file was removed. The basis is recorded:
+- `ancestor`: the anchor commit is an ancestor of the merged head, so the
+  compare patch is exactly the later change;
+- `direct`: the branch was amended or force-pushed in place (it gained no
+  upstream commits), so the file at the two commits is diffed directly;
+- `rebased`: the merged head was rebased onto newer upstream commits; a
+  direct diff would mix in upstream changes, so acted-on is unknown.
+
+In a 10-PR tailscale sample, 26 of 35 kept inline points got an answer (24
+yes); 8 were `rebased` and 1 was on the old side.
 
 ### Must-not-block cases
 
@@ -119,7 +152,12 @@ One per pull request: the **approved head**, the trusted commit (COMMIT-1)
 of the last approval before the merge (`approved_head_sha`). It often differs
 from the merged head, because commits can land after the approval. If a pull
 request has no trusted approval, the merged head is used instead, and these
-cases are counted separately. A blocking finding on this head is counted as a false block.
+cases are counted separately.
+
+If a reviewer requested changes (on a trusted commit) after that approval,
+the record sets `approval_overridden`. The later points may apply to the
+approved head, so these cases are left out of the false-block denominator
+and their count is reported.
 Reviewers sometimes approve code with real problems, so this is an upper bound
 on the true false-block rate, not an exact count.
 

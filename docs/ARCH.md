@@ -8,7 +8,10 @@ result can be published.
 repos.yaml
    │
    ▼
-collect ──► work/corpus/<repo>.json      frozen GitHub data: PRs, rounds, reviews, points
+collect ──► work/corpus/<repo>.json      frozen GitHub data: PRs, rounds, reviews (no text)
+   │
+   ▼
+points  ──► work/points/<repo>.json      review points, drop rules, acted-on (no text)
    │
    ▼
 label   ──► labels/<repo>.yaml           committed; IDs, spans, classes (no comment text)
@@ -28,11 +31,11 @@ score   ──► results/<date>/summary.md    committed tables
 | `repos.py` | Load and validate `repos.yaml` | PR 1 |
 | `name_guard.py` | Refuse to publish blocked names (pre-push, pre-release) | PR 1 |
 | `collect/` | GitHub reads (cached), PR selection, rounds, the frozen record | PR 2 |
-| `points/` | Point splitting, acted-on | PR 3 |
-| `labels/` | Label schema, rules pass, merge with confirmations | PR 3 |
-| `harness/` | Adapter interface, time-correct checkout, runner | PR 4 |
-| `adapters/` | One module per entrant | PR 4, 7 |
-| `score/` | Location matching, noise, false blocks, per-class tables | PR 5 |
+| `points/` | Point splitting, drop rules, acted-on | PR 3 |
+| `labels/` | Label schema, rules pass, merge with confirmations | PR 4 |
+| `harness/` | Adapter interface, time-correct checkout, runner | PR 5 |
+| `adapters/` | One module per entrant | PR 5, 8 |
+| `score/` | Location matching, noise, false blocks, per-class tables | PR 6 |
 
 ## Adapter boundary
 

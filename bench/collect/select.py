@@ -87,9 +87,29 @@ def substantive_conversation(conversation: list[dict], author: str, merged_at: d
     }
 
 
+def trusted_approvals(reviews: list[dict]) -> list[dict]:
+    return [r for r in reviews if r.get("state") == "APPROVED" and r.get("commit_id")]
+
+
 def approved_head(reviews: list[dict]) -> str | None:
     """The commit of the last approval before the merge: the must-not-block head."""
-    approvals = [r for r in reviews if r.get("state") == "APPROVED" and r.get("commit_id")]
+    approvals = trusted_approvals(reviews)
     if not approvals:
         return None
     return max(approvals, key=lambda r: parse_time(r["submitted_at"]))["commit_id"]
+
+
+def approval_overridden(reviews: list[dict]) -> bool:
+    """True if a change request on a trusted commit came after the last approval.
+
+    That approval is then not a clean must-not-block case: the later
+    reviewer's points may apply to the approved head.
+    """
+    approvals = trusted_approvals(reviews)
+    if not approvals:
+        return False
+    approved_at = max(parse_time(r["submitted_at"]) for r in approvals)
+    return any(
+        r.get("state") == "CHANGES_REQUESTED" and r.get("commit_id") and parse_time(r["submitted_at"]) > approved_at
+        for r in reviews
+    )

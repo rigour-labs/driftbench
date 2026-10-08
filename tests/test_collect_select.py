@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from bench.collect.rounds import build_rounds, round_for_head
-from bench.collect.select import (approved_head, candidate_prs, human_reviews, substantive_conversation,
+from bench.collect.select import (approval_overridden, approved_head, candidate_prs, human_reviews, substantive_conversation,
                                   substantive_ids)
 from tests.github_fakes import AUTHOR, BOT, FakeClient, make_comment, make_conversation, make_pr, make_review
 
@@ -89,3 +89,14 @@ def test_substantive_conversation_rules():
         make_conversation(6, "2026-04-01T00:00:00Z", "post-merge question"),         # after merge
     ]
     assert substantive_conversation(conversation, "author", MERGED) == {1}
+
+
+def test_approval_overridden_by_a_later_change_request():
+    approve = make_review(1, "APPROVED", "X", "2026-02-01T00:00:00Z")
+    later_request = make_review(2, "CHANGES_REQUESTED", "X", "2026-02-02T00:00:00Z")
+    earlier_request = make_review(3, "CHANGES_REQUESTED", "W", "2026-01-31T00:00:00Z")
+    untrusted_request = {**later_request, "commit_id": None}
+    assert approval_overridden([approve, later_request])
+    assert not approval_overridden([earlier_request, approve])
+    assert not approval_overridden([approve, untrusted_request])
+    assert not approval_overridden([later_request])

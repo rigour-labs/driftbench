@@ -6,8 +6,9 @@ import sys
 from pathlib import Path
 
 from bench import name_guard
-from bench.collect.corpus import collect_repo, write_corpus
+from bench.collect.corpus import CorpusError, collect_repo, read_corpus, write_corpus
 from bench.collect.github import GitHubClient, GitHubError, require_gh
+from bench.points.points_file import build_points, write_points
 from bench.repos import RepoListError, load_repos
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -39,6 +40,12 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--out", type=Path, default=ROOT / "work" / "corpus")
     collect.add_argument("--cache", type=Path, default=ROOT / "work" / "cache", help="raw API responses (never published)")
     collect.set_defaults(handler=cmd_collect)
+
+    points = commands.add_parser("points", help="split frozen reviews into points; check which were acted on")
+    points.add_argument("--corpus", type=Path, default=ROOT / "work" / "corpus")
+    points.add_argument("--out", type=Path, default=ROOT / "work" / "points")
+    points.add_argument("--cache", type=Path, default=ROOT / "work" / "cache", help="raw API responses (never published)")
+    points.set_defaults(handler=cmd_points)
     return parser
 
 
@@ -95,6 +102,23 @@ def cmd_collect(args: argparse.Namespace) -> int:
             return 1
         path = write_corpus(corpus, args.out)
         print(f"{repo.name}: {len(corpus['prs'])} PRs -> {path}")
+    return 0
+
+
+def cmd_points(args: argparse.Namespace) -> int:
+    corpora = sorted(args.corpus.glob("*.json"))
+    if not corpora:
+        print(f"no corpus files in {args.corpus}; run `bench collect` first", file=sys.stderr)
+        return 1
+    client = GitHubClient(args.cache)
+    for path in corpora:
+        try:
+            result = build_points(read_corpus(path), client)
+        except (CorpusError, GitHubError) as exc:
+            print(f"{path.name}: {exc}", file=sys.stderr)
+            return 1
+        out = write_points(result, args.out)
+        print(f"{result['repo']}: {result['summary']} -> {out}")
     return 0
 
 
