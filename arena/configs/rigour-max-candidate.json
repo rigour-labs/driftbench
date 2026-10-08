@@ -1,1 +1,0 @@
-{ "note": "A fine-tuned max model before publication: RIGOUR_MODEL_PATH points at its GGUF. It ships only if it beats rigour-max on judged recall without losing judged precision.", "config": "rigour-default.yml", "flags": ["--max", "--model-path", "${RIGOUR_MODEL_PATH}"] }

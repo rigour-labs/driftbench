@@ -1,1 +1,0 @@
-{ "note": "Max tier: rules plus the local Qwen2.5-Coder-7B with reference material, two passes and a self-check. Slow on CPU: run sampled, on a GPU or Apple silicon.", "config": "rigour-default.yml", "flags": ["--max"] }

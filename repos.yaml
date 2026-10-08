@@ -1,0 +1,52 @@
+# Repositories in the benchmark.
+#
+# `pin` is the default-branch commit the corpus was cut at: only pull requests
+# merged at or before `pinned_at` are eligible, so a re-run selects the same
+# pull requests. Every pull request's own base and head SHAs are recorded in
+# the frozen corpus, not here.
+#
+# We redistribute none of these projects' code. The corpus stores pull request
+# numbers, commit SHAs, review comment IDs and character spans; tools run on a
+# local clone during a run and the clone is discarded.
+#
+# `enabled: false` repos are listed for the next phase and are skipped by runs.
+
+repos:
+  - name: tailscale/tailscale
+    licence: BSD-3-Clause
+    default_branch: main
+    pin: a89b32904fe50bc55a1121092c0247db843368fe
+    pinned_at: "2026-10-08T15:35:14Z"
+    enabled: true
+
+  - name: zulip/zulip
+    licence: Apache-2.0
+    default_branch: main
+    pin: 29fbc01fa8232da1176932865d31d34085b8f39e
+    pinned_at: "2026-10-08T14:10:33Z"
+    enabled: true
+
+  - name: immich-app/immich
+    licence: AGPL-3.0
+    licence_note: >-
+      Not a permissive licence. Kept because it is the closest profile to a
+      TypeScript web app with a server and SQL. No immich code is copied into
+      this repository or its releases.
+    default_branch: main
+    pin: 481a7bf3ae0d2c2613100d74b028463117e44a39
+    pinned_at: "2026-10-08T15:58:16Z"
+    enabled: true
+
+  - name: apache/superset
+    licence: Apache-2.0
+    default_branch: master
+    pin: d27b73440872e5d3d3bfe0aed8b5d47bd7dec64a
+    pinned_at: "2026-10-08T13:20:08Z"
+    enabled: false
+
+  - name: logto-io/logto
+    licence: MPL-2.0
+    default_branch: master
+    pin: acaef5667f43fcffe6cd61d987ea26d75db32c62
+    pinned_at: "2026-10-08T13:19:23Z"
+    enabled: false

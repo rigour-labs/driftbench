@@ -72,6 +72,5 @@ htmlcov/
 # mypy
 .mypy_cache/
 
-# Mined training examples (published to Hugging Face, not committed)
-rlaif/intent/data/
-rlaif/review/data/
+# Run workspace: clones, frozen corpora and raw outputs (raw outputs ship as release assets)
+work/
