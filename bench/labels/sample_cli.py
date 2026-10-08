@@ -8,14 +8,16 @@ from pathlib import Path
 from bench.collect.github import GitHubClient
 from bench.labels.agreement import cohens_kappa
 from bench.labels.sample import draw_sample, read_sample, sample_path, write_sample
+from bench.labels.rules import suggest
 from bench.labels.session import run_session
+from bench.labels.suggestions import merge_suggestions, read_suggestions, suggestions_path, write_suggestions
 from bench.labels.store import effective_labels, labels_path, read_labels, write_labels
 from bench.labels.workspace import current_texts, points_for_repo
 from bench.points.texts import TextSource, point_text
 
 
 def add_sample_actions(actions: argparse._SubParsersAction) -> None:
-    sample = actions.add_parser("sample", help="draw the seeded random sample of points to label")
+    sample = actions.add_parser("sample", help="draw the seeded random sample of location-scorable points to label")
     sample.add_argument("--repo", required=True)
     sample.add_argument("--size", type=int, default=50)
     sample.add_argument("--seed", type=int, required=True)
@@ -37,7 +39,8 @@ def cmd_sample(args: argparse.Namespace) -> int:
     sample = draw_sample(points_for_repo(args, args.repo), args.size, args.seed)
     path = sample_path(args.labels, args.repo)
     write_sample(sample, path, args.replace)
-    print(f"{args.repo}: sampled {sample['size']} points {sample['by_kind']} (seed {args.seed}) -> {path}")
+    print(f"{args.repo}: sampled {sample['size']} of {sample['eligible']} location-scorable points "
+          f"(seed {args.seed}) -> {path}")
     return 0
 
 
@@ -55,8 +58,19 @@ def cmd_next(args: argparse.Namespace) -> int:
         "labeller": args.labeller, "save": lambda labels: write_labels(labels, path),
         "include_skipped": args.include_skipped,
     }
-    run_session(context, read_labels(path, args.repo), args.ask, args.show)
+    labels = read_labels(path, args.repo)
+    store_suggestions(args, sample["point_ids"], context, labels)
+    run_session(context, labels, args.ask, args.show)
     return 0
+
+
+def store_suggestions(args: argparse.Namespace, sample_ids: list[str], context: dict, labels: dict) -> None:
+    """Write the rule suggestion for each sampled point to the separate suggestions file, unseen."""
+    texts = {pid: context["text"](context["points"][pid]) for pid in sample_ids if pid in context["points"]}
+    new = {pid: suggest(text) for pid, text in texts.items() if text is not None}
+    labelled = {pid for pid, entry in labels["points"].items() if entry.get("label")}
+    path = suggestions_path(args.labels, args.repo)
+    write_suggestions(merge_suggestions(read_suggestions(path, args.repo), new, labelled), path)
 
 
 def sample_status(labels: dict, usable: dict[str, str], sample_ids: list[str]) -> dict:

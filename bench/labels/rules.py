@@ -1,4 +1,4 @@
-"""The rules pass: suggest a class for a review point from its text (docs/LABELLING.md).
+"""The rules pass: suggest a review point's class from its text (docs/LABELLING.md).
 
 A suggestion is never a label. It is shown to the human labeller, who
 confirms or corrects it; an unconfirmed point is reported as `unclassified`.

@@ -7,8 +7,10 @@ from pathlib import Path
 
 from bench.collect.github import GitHubClient, GitHubError
 from bench.labels.rules import CLASSES, suggest
-from bench.labels.store import (LabelError, confirm, effective_labels, label_status, labels_path,
-                                merge_suggestions, read_labels, text_sha256, write_labels)
+from bench.labels.store import (LabelError, confirm, effective_labels, label_status, labels_path, read_labels,
+                                text_sha256, write_labels)
+from bench.labels.suggestions import (confirm_time_suggestions, merge_suggestions, read_suggestions,
+                                      suggestions_path, write_suggestions)
 from bench.labels.sample import SampleError, read_sample, sample_path
 from bench.labels.sample_cli import add_sample_actions, sample_status
 from bench.labels.workspace import current_texts, kept_points, load_points, points_for_repo
@@ -47,13 +49,14 @@ def cmd_suggest(args: argparse.Namespace) -> int:
     for points_file in load_points(args):
         repo = points_file["repo"]
         texts = TextSource(client, repo)
-        suggestions = {}
+        new = {}
         for point in kept_points(points_file):
             text = point_text(texts, point)
-            suggestions[point["id"]] = suggest(text) if text is not None else None
-        path = labels_path(args.labels, repo)
-        write_labels(merge_suggestions(read_labels(path, repo), suggestions), path)
-        print(f"{repo}: {len(suggestions)} points suggested -> {path}")
+            new[point["id"]] = suggest(text) if text is not None else None
+        labelled = {pid for pid, e in read_labels(labels_path(args.labels, repo), repo)["points"].items() if e.get("label")}
+        path = suggestions_path(args.labels, repo)
+        write_suggestions(merge_suggestions(read_suggestions(path, repo), new, labelled), path)
+        print(f"{repo}: {len(new)} points suggested -> {path}")
     return 0
 
 
@@ -62,12 +65,13 @@ def cmd_show(args: argparse.Namespace) -> int:
     labels = read_labels(labels_path(args.labels, args.repo), args.repo)
     texts = TextSource(GitHubClient(args.cache), args.repo)
     pending = [p for p in kept_points(points_file) if not labels["points"].get(p["id"], {}).get("label")]
+    suggested = confirm_time_suggestions(read_suggestions(suggestions_path(args.labels, args.repo), args.repo))
     for point in pending[: args.limit]:
         anchor = point.get("anchor") or {}
         where = f"{anchor.get('path')}:{anchor.get('line')}" if anchor else point["kind"]
         hint = ""
         if args.with_suggestion:
-            hint = f"; suggested: {labels['points'].get(point['id'], {}).get('suggested')}"
+            hint = f"; suggested: {suggested.get(point['id'])}"
         print(f"## {point['id']}  ({where}{hint})\n{point_text(texts, point)}\n")
     print(f"{len(pending)} unconfirmed point(s) in {args.repo}", file=sys.stderr)
     return 0
@@ -92,7 +96,8 @@ def cmd_status(args: argparse.Namespace) -> int:
         repo = points_file["repo"]
         labels = read_labels(labels_path(args.labels, repo), repo)
         texts = current_texts(TextSource(client, repo), points_file, labels)
-        print(f"{repo}: {label_status(labels, texts)}")
+        suggested = confirm_time_suggestions(read_suggestions(suggestions_path(args.labels, repo), repo))
+        print(f"{repo}: {label_status(labels, texts, suggested)}")
         sample = read_sample(sample_path(args.labels, repo))
         if sample:
             print(f"  sample (seed {sample['seed']}): {sample_status(labels, effective_labels(labels, texts), sample['point_ids'])}")

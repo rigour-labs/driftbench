@@ -205,11 +205,14 @@ Each point carries a class: **mechanical** (style, naming, lint-like),
 types or callers promise), **user journey** (behaviour a user sees),
 **judgment** (design or taste), or **unclassified**.
 
-Labels cover a seeded random sample of 50 kept, scorable points per
-repository, stratified by kind (docs/LABELLING.md); per-class results come
-from that sample only, and every other point is unclassified. Labels must be
-committed before the run starts: `bench report` withholds per-class results
-otherwise, and says why.
+Labels cover a seeded random sample of 50 location-scorable points per
+repository (docs/LABELLING.md); per-class results come from that sample
+only, and every other point is unclassified. Labels are fixed at run start
+by content: `bench run` records the blob hash of every label file, the draft
+release notes carry that record, and `bench report` withholds per-class
+results, saying why, unless the label and sample files are committed and
+unchanged since then, and the sample was drawn from the points file the run
+scored.
 
 The labelling is a reproducible step, and the label files are part of every release:
 
@@ -220,9 +223,10 @@ The labelling is a reproducible step, and the label files are part of every rele
 3. Unconfirmed points are reported as `unclassified`, never under a guessed
    class.
 
-Label files hold point IDs, the suggested class, the confirmed class, the
-labeller, whether the label was made blind to the suggestion, and the
-SHA-256 of the text the labeller read, never the text itself. A label is used
+Label files hold point IDs, the confirmed class, the labeller, whether the
+label was made blind to the rule suggestion, and the SHA-256 of the text the
+labeller read, never the text itself. Rule suggestions are kept in a
+separate file. A label is used
 only while the point's text still has that hash; otherwise it is stale and
 the point counts as unclassified. The share of blind labels that match the
 suggestion is reported.

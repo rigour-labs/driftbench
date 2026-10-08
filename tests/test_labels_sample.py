@@ -1,31 +1,30 @@
 import pytest
 
 from bench.labels.agreement import cohens_kappa
-from bench.labels.sample import SampleError, allocate, draw_sample, read_sample, sample_path, write_sample
+from bench.labels.sample import SampleError, draw_sample, read_sample, sample_path, write_sample
 
 
-def points_file(inline=30, body=15, conversation=5, unscorable=10):
-    pts = [{"id": f"i{n}", "kind": "inline", "scorable": True} for n in range(inline)]
-    pts += [{"id": f"b{n}", "kind": "body", "scorable": True} for n in range(body)]
-    pts += [{"id": f"c{n}", "kind": "conversation", "scorable": True} for n in range(conversation)]
-    pts += [{"id": f"x{n}", "kind": "inline", "scorable": False} for n in range(unscorable)]
+def inline(pid, scorable=True, side="RIGHT", line=5):
+    return {"id": pid, "kind": "inline", "scorable": scorable,
+            "anchor": {"path": "a.py", "line": line, "side": side, "commit_sha": "c"}}
+
+
+def points_file(inline_points=30):
+    pts = [inline(f"i{n}") for n in range(inline_points)]
+    pts += [{"id": f"b{n}", "kind": "body", "scorable": True, "anchor": None} for n in range(15)]
+    pts += [inline("unscorable", scorable=False), inline("left", side="LEFT"), inline("lineless", line=None)]
     return {"repo": "o/r", "points": pts}
 
 
-def test_allocation_is_proportional_and_exact():
-    assert allocate({"inline": 30, "body": 15, "conversation": 5}, 20) == {"inline": 12, "body": 6, "conversation": 2}
-    assert allocate({"inline": 2, "body": 1, "conversation": 0}, 50) == {"inline": 2, "body": 1, "conversation": 0}
-    assert sum(allocate({"inline": 7, "body": 7, "conversation": 7}, 10).values()) == 10
-
-
-def test_draw_is_reproducible_stratified_and_scorable_only():
+def test_draw_is_reproducible_and_location_scorable_only():
     first = draw_sample(points_file(), 20, seed=11)
     assert first["point_ids"] == draw_sample(points_file(), 20, seed=11)["point_ids"]
     assert first["point_ids"] != draw_sample(points_file(), 20, seed=12)["point_ids"]
-    assert first["by_kind"] == {"inline": 12, "body": 6, "conversation": 2} and first["size"] == 20
-    assert not any(pid.startswith("x") for pid in first["point_ids"])
+    assert first["size"] == 20 and first["eligible"] == 30
+    assert all(pid.startswith("i") for pid in first["point_ids"])
+    assert draw_sample(points_file(5), 50, seed=1)["size"] == 5
     changed = points_file()
-    changed["points"][0]["kind"] = "body"
+    changed["points"][0]["anchor"]["line"] = 6
     assert draw_sample(changed, 20, seed=11)["points_sha256"] != first["points_sha256"]
 
 

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from bench.labels.rules import CLASSES, suggest
-from bench.labels.store import confirm, merge_suggestions, text_sha256
+from bench.labels.rules import CLASSES
+from bench.labels.store import confirm, mark_skipped, text_sha256
 
 CHOICES = {str(index): label for index, label in enumerate(CLASSES, start=1)}
 PROMPT = "  ".join(f"{key}={label}" for key, label in CHOICES.items()) + "  s=skip  q=quit > "
@@ -39,13 +39,9 @@ def answer_for(ask: Callable[[str], str]) -> str:
 
 
 def record(labels: dict, point_id: str, reply: str, text: str, labeller: str) -> dict:
-    labels = merge_suggestions(labels, {point_id: suggest(text)})
     if reply == "s":
-        entry = {**labels["points"][point_id], "skipped": True}
-        return {**labels, "points": {**labels["points"], point_id: entry}}
-    labelled = confirm(labels, point_id, CHOICES[reply], labeller, {"text_sha256": text_sha256(text), "blind": True})
-    labelled["points"][point_id].pop("skipped", None)
-    return labelled
+        return mark_skipped(labels, point_id)
+    return confirm(labels, point_id, CHOICES[reply], labeller, {"text_sha256": text_sha256(text), "blind": True})
 
 
 def run_session(context: dict, labels: dict, ask: Callable[[str], str], show: Callable[[str], None]) -> dict:

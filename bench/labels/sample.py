@@ -1,9 +1,10 @@
-"""The labelled sample: which points get a human class (docs/LABELLING.md, "The sample").
+"""The labelled sample: which points get a human class (docs/LABELLING.md, "What gets a label").
 
-A uniform random sample of kept, scorable points, stratified by kind in
-proportion (largest remainder), drawn with a recorded seed from a points file
+A uniform random sample of location-scorable points (the only points class
+catch rates are computed over), drawn with a recorded seed from a points file
 identified by its SHA-256. The seed and hash let anyone redraw the same sample
-and show it wasn't hand-picked. A sample is never replaced silently.
+and show it wasn't hand-picked. A sample is never replaced silently, and the
+report refuses a sample whose points file has since changed.
 """
 from __future__ import annotations
 
@@ -16,9 +17,7 @@ from pathlib import Path
 import yaml
 
 from bench.repos import slug_of
-
-KINDS = ("inline", "body", "conversation")
-
+from bench.score.match import location_scorable
 
 class SampleError(ValueError):
     pass
@@ -33,32 +32,15 @@ def points_sha256(points_file: dict) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def allocate(counts: dict[str, int], size: int) -> dict[str, int]:
-    """Split `size` across kinds in proportion to `counts` (largest remainder)."""
-    total = sum(counts.values())
-    size = min(size, total)
-    if not total:
-        return {kind: 0 for kind in counts}
-    exact = {kind: size * n / total for kind, n in counts.items()}
-    shares = {kind: int(share) for kind, share in exact.items()}
-    by_remainder = sorted(counts, key=lambda kind: (exact[kind] - shares[kind], kind), reverse=True)
-    for kind in by_remainder[: size - sum(shares.values())]:
-        shares[kind] += 1
-    return shares
-
-
 def draw_sample(points_file: dict, size: int, seed: int) -> dict:
-    eligible = {kind: sorted(p["id"] for p in points_file["points"] if p["scorable"] and p["kind"] == kind)
-                for kind in KINDS}
-    shares = allocate({kind: len(ids) for kind, ids in eligible.items()}, size)
-    rng = random.Random(seed)
-    chosen = [pid for kind in KINDS for pid in sorted(rng.sample(eligible[kind], shares[kind]))]
+    eligible = sorted(p["id"] for p in points_file["points"] if location_scorable(p))
+    chosen = sorted(random.Random(seed).sample(eligible, min(size, len(eligible))))
     return {
         "repo": points_file["repo"],
         "seed": seed,
         "size": len(chosen),
         "requested_size": size,
-        "by_kind": shares,
+        "eligible": len(eligible),
         "points_sha256": points_sha256(points_file),
         "drawn_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "point_ids": chosen,

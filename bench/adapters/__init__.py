@@ -1,4 +1,4 @@
-"""Entrants. Each is one class behind the same interface (bench/harness/types.py)."""
+"""Entrants. Each is a single class, behind the same interface (bench/harness/types.py)."""
 from __future__ import annotations
 
 from bench.adapters.baselines import EveryHunk, NoTool

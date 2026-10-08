@@ -24,8 +24,8 @@ def test_label_skip_and_unreadable_text():
     labels, saved, shown = session(["x", "3", "s"])     # "x" is rejected and asked again
     p1, p2 = labels["points"]["p1"], labels["points"]["p2"]
     assert (p1["label"], p1["blind"], p1["labeller"]) == ("claim/contract", True, "ash")
-    assert p1["text_sha256"] == text_sha256("this leaks the handle") and p1["suggested"] == "claim/contract"
-    assert p2["label"] is None and p2["skipped"] is True
+    assert p1["text_sha256"] == text_sha256("this leaks the handle") and "suggested" not in p1
+    assert p2 == {"skipped": True}
     assert len(saved) == 2 and any("TEXT-1" in line for line in shown)
     assert "suggested" not in shown[0]                  # blind: no suggestion shown
 

@@ -11,6 +11,7 @@ from bench.adapters import select_adapters
 from bench.collect.corpus import CorpusError, read_corpus
 from bench.harness.gitrepo import GitError, RepoCheckout
 from bench.harness.runner import RunConfig, run_corpus
+from bench.labels.fingerprint import label_fingerprint
 from bench.repos import slug_of
 
 
@@ -23,6 +24,7 @@ def add_run_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     run.add_argument("--out", type=Path, default=root / "work" / "runs" / today)
     run.add_argument("--repos-dir", type=Path, default=root / "work" / "repos", help="local clones")
     run.add_argument("--timeout", type=int, default=900, help="seconds per review")
+    run.add_argument("--labels", type=Path, default=root / "labels", help="label files fixed at run start")
     run.set_defaults(handler=cmd_run)
 
 
@@ -38,7 +40,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(f"no matching corpus in {args.corpus}; run `bench collect` first", file=sys.stderr)
         return 1
     try:
-        started = run_manifest(args.out, adapters, [c["repo"] for c in corpora])["run_started_at"]
+        started = run_manifest(args.out, adapters, args.labels)["run_started_at"]
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 1
@@ -56,15 +58,19 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
-def run_manifest(out: Path, adapters: list, repos: list[str]) -> dict:
-    """`<out>/run.json`, written once at the first start; a resumed run keeps the first start time."""
+def run_manifest(out: Path, adapters: list, labels_dir: Path) -> dict:
+    """`<out>/run.json`, written once at the first start; a resumed run keeps the first record.
+
+    It fixes the labels by content (bench/labels/fingerprint.py): the HEAD
+    commit and the blob hash of every label file at the moment the run began.
+    """
     path = out / "run.json"
     if path.exists():
         return read_manifest(path)
     manifest = {
         "run_started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "entrants": {adapter.name: adapter.version for adapter in adapters},
-        "repos": repos,
+        "labels": label_fingerprint(labels_dir),
     }
     out.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n", encoding="utf-8")

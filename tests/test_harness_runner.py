@@ -149,9 +149,14 @@ def test_tools_cannot_see_refs_or_commits_after_the_head(setup):
     assert set(reachable.split()) == {origin["base"], origin["head1"]}
 
 
-def test_run_manifest_keeps_the_first_start(tmp_path):
+def test_run_manifest_keeps_the_first_start_and_fixes_the_labels(tmp_path):
     from bench.harness.cli import run_manifest
-    first = run_manifest(tmp_path, [NoTool()], ["o/r"])
-    (tmp_path / "x").write_text("later", encoding="utf-8")
-    assert run_manifest(tmp_path, [EveryHunk()], ["o/r"]) == first
-    assert first["entrants"] == {"no-tool": "1"}
+    from tests.git_fixture import commit_file
+    repo = tmp_path / "repo"
+    (repo / "labels").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    commit_file(repo, "labels/o__r.yaml", "points: {}\n", "labels")
+    first = run_manifest(tmp_path / "run", [NoTool()], repo / "labels")
+    assert first["entrants"] == {"no-tool": "1"} and set(first["labels"]["files"]) == {"o__r.yaml"}
+    assert len(first["labels"]["commit"]) == 40
+    assert run_manifest(tmp_path / "run", [EveryHunk()], repo / "labels") == first   # resume keeps it

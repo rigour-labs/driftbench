@@ -90,7 +90,7 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "") 
               *(block_row(n, m) for n, m in summary["tools"].items()), ""]
     lines += ["Sensitivity (all location-scorable points):", "", *sensitivity(summary), ""]
     if class_note:
-        lines += [f"Per-class results withheld: {class_note}.", ""]
+        lines += [f"Results by class withheld: {class_note}.", ""]
     elif classes:
         lines += ["By class (N=3), from the labelled random sample only; points outside it are unclassified:",
                   "", *class_table(classes), ""]

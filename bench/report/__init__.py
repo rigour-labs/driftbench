@@ -1,1 +1,1 @@
-"""Stage 6: the published report: tables, per-class results, calibration."""
+"""Stage 6: the published report: tables, results by class, calibration."""

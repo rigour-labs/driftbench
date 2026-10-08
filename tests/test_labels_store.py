@@ -1,35 +1,37 @@
 import pytest
 
 from bench.labels.store import (LabelError, confirm, effective_labels, empty_labels, label_status, labels_path,
-                                merge_suggestions, read_labels, text_sha256, write_labels)
+                                mark_skipped, read_labels, text_sha256, write_labels)
+from bench.labels.suggestions import (confirm_time_suggestions, merge_suggestions, read_suggestions,
+                                      suggestions_path, write_suggestions)
 
 BLIND = {"text_sha256": text_sha256("A leaks"), "blind": True}
 
 
-def test_merge_adds_refreshes_and_never_moves_a_confirmed_entry():
-    labels = merge_suggestions(empty_labels("o/r"), {"a": "judgment", "b": None})
-    labels = confirm(labels, "a", "claim/contract", "maintainer", BLIND)
-    merged = merge_suggestions(labels, {"a": "mechanical", "b": "performance", "c": None})
-    assert merged["points"]["a"]["suggested"] == "judgment"          # as it was at confirm time
-    assert merged["points"]["a"]["suggested_now"] == "mechanical"
-    assert merged["points"]["a"]["label"] == "claim/contract"
-    assert merged["points"]["b"]["suggested"] == "performance" and merged["points"]["b"]["label"] is None
-    assert set(merged["points"]) == {"a", "b", "c"}
-    assert "suggested_now" not in labels["points"]["a"]  # inputs aren't mutated
+def test_label_file_never_holds_suggestions(tmp_path):
+    labels = confirm(empty_labels("o/r"), "a", "claim/contract", "maintainer", BLIND)
+    write_labels(mark_skipped(labels, "b"), labels_path(tmp_path, "o/r"))
+    raw = labels_path(tmp_path, "o/r").read_text()
+    assert "suggest" not in raw and "claim/contract" in raw and "skipped: true" in raw
 
 
-def test_confirm_rejects_unknown_class_or_point():
-    labels = merge_suggestions(empty_labels("o/r"), {"a": None})
+def test_suggestions_keep_the_confirm_time_value(tmp_path):
+    path = suggestions_path(tmp_path, "o/r")
+    suggestions = merge_suggestions(read_suggestions(path, "o/r"), {"a": "judgment", "b": None}, labelled=set())
+    later = merge_suggestions(suggestions, {"a": "mechanical", "b": "performance"}, labelled={"a"})
+    assert later["points"]["a"] == {"suggested": "judgment", "suggested_now": "mechanical"}
+    assert later["points"]["b"] == {"suggested": "performance"}
+    write_suggestions(later, path)
+    assert confirm_time_suggestions(read_suggestions(path, "o/r")) == {"a": "judgment", "b": "performance"}
+    assert "suggested_now" not in suggestions["points"]["a"]  # inputs aren't mutated
+
+
+def test_confirm_skip_and_validation(tmp_path):
     with pytest.raises(LabelError, match="unknown class"):
-        confirm(labels, "a", "security", "maintainer", BLIND)
-    with pytest.raises(LabelError, match="not in the label file"):
-        confirm(labels, "zzz", "judgment", "maintainer", BLIND)
-
-
-def test_round_trip_and_validation(tmp_path):
+        confirm(empty_labels("o/r"), "a", "security", "maintainer", BLIND)
+    labels = confirm(empty_labels("o/r"), "a", "user journey", "m", BLIND)
+    assert mark_skipped(labels, "a") == labels          # skipping never removes a label
     path = labels_path(tmp_path, "o/r")
-    assert path.name == "o__r.yaml" and read_labels(path, "o/r")["points"] == {}
-    labels = confirm(merge_suggestions(empty_labels("o/r"), {"a": "judgment"}), "a", "user journey", "m", BLIND)
     write_labels(labels, path)
     assert read_labels(path, "o/r") == labels
     with pytest.raises(LabelError, match="not a label file"):
@@ -40,19 +42,18 @@ def test_round_trip_and_validation(tmp_path):
 
 
 def test_label_is_used_only_while_the_text_is_the_one_read():
-    labels = confirm(merge_suggestions(empty_labels("o/r"), {"a": None}), "a", "claim/contract", "m", BLIND)
+    labels = confirm(empty_labels("o/r"), "a", "claim/contract", "m", BLIND)
     assert effective_labels(labels, {"a": "A leaks"}) == {"a": "claim/contract"}
     assert effective_labels(labels, {"a": "a different paragraph"}) == {}
     assert effective_labels(labels, {"a": None}) == {} and effective_labels(labels, {}) == {}
 
 
 def test_status_counts_stale_and_blind_agreement_only():
-    labels = merge_suggestions(empty_labels("o/r"), {"a": "judgment", "b": "mechanical", "c": "judgment", "d": None})
-    labels = confirm(labels, "a", "judgment", "m", {"text_sha256": text_sha256("ta"), "blind": True})
-    labels = confirm(labels, "b", "claim/contract", "m", {"text_sha256": text_sha256("tb"), "blind": True})
-    labels = confirm(labels, "c", "judgment", "m", {"text_sha256": text_sha256("tc"), "blind": False})
-    labels = confirm(labels, "d", "mechanical", "m", {"text_sha256": text_sha256("td"), "blind": True})
-    status = label_status(labels, {"a": "ta", "b": "tb", "c": "tc", "d": "changed"})
-    assert status == {"points": 4, "confirmed": 3, "stale": 1,
-                      "by_class": {"claim/contract": 1, "judgment": 2},
+    labels = empty_labels("o/r")
+    for pid, label, blind in (("a", "judgment", True), ("b", "claim/contract", True), ("c", "judgment", False),
+                              ("d", "mechanical", True)):
+        labels = confirm(labels, pid, label, "m", {"text_sha256": text_sha256(f"t{pid}"), "blind": blind})
+    suggested = {"a": "judgment", "b": "mechanical", "c": "judgment", "d": None}
+    status = label_status(labels, {"a": "ta", "b": "tb", "c": "tc", "d": "changed"}, suggested)
+    assert status == {"points": 4, "confirmed": 3, "stale": 1, "by_class": {"claim/contract": 1, "judgment": 2},
                       "blind_suggestion_agreement": "1/2", "dropped_ids": 0}

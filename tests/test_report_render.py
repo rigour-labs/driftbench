@@ -46,5 +46,5 @@ def test_withheld_per_class_note_replaces_the_table(tmp_path):
     classes = per_class(ledger, {"p1": "mechanical"})
     page = render("r", [result], {"o/r": classes}, {"validated": False, "location": {}, "acted_on": {}},
                   {"o/r": "o__r.yaml was committed after the run started"})
-    assert "Per-class results withheld: o__r.yaml was committed after the run started." in page
+    assert "Results by class withheld: o__r.yaml was committed after the run started." in page
     assert "By class" not in page

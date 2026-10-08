@@ -7,8 +7,9 @@ an older version are reported with that version.
 ## What gets a label
 
 A **random sample** of 50 points per repository, not every point. The sample
-is drawn from kept, scorable points, stratified by kind (inline, review body,
-conversation) in proportion:
+is drawn from **location-scorable** points only (inline comments with a line
+on the new side, kept and with a round), because per-class catch rates are
+computed over those points and no others:
 
 ```bash
 python -m bench label sample --repo zulip/zulip --size 50 --seed 20261008
@@ -17,7 +18,8 @@ python -m bench label sample --repo zulip/zulip --size 50 --seed 20261008
 The seed, the size and the SHA-256 of the points file are written to
 `labels/<owner>__<repo>.sample.yaml` and committed, so anyone can redraw the
 same sample and see it wasn't hand-picked. A second draw needs `--replace`,
-and the old draw stays in the file's history.
+and the old draw stays in the file's history. The report refuses a sample
+whose points file differs from the one the run scored.
 
 Each sampled point gets exactly one class: the main thing the reviewer asked
 for. If a point asks for two things, label the one the reviewer spent more
@@ -84,8 +86,10 @@ python -m bench label next --repo zulip/zulip --labeller maintainer
 ```
 
 `next` shows one unlabelled sampled point at a time: its text, a link to the
-code at the commit the comment was written on (inline points) and a link to
-the pull request. It never shows the rule suggestion. Answer `1` to `5` for
+code at the commit the comment was written on and a link to the pull request.
+It never shows the rule suggestion; it writes each sampled point's suggestion
+to the separate `labels/<owner>__<repo>.suggest.yaml`, unseen, so blind
+agreement can be measured. Answer `1` to `5` for
 the class, `s` to skip (the point stays unconfirmed and is marked skipped),
 or `q` to quit. Every answer is saved at once, so you can stop and resume
 anywhere; `--include-skipped` revisits skipped points.
@@ -98,13 +102,16 @@ python -m bench label agreement --repo zulip/zulip --a labels --b labels-second 
 The older commands still work: `suggest` (the rules pass over all points),
 `show` (blind by default) and `set` (one point by ID).
 
-## Order: labels before the run
+## Order: labels are fixed at run start
 
-Labels must be fixed before any tool output exists. `bench run` records
-`run_started_at` from its own clock (in `run.json` and every run record, and
-in the draft release notes). `bench report` publishes per-class results only
-if every label and sample file was last committed at or before that time and
-has no uncommitted changes; otherwise the page says why they are withheld.
+Labels should exist before any tool output does. `bench run` records, at its
+start, the repository's HEAD commit and the git blob hash of every file
+under `labels/` (in `run.json`, and in the draft release notes, so the public
+copy fixes them). `bench report` publishes per-class results only if each
+repository's label and sample files are committed and still have exactly
+those hashes; otherwise the page says why they are withheld. This fixes the
+labels by content at run start. It doesn't prove when they were written, and
+it doesn't rely on dates, which git lets anyone set.
 
 ## A second labeller
 
@@ -127,8 +134,15 @@ Rules for the labeller:
 
 ## What the label files contain
 
-`labels/<owner>__<repo>.yaml`: for each point ID, the suggested class, the
-confirmed class, the labeller, `blind`, and the SHA-256 of the text that was
-read. No review text. Anyone can relabel a point
-in a pull request by changing its entry and naming the rule above they
-followed.
+- `labels/<owner>__<repo>.yaml`: for each labelled point, the class, the
+  labeller, `blind`, and the SHA-256 of the text that was read; skipped points
+  are marked `skipped`. No review text and no rule suggestions, so opening the
+  file can't anchor a labeller.
+- `labels/<owner>__<repo>.sample.yaml`: the seed, size, points-file hash and
+  sampled IDs.
+- `labels/<owner>__<repo>.suggest.yaml`: rule suggestions, kept apart. A
+  labelled point keeps the suggestion it had when it was labelled; a later
+  rules change only adds `suggested_now`.
+
+Anyone can relabel a point in a pull request by changing its entry and naming
+the rule above they followed.

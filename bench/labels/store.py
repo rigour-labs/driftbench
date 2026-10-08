@@ -3,18 +3,17 @@
 ```yaml
 repo: o/r
 guideline: 1
-rules_version: 1
 points:
-  "7-inline-100-0": {suggested: claim/contract, label: claim/contract, labeller: maintainer,
-                     blind: true, text_sha256: 9f86d0...}
-  "7-body-10-1": {suggested: null, label: null, labeller: null}
+  "7-inline-100-0": {label: claim/contract, labeller: maintainer, blind: true, text_sha256: 9f86d0...}
+  "7-inline-104-0": {skipped: true}
 ```
 
 A point is confirmed when `label` is set; `labeller` says who set it,
-`blind` whether they labelled without seeing the suggestion, and
+`blind` whether they labelled without seeing a rule suggestion, and
 `text_sha256` which exact text they read. A label is used only while the
-point's text still has that hash (otherwise it is stale). Merging new
-suggestions never changes a confirmed entry.
+point's text still has that hash (otherwise it is stale). Rule suggestions
+never appear here: they live in a separate file (bench/labels/suggestions.py)
+so opening the label file can't anchor a labeller.
 """
 from __future__ import annotations
 
@@ -24,7 +23,7 @@ from pathlib import Path
 
 import yaml
 
-from bench.labels.rules import CLASSES, RULES_VERSION
+from bench.labels.rules import CLASSES
 from bench.repos import slug_of
 
 GUIDELINE_VERSION = 1
@@ -39,7 +38,7 @@ def labels_path(labels_dir: Path, repo: str) -> Path:
 
 
 def empty_labels(repo: str) -> dict:
-    return {"repo": repo, "guideline": GUIDELINE_VERSION, "rules_version": RULES_VERSION, "points": {}}
+    return {"repo": repo, "guideline": GUIDELINE_VERSION, "points": {}}
 
 
 def read_labels(path: Path, repo: str) -> dict:
@@ -62,28 +61,20 @@ def write_labels(labels: dict, path: Path) -> None:
     path.write_text(yaml.safe_dump(labels, sort_keys=True, allow_unicode=True), encoding="utf-8")
 
 
-def merge_suggestions(labels: dict, suggestions: dict[str, str | None]) -> dict:
-    """Add new points and refresh suggestions, without moving any confirmed entry.
-
-    A confirmed entry keeps the suggestion it had when it was confirmed; the
-    current rules' suggestion goes in `suggested_now`.
-    """
-    points = {key: dict(value) for key, value in labels["points"].items()}
-    for point_id, suggested in suggestions.items():
-        entry = points.setdefault(point_id, {"suggested": None, "label": None, "labeller": None})
-        entry["suggested_now" if entry.get("label") else "suggested"] = suggested
-    return {**labels, "rules_version": RULES_VERSION, "points": points}
-
-
 def confirm(labels: dict, point_id: str, label: str, labeller: str, evidence: dict) -> dict:
     """Confirm a class. `evidence` holds `text_sha256` (the point's own text) and `blind`."""
     if label not in CLASSES:
         raise LabelError(f"unknown class {label!r}; expected one of {', '.join(CLASSES)}")
-    if point_id not in labels["points"]:
-        raise LabelError(f"{point_id} is not in the label file; run `bench label suggest` first")
-    entry = {**labels["points"][point_id], "label": label, "labeller": labeller,
-             "text_sha256": evidence["text_sha256"], "blind": evidence["blind"]}
+    entry = {"label": label, "labeller": labeller, "text_sha256": evidence["text_sha256"], "blind": evidence["blind"]}
     return {**labels, "points": {**labels["points"], point_id: entry}}
+
+
+def mark_skipped(labels: dict, point_id: str) -> dict:
+    """A skipped point stays unconfirmed; an existing label on it is kept."""
+    entry = labels["points"].get(point_id) or {}
+    if entry.get("label"):
+        return labels
+    return {**labels, "points": {**labels["points"], point_id: {"skipped": True}}}
 
 
 def text_sha256(text: str) -> str:
@@ -105,11 +96,12 @@ def effective_labels(labels: dict, current_text: dict[str, str | None]) -> dict[
     }
 
 
-def label_status(labels: dict, current_text: dict[str, str | None]) -> dict:
+def label_status(labels: dict, current_text: dict[str, str | None], suggested: dict[str, str | None]) -> dict:
+    """Counts, with agreement against the confirm-time rule suggestion over blind labels only."""
     entries = labels["points"]
     usable = effective_labels(labels, current_text)
     blind = [pid for pid in usable if entries[pid].get("blind")]
-    agreed = sum(1 for pid in blind if usable[pid] == entries[pid].get("suggested"))
+    agreed = sum(1 for pid in blind if usable[pid] == suggested.get(pid))
     confirmed = sum(1 for e in entries.values() if e.get("label"))
     return {
         "points": len(entries),

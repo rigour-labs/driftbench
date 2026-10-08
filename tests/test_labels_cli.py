@@ -4,6 +4,7 @@ import pytest
 
 from bench.__main__ import main
 from bench.labels.store import labels_path, read_labels
+from bench.labels.suggestions import read_suggestions, suggestions_path
 from bench.points.points_file import write_points
 from tests.github_fakes import FakeClient
 
@@ -32,9 +33,10 @@ def workspace(tmp_path, monkeypatch):
 def test_suggest_show_set_status(workspace, capsys):
     base, tmp_path = workspace
     assert main([*base, "suggest"]) == 0
-    labels = read_labels(labels_path(tmp_path / "labels", "o/r"), "o/r")
-    assert {k: v["suggested"] for k, v in labels["points"].items()} == {
-        "7-body-10-0": "claim/contract", "7-body-10-1": "mechanical"}  # dropped point not labelled
+    suggestions = read_suggestions(suggestions_path(tmp_path / "labels", "o/r"), "o/r")
+    assert {k: v["suggested"] for k, v in suggestions["points"].items()} == {
+        "7-body-10-0": "claim/contract", "7-body-10-1": "mechanical"}  # dropped point not suggested
+    assert read_labels(labels_path(tmp_path / "labels", "o/r"), "o/r")["points"] == {}   # labels untouched
     capsys.readouterr()
     assert main([*base, "show", "--repo", "o/r"]) == 0
     shown = capsys.readouterr().out
