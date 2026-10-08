@@ -101,6 +101,8 @@ jobs:
           name: manifest
           path: work/runs/${{ needs.start.outputs.name }}
       - name: Review every head (run.json from the start job is kept, never recomputed)
+        # shorter than the job's 350 so the always() steps below still record and upload partial records
+        timeout-minutes: 320
         env:
           ENTRANTS: ${{ inputs.entrants }}
           REPO: ${{ matrix.repo }}
