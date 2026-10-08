@@ -28,6 +28,7 @@ class RunConfig:
     scratch_dir: Path  # diffs and per-run sandboxes; outside every checkout
     npm_cache: Path    # shared by every sandbox so npx stays fast
     timeout_s: int = 900
+    run_started_at: str = ""  # harness clock at the start of `bench run`; proves labels came first
 
 
 def record_path_for(run_dir: Path, tool: str, repo: str, pr: int, head: str) -> Path:
@@ -127,7 +128,8 @@ def run_corpus(adapter: Adapter, checkout: RepoCheckout, corpus: dict, config: R
                 counts["skipped"] += 1
                 continue
             result = run_head(adapter, checkout, pr, head, config)
-            write_record(path, record_header(adapter, corpus["repo"], pr["number"], head, cases), result)
+            header = record_header(adapter, corpus["repo"], pr["number"], head, cases)
+            write_record(path, {**header, "run_started_at": config.run_started_at}, result)
             counts["written"] += 1
             counts[result["verdict"]] = counts.get(result["verdict"], 0) + 1
     return counts

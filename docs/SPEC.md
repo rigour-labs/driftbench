@@ -205,6 +205,12 @@ Each point carries a class: **mechanical** (style, naming, lint-like),
 types or callers promise), **user journey** (behaviour a user sees),
 **judgment** (design or taste), or **unclassified**.
 
+Labels cover a seeded random sample of 50 kept, scorable points per
+repository, stratified by kind (docs/LABELLING.md); per-class results come
+from that sample only, and every other point is unclassified. Labels must be
+committed before the run starts: `bench report` withholds per-class results
+otherwise, and says why.
+
 The labelling is a reproducible step, and the label files are part of every release:
 
 1. A rules pass (`bench label suggest`) proposes a class from the point text

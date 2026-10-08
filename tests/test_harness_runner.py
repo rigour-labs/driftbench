@@ -147,3 +147,11 @@ def test_tools_cannot_see_refs_or_commits_after_the_head(setup):
     assert refs == ""                                   # no origin/main, no branches, no tags
     assert future not in reachable and origin["head2"] not in reachable
     assert set(reachable.split()) == {origin["base"], origin["head1"]}
+
+
+def test_run_manifest_keeps_the_first_start(tmp_path):
+    from bench.harness.cli import run_manifest
+    first = run_manifest(tmp_path, [NoTool()], ["o/r"])
+    (tmp_path / "x").write_text("later", encoding="utf-8")
+    assert run_manifest(tmp_path, [EveryHunk()], ["o/r"]) == first
+    assert first["entrants"] == {"no-tool": "1"}

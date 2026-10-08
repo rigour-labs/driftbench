@@ -10,6 +10,8 @@ def test_score_calibrate_report_end_to_end(tmp_path, monkeypatch, capsys):
     points = [{**inline_point(f"p{n}", 1, 1, n, True), "acted_basis": "direct"} for n in range(1, 6)]
     write_points({"schema": POINTS_SCHEMA, "repo": "o/r", "points": points}, tmp_path / "points")
     run = tmp_path / "2026-10-08"
+    run.mkdir()
+    (run / "run.json").write_text('{"run_started_at": "2026-10-08T00:00:00+00:00"}', encoding="utf-8")
     for tool in ("every-hunk", "alpha"):
         write_run(run, tool, 1, "h1", [finding(2)], [round_case(1, 1)])
         write_run(run, tool, 1, "h2", [], [round_case(1, 2), mnb_case(1)])

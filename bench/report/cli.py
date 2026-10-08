@@ -7,7 +7,9 @@ from pathlib import Path
 
 from bench.collect.github import GitHubClient, GitHubError
 from bench.harness.runner import RecordError, read_record, record_path_for
-from bench.labels.cli import current_texts
+from bench.harness.cli import read_manifest
+from bench.labels.sample import SampleError, read_sample, sample_path
+from bench.labels.workspace import current_texts
 from bench.labels.store import LabelError, effective_labels, labels_path, read_labels
 from bench.points.points_file import PointsError, read_points
 from bench.points.texts import TextSource, point_text
@@ -15,9 +17,11 @@ from bench.repos import slug_of
 from bench.report.calibration import CalibrationError, draw, read_calibration, summarise_calibration, write_calibration
 from bench.report.classes import per_class
 from bench.report.markdown import render
+from bench.report.ordering import labels_precede_run
 from bench.score.cli import ScoreFileError, read_ledger, read_summary
 
-HANDLED = (OSError, CalibrationError, GitHubError, LabelError, PointsError, RecordError, ScoreFileError)
+HANDLED = (OSError, ValueError, CalibrationError, GitHubError, LabelError, PointsError, RecordError, SampleError,
+           ScoreFileError)
 
 
 def add_report_parsers(commands: argparse._SubParsersAction, root: Path) -> None:
@@ -54,6 +58,22 @@ def repo_points(args: argparse.Namespace, repo: str) -> dict:
     return read_points(args.points / f"{slug_of(repo)}.json")
 
 
+def class_results(args: argparse.Namespace, repo: str, ledger: list[dict], started: str) -> tuple[dict, str]:
+    """Per-class rates from the labelled sample, or ({}, the reason they are withheld)."""
+    sample = read_sample(sample_path(args.labels, repo))
+    if sample is None:
+        return {}, "no labelled sample for this repository"
+    ok, reason = labels_precede_run([labels_path(args.labels, repo), sample_path(args.labels, repo)], started)
+    if not ok:
+        return {}, reason
+    points_file = repo_points(args, repo)
+    labels = read_labels(labels_path(args.labels, repo), repo)
+    texts = current_texts(TextSource(GitHubClient(args.cache), repo), points_file, labels)
+    in_sample = set(sample["point_ids"])
+    usable = {pid: label for pid, label in effective_labels(labels, texts).items() if pid in in_sample}
+    return per_class([row for row in ledger if row["repo"] == repo], usable), ""
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     out = results_dir(args)
     summaries = [read_summary(p) for p in sorted(out.glob("*.json"))]
@@ -61,16 +81,13 @@ def cmd_report(args: argparse.Namespace) -> int:
         print(f"no score summaries in {out}; run `bench score` first", file=sys.stderr)
         return 1
     ledger = read_ledger(args.run / "ledger.jsonl")
-    client = GitHubClient(args.cache)
-    classes = {}
+    started = read_manifest(args.run / "run.json")["run_started_at"]
+    classes, notes = {}, {}
     for summary in summaries:
-        repo = summary["repo"]
-        points_file = repo_points(args, repo)
-        labels = read_labels(labels_path(args.labels, repo), repo)
-        usable = effective_labels(labels, current_texts(TextSource(client, repo), points_file, labels))
-        classes[repo] = per_class([row for row in ledger if row["repo"] == repo], usable) if usable else {}
+        classes[summary["repo"]], notes[summary["repo"]] = class_results(args, summary["repo"], ledger, started)
     calibration = summarise_calibration(read_calibration(out / "calibration.yaml"))
-    (out / "summary.md").write_text(render(args.run.name, summaries, classes, calibration), encoding="utf-8")
+    page = render(args.run.name, summaries, classes, calibration, notes)
+    (out / "summary.md").write_text(page, encoding="utf-8")
     print(f"wrote {out / 'summary.md'}")
     return 0
 

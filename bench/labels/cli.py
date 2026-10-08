@@ -7,9 +7,12 @@ from pathlib import Path
 
 from bench.collect.github import GitHubClient, GitHubError
 from bench.labels.rules import CLASSES, suggest
-from bench.labels.store import (LabelError, confirm, label_status, labels_path, merge_suggestions, read_labels,
-                                text_sha256, write_labels)
-from bench.points.points_file import PointsError, read_points
+from bench.labels.store import (LabelError, confirm, effective_labels, label_status, labels_path,
+                                merge_suggestions, read_labels, text_sha256, write_labels)
+from bench.labels.sample import SampleError, read_sample, sample_path
+from bench.labels.sample_cli import add_sample_actions, sample_status
+from bench.labels.workspace import current_texts, kept_points, load_points, points_for_repo
+from bench.points.points_file import PointsError
 from bench.points.texts import TextSource, point_text
 
 
@@ -36,24 +39,7 @@ def add_label_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     setter.add_argument("--saw-suggestion", action="store_true", help="the labeller saw the rule suggestion")
     setter.set_defaults(label_handler=cmd_set)
     actions.add_parser("status", help="confirmed counts per repo").set_defaults(label_handler=cmd_status)
-
-
-def kept_points(points_file: dict) -> list[dict]:
-    return [p for p in points_file["points"] if not p["dropped"]]
-
-
-def load_points(args: argparse.Namespace) -> list[dict]:
-    paths = sorted(args.points.glob("*.json"))
-    if not paths:
-        raise PointsError(f"no points files in {args.points}; run `bench points` first")
-    return [read_points(path) for path in paths]
-
-
-def points_for_repo(args: argparse.Namespace, repo: str) -> dict:
-    match = [p for p in load_points(args) if p["repo"] == repo]
-    if not match:
-        raise PointsError(f"no points file for {repo} in {args.points}")
-    return match[0]
+    add_sample_actions(actions)
 
 
 def cmd_suggest(args: argparse.Namespace) -> int:
@@ -100,24 +86,22 @@ def cmd_set(args: argparse.Namespace) -> int:
     return 0
 
 
-def current_texts(texts: TextSource, points_file: dict, labels: dict) -> dict[str, str | None]:
-    """Each kept point's current text; fetched only for confirmed points, the rest are None."""
-    confirmed = {pid for pid, entry in labels["points"].items() if entry.get("label")}
-    return {p["id"]: point_text(texts, p) if p["id"] in confirmed else None for p in kept_points(points_file)}
-
-
 def cmd_status(args: argparse.Namespace) -> int:
     client = GitHubClient(args.cache)
     for points_file in load_points(args):
         repo = points_file["repo"]
         labels = read_labels(labels_path(args.labels, repo), repo)
-        print(f"{repo}: {label_status(labels, current_texts(TextSource(client, repo), points_file, labels))}")
+        texts = current_texts(TextSource(client, repo), points_file, labels)
+        print(f"{repo}: {label_status(labels, texts)}")
+        sample = read_sample(sample_path(args.labels, repo))
+        if sample:
+            print(f"  sample (seed {sample['seed']}): {sample_status(labels, effective_labels(labels, texts), sample['point_ids'])}")
     return 0
 
 
 def run_label(args: argparse.Namespace) -> int:
     try:
         return args.label_handler(args)
-    except (LabelError, PointsError, GitHubError) as exc:
+    except (LabelError, PointsError, GitHubError, SampleError) as exc:
         print(exc, file=sys.stderr)
         return 1

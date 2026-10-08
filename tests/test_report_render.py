@@ -39,3 +39,12 @@ def test_per_class_uses_only_given_labels():
               {"tool": "t", "point": "c", "distance": None}]
     assert per_class(ledger, {"a": "mechanical", "b": "mechanical"}) == {
         "t": {"mechanical": {"caught": 1, "points": 2}, "unclassified": {"caught": 0, "points": 1}}}
+
+
+def test_withheld_per_class_note_replaces_the_table(tmp_path):
+    result, ledger = summary(tmp_path, prs=10, points=25)
+    classes = per_class(ledger, {"p1": "mechanical"})
+    page = render("r", [result], {"o/r": classes}, {"validated": False, "location": {}, "acted_on": {}},
+                  {"o/r": "o__r.yaml was committed after the run started"})
+    assert "Per-class results withheld: o__r.yaml was committed after the run started." in page
+    assert "By class" not in page

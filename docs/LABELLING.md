@@ -6,10 +6,23 @@ an older version are reported with that version.
 
 ## What gets a label
 
-Every kept review point (not dropped by a rule in docs/SPEC.md, "Review
-points"). Each point gets exactly one class: the main thing the reviewer asked
+A **random sample** of 50 points per repository, not every point. The sample
+is drawn from kept, scorable points, stratified by kind (inline, review body,
+conversation) in proportion:
+
+```bash
+python -m bench label sample --repo zulip/zulip --size 50 --seed 20261008
+```
+
+The seed, the size and the SHA-256 of the points file are written to
+`labels/<owner>__<repo>.sample.yaml` and committed, so anyone can redraw the
+same sample and see it wasn't hand-picked. A second draw needs `--replace`,
+and the old draw stays in the file's history.
+
+Each sampled point gets exactly one class: the main thing the reviewer asked
 for. If a point asks for two things, label the one the reviewer spent more
-words on; if they are equal, label the earlier one.
+words on; if they are equal, label the earlier one. Per-class results are
+computed from the labelled sample only; every other point is unclassified.
 
 ## Classes
 
@@ -67,11 +80,37 @@ the two together.
 ## How to label
 
 ```bash
-python -m bench label suggest                        # rules pass; never overwrites a confirmed label
-python -m bench label show --repo zulip/zulip         # unconfirmed points with their text, locally (blind)
-python -m bench label set --repo zulip/zulip 123-inline-456-0 claim/contract --labeller maintainer
-python -m bench label status                         # confirmed, stale, per class, blind agreement
+python -m bench label next --repo zulip/zulip --labeller maintainer
 ```
+
+`next` shows one unlabelled sampled point at a time: its text, a link to the
+code at the commit the comment was written on (inline points) and a link to
+the pull request. It never shows the rule suggestion. Answer `1` to `5` for
+the class, `s` to skip (the point stays unconfirmed and is marked skipped),
+or `q` to quit. Every answer is saved at once, so you can stop and resume
+anywhere; `--include-skipped` revisits skipped points.
+
+```bash
+python -m bench label status                          # sampled, labelled, skipped, stale, per class
+python -m bench label agreement --repo zulip/zulip --a labels --b labels-second   # Cohen's kappa
+```
+
+The older commands still work: `suggest` (the rules pass over all points),
+`show` (blind by default) and `set` (one point by ID).
+
+## Order: labels before the run
+
+Labels must be fixed before any tool output exists. `bench run` records
+`run_started_at` from its own clock (in `run.json` and every run record, and
+in the draft release notes). `bench report` publishes per-class results only
+if every label and sample file was last committed at or before that time and
+has no uncommitted changes; otherwise the page says why they are withheld.
+
+## A second labeller
+
+`--labeller` records who confirmed each label. A second labeller works in
+their own labels directory (`--labels labels-second`), and `bench label
+agreement` reports Cohen's kappa over the points both labelled.
 
 Rules for the labeller:
 

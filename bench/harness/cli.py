@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,8 +37,13 @@ def cmd_run(args: argparse.Namespace) -> int:
     if not corpora:
         print(f"no matching corpus in {args.corpus}; run `bench collect` first", file=sys.stderr)
         return 1
+    try:
+        started = run_manifest(args.out, adapters, [c["repo"] for c in corpora])["run_started_at"]
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 1
     config = RunConfig(out_dir=args.out, scratch_dir=args.out / "_scratch",
-                       npm_cache=args.repos_dir.parent / "npm-cache", timeout_s=args.timeout)
+                       npm_cache=args.repos_dir.parent / "npm-cache", timeout_s=args.timeout, run_started_at=started)
     for corpus in corpora:
         checkout = RepoCheckout(f"https://github.com/{corpus['repo']}.git", args.repos_dir / slug_of(corpus["repo"]))
         for adapter in adapters:
@@ -48,3 +54,28 @@ def cmd_run(args: argparse.Namespace) -> int:
                 return 1
             print(f"{corpus['repo']} {adapter.name}: {counts}")
     return 0
+
+
+def run_manifest(out: Path, adapters: list, repos: list[str]) -> dict:
+    """`<out>/run.json`, written once at the first start; a resumed run keeps the first start time."""
+    path = out / "run.json"
+    if path.exists():
+        return read_manifest(path)
+    manifest = {
+        "run_started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "entrants": {adapter.name: adapter.version for adapter in adapters},
+        "repos": repos,
+    }
+    out.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    return manifest
+
+
+def read_manifest(path: Path) -> dict:
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read run manifest {path}: {exc}") from exc
+    if "run_started_at" not in manifest:
+        raise ValueError(f"{path}: no run_started_at")
+    return manifest
