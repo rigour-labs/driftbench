@@ -5,15 +5,20 @@ repo: o/r
 guideline: 1
 rules_version: 1
 points:
-  "7-inline-100-0": {suggested: claim/contract, label: claim/contract, labeller: maintainer}
+  "7-inline-100-0": {suggested: claim/contract, label: claim/contract, labeller: maintainer,
+                     blind: true, text_sha256: 9f86d0...}
   "7-body-10-1": {suggested: null, label: null, labeller: null}
 ```
 
-A point is confirmed when `label` is set; `labeller` says who set it.
-Merging new suggestions never changes a confirmed label.
+A point is confirmed when `label` is set; `labeller` says who set it,
+`blind` whether they labelled without seeing the suggestion, and
+`text_sha256` which exact text they read. A label is used only while the
+point's text still has that hash (otherwise it is stale). Merging new
+suggestions never changes a confirmed entry.
 """
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from pathlib import Path
 
@@ -58,31 +63,59 @@ def write_labels(labels: dict, path: Path) -> None:
 
 
 def merge_suggestions(labels: dict, suggestions: dict[str, str | None]) -> dict:
-    """Add new points; refresh suggestions on unconfirmed ones; leave confirmed labels alone."""
+    """Add new points and refresh suggestions, without moving any confirmed entry.
+
+    A confirmed entry keeps the suggestion it had when it was confirmed; the
+    current rules' suggestion goes in `suggested_now`.
+    """
     points = {key: dict(value) for key, value in labels["points"].items()}
     for point_id, suggested in suggestions.items():
         entry = points.setdefault(point_id, {"suggested": None, "label": None, "labeller": None})
-        entry["suggested"] = suggested
+        entry["suggested_now" if entry.get("label") else "suggested"] = suggested
     return {**labels, "rules_version": RULES_VERSION, "points": points}
 
 
-def confirm(labels: dict, point_id: str, label: str, labeller: str) -> dict:
+def confirm(labels: dict, point_id: str, label: str, labeller: str, evidence: dict) -> dict:
+    """Confirm a class. `evidence` holds `text_sha256` (the point's own text) and `blind`."""
     if label not in CLASSES:
         raise LabelError(f"unknown class {label!r}; expected one of {', '.join(CLASSES)}")
     if point_id not in labels["points"]:
         raise LabelError(f"{point_id} is not in the label file; run `bench label suggest` first")
-    points = {**labels["points"], point_id: {**labels["points"][point_id], "label": label, "labeller": labeller}}
-    return {**labels, "points": points}
+    entry = {**labels["points"][point_id], "label": label, "labeller": labeller,
+             "text_sha256": evidence["text_sha256"], "blind": evidence["blind"]}
+    return {**labels, "points": {**labels["points"], point_id: entry}}
 
 
-def label_status(labels: dict, current_ids: set[str]) -> dict:
+def text_sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def effective_labels(labels: dict, current_text: dict[str, str | None]) -> dict[str, str]:
+    """Confirmed labels whose point still has the exact text the labeller read.
+
+    A label on a point whose text changed (a different split, an edited
+    comment) or that no longer exists is stale and is not used.
+    """
+    return {
+        point_id: entry["label"]
+        for point_id, entry in labels["points"].items()
+        if entry.get("label")
+        and current_text.get(point_id) is not None
+        and text_sha256(current_text[point_id]) == entry.get("text_sha256")
+    }
+
+
+def label_status(labels: dict, current_text: dict[str, str | None]) -> dict:
     entries = labels["points"]
-    confirmed = [e for e in entries.values() if e.get("label")]
-    agreed = sum(1 for e in confirmed if e["label"] == e.get("suggested"))
+    usable = effective_labels(labels, current_text)
+    blind = [pid for pid in usable if entries[pid].get("blind")]
+    agreed = sum(1 for pid in blind if usable[pid] == entries[pid].get("suggested"))
+    confirmed = sum(1 for e in entries.values() if e.get("label"))
     return {
         "points": len(entries),
-        "confirmed": len(confirmed),
-        "by_class": dict(sorted(Counter(e["label"] for e in confirmed).items())),
-        "suggestion_agreement": f"{agreed}/{len(confirmed)}",
-        "stale": len(set(entries) - current_ids),
+        "confirmed": len(usable),
+        "stale": confirmed - len(usable),
+        "by_class": dict(sorted(Counter(usable.values()).items())),
+        "blind_suggestion_agreement": f"{agreed}/{len(blind)}",
+        "dropped_ids": len(set(entries) - set(current_text)),
     }

@@ -39,16 +39,36 @@ claim/contract if the missing error is a bug, judgment if both are valid.
 The rules pass (`bench/labels/rules.py`) follows the same order using
 keywords, except that a point starting with "nit" is suggested as
 mechanical. Keywords miss context, so it only makes a suggestion, and this
-guideline wins wherever the two disagree. The rate at which confirmed labels agree with suggestions is
-reported (`bench label status`).
+guideline wins wherever the two disagree.
+
+## Blind labels and agreement
+
+`bench label show` hides the suggestion by default, so the labeller isn't
+anchored to it. Each confirmed label records `blind: true` unless the
+labeller passes `--saw-suggestion`. The agreement between labels and
+suggestions (`bench label status`) is counted over blind labels only; for
+labels made after seeing the suggestion it would partly measure anchoring.
+
+A confirmed entry keeps the suggestion it had when it was confirmed. If the
+rules change later, the new suggestion is stored as `suggested_now`, so the
+agreement figure doesn't shift after the fact.
+
+## Labels are pinned to the text that was read
+
+A point ID (`<pr>-<kind>-<source id>-<index>`) depends on how text is split.
+If the splitting rules or the comment change, the same ID can name different
+text. So `set` stores `text_sha256`, the hash of the exact text the labeller
+read. A label is used only while the point's current text has that hash;
+otherwise it is **stale**, reported as unclassified, and never carried over.
+`bench label status` counts stale labels.
 
 ## How to label
 
 ```bash
 python -m bench label suggest                        # rules pass; never overwrites a confirmed label
-python -m bench label show --repo zulip/zulip         # unconfirmed points with their text, locally
+python -m bench label show --repo zulip/zulip         # unconfirmed points with their text, locally (blind)
 python -m bench label set --repo zulip/zulip 123-inline-456-0 claim/contract --labeller maintainer
-python -m bench label status                         # confirmed counts per class
+python -m bench label status                         # confirmed, stale, per class, blind agreement
 ```
 
 Rules for the labeller:
@@ -67,6 +87,7 @@ Rules for the labeller:
 ## What the label files contain
 
 `labels/<owner>__<repo>.yaml`: for each point ID, the suggested class, the
-confirmed class and the labeller. No review text. Anyone can relabel a point
+confirmed class, the labeller, `blind`, and the SHA-256 of the text that was
+read. No review text. Anyone can relabel a point
 in a pull request by changing its entry and naming the rule above they
 followed.

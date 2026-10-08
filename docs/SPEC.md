@@ -183,9 +183,11 @@ The labelling is a reproducible step, and the label files are part of every rele
 3. Unconfirmed points are reported as `unclassified`, never under a guessed
    class.
 
-Label files hold point IDs, the suggested class, the confirmed class and the
-labeller, never the comment text. The text is fetched from GitHub when a
-labeller or a run needs it. The share of confirmed labels that match the
+Label files hold point IDs, the suggested class, the confirmed class, the
+labeller, whether the label was made blind to the suggestion, and the
+SHA-256 of the text the labeller read, never the text itself. A label is used
+only while the point's text still has that hash; otherwise it is stale and
+the point counts as unclassified. The share of blind labels that match the
 suggestion is reported.
 
 **Disclosed limit:** the labeller for the first releases is the maintainer of
