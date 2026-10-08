@@ -4,13 +4,16 @@ Yes if the code changed within ACTED_WINDOW lines of the anchor between the
 commit the comment was written on and the merged head, or the file was
 removed. How the change is found (`basis`):
 - "ancestor": the anchor commit is an ancestor of the merged head; the
-  compare patch is exactly the later commits' change.
+  compare patch is exactly the later commits' change. When the patch can't
+  tell (no patch for a big file, or a file list truncated at 300), the file
+  at the two commits is diffed instead, which is exact here too.
 - "direct": the branch was amended or force-pushed in place (no upstream
   commits gained); the file at the two commits is diffed directly.
 - "rebased": the merged head was rebased onto newer upstream commits; a
   direct diff would mix in upstream changes, so the answer is unknown.
 Unknown also for left-side or lineless comments, a commit GitHub no longer
-has, or a file GitHub returns no content for.
+has, or a file GitHub returns no content for. A rename that a truncated file
+list hides reads as a removal, so it counts as acted on.
 """
 from __future__ import annotations
 
@@ -22,6 +25,7 @@ from bench.points.file_at import changed_lines_between, file_at
 ACTED_WINDOW = 3
 HUNK_RE = re.compile(r"^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@")
 ANCESTOR_STATUSES = ("ahead", "identical")
+COMPARE_FILE_CAP = 300  # GitHub lists at most this many files in a compare
 Verdict = tuple[bool | None, str | None]
 
 
@@ -60,9 +64,15 @@ def file_entry(compare: dict, path: str) -> dict | None:
 
 
 def from_patch(compare: dict, anchor: dict) -> bool | None:
+    """The answer from the compare patch, or None when the patch can't tell.
+
+    It can't tell when the file has no patch (GitHub omits big ones), or is
+    absent from a file list GitHub truncated at COMPARE_FILE_CAP.
+    """
+    files = compare.get("files") or []
     entry = file_entry(compare, anchor["path"])
     if entry is None:
-        return False
+        return None if len(files) >= COMPARE_FILE_CAP else False
     if entry.get("status") == "removed":
         return True
     return bool(changed_old_lines(entry["patch"]) & window(anchor)) if "patch" in entry else None
@@ -89,7 +99,10 @@ def acted_on(client: GitHubClient, repo: str, anchor: dict | None, merged_head: 
     if not compare:
         return None, None
     if compare.get("status") in ANCESTOR_STATUSES:
-        return from_patch(compare, anchor), "ancestor"
+        verdict = from_patch(compare, anchor)
+        if verdict is None:
+            verdict = from_contents(client, repo, anchor, compare, merged_head)
+        return verdict, "ancestor"
     if compare.get("ahead_by", pr_commits + 1) <= pr_commits:
         return from_contents(client, repo, anchor, compare, merged_head), "direct"
     return None, "rebased"

@@ -33,6 +33,18 @@ def test_patch_file_untouched_removed_renamed_or_without_patch():
     assert from_patch(compare(files=[{"filename": "a.go", "status": "removed"}]), ANCHOR) is True
     assert from_patch(compare(files=[{"filename": "c.go", "previous_filename": "a.go", "patch": PATCH}]), ANCHOR) is True
     assert from_patch(compare(files=[{"filename": "a.go", "status": "modified"}]), ANCHOR) is None
+    truncated = [{"filename": f"f{n}.go", "patch": PATCH} for n in range(300)]
+    assert from_patch(compare(files=truncated), ANCHOR) is None
+
+
+def test_ancestor_falls_back_to_contents_when_the_patch_cant_tell():
+    new = OLD.replace("line 13\n", "line 13 changed\n")
+    file_contents = {"repos/o/r/contents/a.go?ref=A": contents(OLD), "repos/o/r/contents/a.go?ref=H": contents(new)}
+    truncated = compare(files=[{"filename": f"f{n}.go", "patch": PATCH} for n in range(300)])
+    verdict, client = run({"repos/o/r/compare/A...H": truncated, **file_contents})
+    assert verdict == (True, "ancestor") and "repos/o/r/contents/a.go?ref=H" in client.calls
+    no_patch = compare(files=[{"filename": "a.go", "status": "modified"}])
+    assert run({"repos/o/r/compare/A...H": no_patch, **file_contents})[0] == (True, "ancestor")
 
 
 def run(objects: dict, anchor: dict = ANCHOR, pr_commits: int = 1):

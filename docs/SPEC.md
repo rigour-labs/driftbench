@@ -111,7 +111,9 @@ reported. Points are reported by head source (`push`, `review`,
 
 `bench points` turns each frozen record into points. A point holds IDs, a
 character span and an anchor, never text. Text is fetched by ID and must match
-the frozen hash, or the point is dropped (TEXT-1).
+the frozen hash, or the point is dropped (TEXT-1). On the collector's own warm
+cache TEXT-1 can't fire, since the text comes from the same cached lists; it
+protects a re-run by someone else, without that cache.
 
 - Each inline review comment is one point, anchored to its file and line on
   the commit it was written on.
@@ -124,7 +126,7 @@ Dropped points stay in the output, marked with the rule that dropped them:
 | Rule | Drops |
 |---|---|
 | AUTHOR-1 | comments by the pull request author |
-| THREAD-1 | inline replies: a thread is one point, its first comment |
+| THREAD-1 | inline replies, including other reviewers' replies: a thread is one point, its first comment |
 | ACK-1, CMD-1 | acknowledgements and commands (see Pull requests) |
 | QUOTE-1 | paragraphs that only quote earlier text (`>`) |
 | TEXT-1 | text deleted, or edited since the freeze |
@@ -137,7 +139,9 @@ reported, but not scored.
 the code within 3 lines of the anchor changed between the anchor commit and
 the merged head, or the file was removed. The basis is recorded:
 - `ancestor`: the anchor commit is an ancestor of the merged head, so the
-  compare patch is exactly the later change;
+  compare patch is exactly the later change (when GitHub omits the file's
+  patch, or truncates the file list at 300, the file at the two commits is
+  diffed instead);
 - `direct`: the branch was amended or force-pushed in place (it gained no
   upstream commits), so the file at the two commits is diffed directly;
 - `rebased`: the merged head gained upstream commits, by a rebase onto a
