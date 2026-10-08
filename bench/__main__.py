@@ -7,7 +7,7 @@ from pathlib import Path
 
 from bench import name_guard
 from bench.collect.corpus import collect_repo, write_corpus
-from bench.collect.github import GitHubClient, GitHubError
+from bench.collect.github import GitHubClient, GitHubError, require_gh
 from bench.repos import RepoListError, load_repos
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -80,6 +80,11 @@ def cmd_collect(args: argparse.Namespace) -> int:
     unknown = set(args.repo or []) - {r.name for r in chosen}
     if unknown:
         print(f"not an enabled repo in repos.yaml: {', '.join(sorted(unknown))}", file=sys.stderr)
+        return 1
+    try:
+        require_gh()
+    except GitHubError as exc:
+        print(exc, file=sys.stderr)
         return 1
     client = GitHubClient(args.cache)
     for repo in chosen:

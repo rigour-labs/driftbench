@@ -41,17 +41,36 @@ def make_comment(comment_id: int, review_id: int, at: str, user: dict = REVIEWER
     return comment
 
 
+def make_conversation(comment_id: int, at: str, body: str, user: dict = REVIEWER) -> dict:
+    return {"id": comment_id, "created_at": at, "user": user, "body": body}
+
+
+def make_push(sha: str, at: str) -> dict:
+    return {"event": "head_ref_force_pushed", "commit_id": sha, "created_at": at}
+
+
 def make_commit(sha: str, at: str) -> dict:
     return {"sha": sha, "commit": {"committer": {"date": at}}}
 
 
-class FakeClient:
-    """Answers `get` and `get_all` from a dict keyed by API path, and records calls."""
+def commit_objects(repo: str, dates: dict[str, str]) -> dict[str, dict]:
+    """`repos/<repo>/commits/<sha>` responses for `get_optional`."""
+    return {f"repos/{repo}/commits/{sha}": make_commit(sha, at) for sha, at in dates.items()}
 
-    def __init__(self, pages: dict[str, list[list[dict]]], lists: dict[str, list[dict]]):
+
+class FakeClient:
+    """Answers `get`, `get_all` and `get_optional` from dicts keyed by API path, and records calls."""
+
+    def __init__(self, pages: dict[str, list[list[dict]]], lists: dict[str, list[dict]],
+                 objects: dict[str, dict] | None = None):
         self.pages = pages
         self.lists = lists
+        self.objects = objects or {}
         self.calls: list[str] = []
+
+    def get_optional(self, path: str):
+        self.calls.append(path)
+        return self.objects.get(path)
 
     def get(self, path: str, params: dict[str, str] | None = None):
         self.calls.append(path)

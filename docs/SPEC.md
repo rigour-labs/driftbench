@@ -33,23 +33,48 @@ no repository's code, only identifiers (see Storage).
 
 ### Pull requests
 
-- Listed with the GitHub API, sorted by `updated` and then by merge date, so long-lived,
-  multi-round pull requests aren't crowded out by quick ones.
-- Kept only if merged and **substantively reviewed**: at least one review by
-  someone other than the author, submitted before the merge, that is
-  `CHANGES_REQUESTED`, or has a body or inline comments that aren't just an
-  acknowledgement. Bare approvals don't count. Bot accounts don't count as
-  reviewers.
-- **Acknowledgement (rule ACK-1):** at most six words, every one of them from
-  a fixed list ("LGTM", "Thank you!", "Looks good to me, thanks"). The list is
-  in `bench/collect/text_rules.py`.
+- Closed pull requests are listed most recently updated first (the API's only
+  useful order), up to `--max-listed`. Those merged at or before the pin are
+  kept, then sorted by updated date and then merge date. `merged_candidates`
+  in the corpus records how many survived the filter. With an old pin, raise
+  `--max-listed` or report the survivor count.
 - The listing order changes as pull requests get new activity, so selection
   is reproducible from the frozen corpus, not by re-listing.
+- Kept only if merged and **substantively reviewed**: before the merge,
+  someone other than the author either
+  - submitted a review that is `CHANGES_REQUESTED`, or whose body or inline
+    comments contain a review point; or
+  - posted a conversation-tab comment that is a review point.
+- A **review point** is a text that is neither an acknowledgement (ACK-1) nor
+  a command (CMD-1). Bare approvals don't count. Bot accounts don't count as
+  reviewers.
+- **Rule ACK-1 (acknowledgement):** at most six words, every one of them from
+  a fixed list ("LGTM", "Thank you!", "Looks good to me, thanks"). ACK-1
+  assumes English-script reviews: a review with no Latin letters counts as an
+  acknowledgement and is dropped.
+- **Rule CMD-1 (command):** the first non-blank line starts with `/`
+  ("/retest") or with a mention of a bot account ("@dependabot rebase").
+- Both rules are in `bench/collect/text_rules.py`.
+- Every human, non-author, pre-merge review is recorded, substantive or not,
+  with a `substantive` flag. Only substantive reviews define rounds. Bare
+  approvals are kept so that the approved head is known.
 
 ### Rounds
 
-Every review records the commit it was made on (`commit_id`). **Round k** is
-the k-th distinct reviewed head. A tool reviewing round k sees:
+Every review records the commit it was made on (`commit_id`), checked by
+**rule COMMIT-1**. GitHub can report a review's commit as one created after
+the review was submitted: an approval appears to move forward onto a later
+force-pushed head. A commit can't be reviewed before it exists, so the
+reported commit is trusted only if its committer date is at or before the
+review. Otherwise the commit that review's own inline comments were written
+on is used, if it predates the review. Otherwise the review is marked
+`untrusted`: it stays in the record but defines no round and is not an
+approved head. In a 10-PR sample of tailscale/tailscale, 3 of 26 human
+reviews (all approvals) needed this rule.
+
+**Round k** is the k-th distinct trusted head that received a substantive
+review. A tool reviewing
+round k sees:
 
 - the repository at that head, and the diff from the merge base to it;
 - if the adapter declares that it reads history: the pull request title and
@@ -58,24 +83,45 @@ the k-th distinct reviewed head. A tool reviewing round k sees:
 It never sees round k's reviews or anything later. This is what makes the
 comparison time-correct.
 
+**Conversation comments** carry no commit, so each one is tied to the head the
+pull request had when it was written. The **head history** comes from the
+issue timeline:
+- force-push events give the new head and the push time (`push`, exact);
+- `committed` events give the committer date, which can be earlier than the
+  push (`commit_date`, approximate);
+- if the timeline has neither, the commit list's committer dates are used
+  (`commit_date`);
+- the timeline only lists commits still in the pull request, so heads that
+  were rebased away are missing; every review with a trusted commit adds
+  that commit at the review's time (`review`).
+
+The comment's round is the round reviewed on that head. If no substantive
+review was made on that head, the point is counted in the corpus but not
+scored: there is no reviewed head to compare a tool on. That count is
+reported. Points are reported by head source (`push`, `review`,
+`commit_date`); `commit_date` is approximate.
+
 ### Review points
 
 - Each inline review comment is one point, anchored to its file and line on
   the commit it was posted on.
-- Each review body is split into points on paragraphs and list items. Body
-  points have no anchor.
-- Replies by the pull request author, and acknowledgements with no request
-  ("thanks", "LGTM"), are dropped by a documented rule and kept in the corpus as
+- Each review body and each conversation comment is split into points on
+  paragraphs and list items. These points have no anchor.
+- Replies by the pull request author, acknowledgements (ACK-1) and commands
+  (CMD-1) are dropped by a documented rule. They stay in the corpus marked as
   dropped, with the rule that dropped them.
 - **Acted on:** a point is acted on if a later commit in the same pull request
   changed one of the lines it is anchored to (±3 lines) before merge.
 
 ### Must-not-block cases
 
-The merged head of every pull request in the corpus. The maintainers approved
-it, so a blocking finding on it is counted as a false block. Reviewers
-sometimes approve code with real problems, so this is an upper bound on the
-true false-block rate, not an exact count.
+One per pull request: the **approved head**, the trusted commit (COMMIT-1)
+of the last approval before the merge (`approved_head_sha`). It often differs
+from the merged head, because commits can land after the approval. If a pull
+request has no trusted approval, the merged head is used instead, and these
+cases are counted separately. A blocking finding on this head is counted as a false block.
+Reviewers sometimes approve code with real problems, so this is an upper bound
+on the true false-block rate, not an exact count.
 
 ## Labels
 

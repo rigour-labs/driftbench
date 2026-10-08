@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from datetime import datetime
 
 from bench.collect.github import GitHubClient
-from bench.collect.text_rules import is_acknowledgement
+from bench.collect.text_rules import is_review_point
 
 PAGE_SIZE = 100
 
@@ -49,28 +49,47 @@ def list_closed(client: GitHubClient, repo: str, limit: int) -> Iterator[dict]:
             return
 
 
-def substantive_reviews(reviews: list[dict], comments: list[dict], author: str, merged_at: datetime) -> list[dict]:
-    """Reviews by a human other than the author, before merge, that say something.
-
-    A review counts if it requested changes, has a body that isn't just an
-    acknowledgement (rule ACK-1), or has inline comments that aren't. A bare
-    approval doesn't count.
-    """
-    with_inline = {
-        c.get("pull_request_review_id") for c in comments if not is_acknowledgement(c.get("body"))
-    }
+def human_reviews(reviews: list[dict], author: str, merged_at: datetime) -> list[dict]:
+    """Reviews by a human other than the author, on a known commit, before the merge."""
     kept = []
     for review in reviews:
         submitted = parse_time(review.get("submitted_at"))
         if not submitted or submitted > merged_at or not review.get("commit_id"):
             continue
-        if not is_human_reviewer(review.get("user"), author):
-            continue
-        says_something = (
-            review.get("state") == "CHANGES_REQUESTED"
-            or not is_acknowledgement(review.get("body"))
-            or review.get("id") in with_inline
-        )
-        if says_something:
+        if is_human_reviewer(review.get("user"), author):
             kept.append(review)
     return kept
+
+
+def substantive_ids(reviews: list[dict], comments: list[dict]) -> set[int]:
+    """IDs of the reviews that say something.
+
+    A review counts if it requested changes, or has a body or inline comment
+    that is a review point (not an acknowledgement, ACK-1, or a command, CMD-1).
+    A bare approval doesn't count.
+    """
+    with_inline = {c.get("pull_request_review_id") for c in comments if is_review_point(c.get("body"))}
+    return {
+        review["id"] for review in reviews
+        if review.get("state") == "CHANGES_REQUESTED"
+        or is_review_point(review.get("body"))
+        or review["id"] in with_inline
+    }
+
+
+def substantive_conversation(conversation: list[dict], author: str, merged_at: datetime) -> set[int]:
+    """IDs of conversation comments by a human other than the author, before merge, that are review points."""
+    return {
+        c["id"] for c in conversation
+        if is_human_reviewer(c.get("user"), author)
+        and parse_time(c.get("created_at")) <= merged_at
+        and is_review_point(c.get("body"))
+    }
+
+
+def approved_head(reviews: list[dict]) -> str | None:
+    """The commit of the last approval before the merge: the must-not-block head."""
+    approvals = [r for r in reviews if r.get("state") == "APPROVED" and r.get("commit_id")]
+    if not approvals:
+        return None
+    return max(approvals, key=lambda r: parse_time(r["submitted_at"]))["commit_id"]
