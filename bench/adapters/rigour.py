@@ -48,8 +48,8 @@ class RigourDeterministic:
 
     def review(self, request: ReviewInput) -> ReviewOutput:
         try:
-            result = subprocess.run(command(request), cwd=request.workdir, capture_output=True, text=True,
-                                    timeout=request.timeout_s, check=False)
+            result = subprocess.run(command(request), cwd=request.workdir, env=request.env, capture_output=True,
+                                    text=True, timeout=request.timeout_s, check=False)
         except subprocess.TimeoutExpired as exc:
             raise AdapterError(f"timed out after {request.timeout_s}s") from exc
         report = load_report(result.stdout, result.returncode)

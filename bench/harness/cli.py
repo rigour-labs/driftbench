@@ -36,7 +36,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     if not corpora:
         print(f"no matching corpus in {args.corpus}; run `bench collect` first", file=sys.stderr)
         return 1
-    config = RunConfig(out_dir=args.out, scratch_dir=args.out / "_diffs", timeout_s=args.timeout)
+    config = RunConfig(out_dir=args.out, scratch_dir=args.out / "_scratch",
+                       npm_cache=args.repos_dir.parent / "npm-cache", timeout_s=args.timeout)
     for corpus in corpora:
         checkout = RepoCheckout(f"https://github.com/{corpus['repo']}.git", args.repos_dir / slug_of(corpus["repo"]))
         for adapter in adapters:

@@ -24,11 +24,12 @@ class Adapter(Protocol):
 
 | Field | Meaning |
 |---|---|
-| `workdir` | Checkout of the repository at the round's head, read-only by convention. Anything the tool writes there is deleted before the next run (`git clean -ffdx`), so no state carries between rounds |
+| `workdir` | A fresh repository at the round's head with no refs (no branches, no tags), deleted after the run |
 | `base_sha`, `head_sha` | Merge base and the reviewed head |
 | `diff_path` | Unified diff `base_sha...head_sha` |
 | `history` | Only if `reads_history`: PR title, body, and comments posted before this round |
 | `timeout_s` | Hard limit; the harness kills the process after it |
+| `env` | The only environment your tool's processes may get: pass it as `env=` to every subprocess. It has a fresh `HOME` and no tokens |
 
 `ReviewOutput` returns:
 
@@ -51,6 +52,8 @@ just to look stricter or quieter. The mapping is reviewed in the pull request.
 - Never read anything outside `request`: no network lookups of the pull
   request, its reviews or later commits. The harness already gives you the
   history you are allowed to see.
+- Run every tool process with `env=request.env`, never the inherited
+  environment. A paid adapter adds only its own key to a copy of it.
 - Keep keys in environment variables. Never commit them, never log them.
 - Paid adapters must report usage, or document why the tool can't.
 - Add a test with a recorded tool output under `tests/fixtures/` that checks

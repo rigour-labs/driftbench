@@ -27,6 +27,7 @@ class ReviewInput:
     diff_path: Path      # unified diff base_sha...head_sha
     history: dict | None  # only for adapters with reads_history; None otherwise
     timeout_s: int
+    env: dict[str, str]  # the only environment a tool process may get (bench/harness/sandbox.py)
 
 
 @dataclasses.dataclass(frozen=True)

@@ -11,7 +11,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "rigour-review-fail.json"
 
 
 def request(tmp_path) -> ReviewInput:
-    return ReviewInput(tmp_path, "b" * 40, "h" * 40, tmp_path / "x.diff", None, 5)
+    return ReviewInput(tmp_path, "b" * 40, "h" * 40, tmp_path / "x.diff", None, 5, {"PATH": "/bin", "HOME": "/sandbox"})
 
 
 def test_rigour_blocking_follows_its_failures_list():
@@ -29,6 +29,7 @@ def test_rigour_command_is_pinned_and_uses_the_merge_base(tmp_path):
 def test_rigour_review_verdicts(tmp_path, monkeypatch):
     def fake_run(args, **kwargs):
         assert kwargs["cwd"] == tmp_path and kwargs["timeout"] == 5
+        assert kwargs["env"] == {"PATH": "/bin", "HOME": "/sandbox"}  # only the harness's env
         return subprocess.CompletedProcess(args, 1, FIXTURE.read_text(), "")
     monkeypatch.setattr(rigour.subprocess, "run", fake_run)
     output = rigour.RigourDeterministic().review(request(tmp_path))

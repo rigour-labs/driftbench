@@ -1,10 +1,13 @@
+import subprocess
+from pathlib import Path
+
 import pytest
 
 from bench.adapters.baselines import EveryHunk, NoTool
 from bench.harness.gitrepo import RepoCheckout
 from bench.harness.runner import RecordError, RunConfig, read_record, record_path, run_corpus
 from bench.harness.types import AdapterError, Finding, ReviewOutput
-from tests.git_fixture import make_origin
+from tests.git_fixture import commit_file, git, make_origin
 
 
 class StatefulTool:
@@ -40,7 +43,8 @@ def setup(tmp_path):
           "rounds": [{"index": 1, "head_sha": origin["head1"]}, {"index": 2, "head_sha": origin["head2"]}]}
     corpus = {"repo": "o/r", "prs": [pr]}
     checkout = RepoCheckout(origin["path"], tmp_path / "clone", blobless=False)
-    config = RunConfig(out_dir=tmp_path / "runs", scratch_dir=tmp_path / "scratch", timeout_s=30)
+    config = RunConfig(out_dir=tmp_path / "runs", scratch_dir=tmp_path / "scratch",
+                       npm_cache=tmp_path / "npm-cache", timeout_s=30)
     return corpus, checkout, config, origin
 
 
@@ -98,3 +102,48 @@ def test_read_record_rejects_bad_files(tmp_path):
     bad.write_text('{"schema": 0}', encoding="utf-8")
     with pytest.raises(RecordError, match="schema"):
         read_record(bad)
+
+
+class EnvTool:
+    """Reports the environment a child process of the tool actually gets."""
+    name, version, paid, reads_history = "env", "1", False, False
+
+    def review(self, request):
+        dump = subprocess.run(["env"], env=request.env, capture_output=True, text=True, check=True).stdout
+        return ReviewOutput([Finding(None, None, False, dump)], "pass")
+
+
+class RefsTool:
+    """Reports every ref and every commit reachable from any ref in its workdir."""
+    name, version, paid, reads_history = "refs", "1", False, False
+
+    def review(self, request):
+        def git_out(*args):
+            return subprocess.run(["git", "-C", str(request.workdir), *args], capture_output=True, text=True).stdout
+        seen = git_out("for-each-ref") + "|" + git_out("log", "--all", "--format=%H")
+        return ReviewOutput([Finding(None, None, False, seen)], "pass")
+
+
+def test_tools_get_a_minimal_env_and_a_fresh_home(setup, monkeypatch):
+    corpus, checkout, config, origin = setup
+    for name in ("RIGOUR_TEAM_ID", "GH_TOKEN", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.setenv(name, "planted-secret")
+    run_corpus(EnvTool(), checkout, corpus, config)
+    record = read(config, EnvTool(), origin["head1"])
+    dump = record["findings"][0]["message"]
+    assert "planted-secret" not in dump
+    env = dict(line.split("=", 1) for line in dump.splitlines() if "=" in line)
+    assert env["HOME"] != str(Path.home()) and env["RIGOUR_TELEMETRY"] == "0" and env["DO_NOT_TRACK"] == "1"
+    assert not Path(env["HOME"]).exists()  # deleted after the run
+    assert "GH_TOKEN" not in record["env_keys"] and "HOME" in record["env_keys"]
+
+
+def test_tools_cannot_see_refs_or_commits_after_the_head(setup):
+    corpus, checkout, config, origin = setup
+    future = commit_file(Path(origin["path"]), "app.py", "def f():\n    return 99\n", "future on main")
+    git(Path(origin["path"]), "tag", "v9", future)
+    run_corpus(RefsTool(), checkout, corpus, config)
+    refs, reachable = read(config, RefsTool(), origin["head1"])["findings"][0]["message"].split("|")
+    assert refs == ""                                   # no origin/main, no branches, no tags
+    assert future not in reachable and origin["head2"] not in reachable
+    assert set(reachable.split()) == {origin["base"], origin["head1"]}

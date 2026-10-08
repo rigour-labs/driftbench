@@ -113,9 +113,16 @@ reported. Points are reported by head source (`push`, `review`,
 head (each round's head and the must-not-block head; a head shared by two
 cases is reviewed once):
 
-- a checkout of the repository at that head, forced and cleaned
-  (`git clean -ffdx`) before every run, so nothing a tool wrote in one run
-  (caches, its own state) reaches the next;
+- a fresh repository at that head that borrows the clone's objects but has
+  **no refs**: no `origin/main`, no other branch, no tag. A tool can't
+  reach commits made after the head through any ref (they exist only as
+  unreferenced objects). It is deleted after the run, so nothing a tool
+  writes (caches, its own state) reaches the next run;
+- a **minimal environment** built by the harness, never inherited: `PATH`,
+  a fresh `HOME` (so no tool reads the machine's settings, stored answers
+  or profiles), telemetry off (`RIGOUR_TELEMETRY=0`, `DO_NOT_TRACK=1`), a
+  shared package cache, and no tokens or API keys. A paid adapter adds only
+  its own key. The variable names (not values) are in every run record;
 - the diff from the merge base of the pull request's recorded base commit
   and the head;
 - a time limit (default 900 s).

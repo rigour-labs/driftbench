@@ -15,6 +15,7 @@ from pathlib import Path
 from bench.harness.cases import ReviewCase, cases_for_pr, heads_to_run
 from bench.harness.diffstat import changed_lines, parse_hunks
 from bench.harness.gitrepo import GitError, RepoCheckout
+from bench.harness.sandbox import env_keys, sandbox
 from bench.harness.types import Adapter, AdapterError, ReviewInput, ReviewOutput
 from bench.repos import slug_of
 
@@ -24,7 +25,8 @@ RECORD_SCHEMA = 1
 @dataclasses.dataclass(frozen=True)
 class RunConfig:
     out_dir: Path      # records: <out>/<tool>/<repo>/<pr>/<head>.json
-    scratch_dir: Path  # diffs handed to tools; outside every checkout
+    scratch_dir: Path  # diffs and per-run sandboxes; outside every checkout
+    npm_cache: Path    # shared by every sandbox so npx stays fast
     timeout_s: int = 900
 
 
@@ -44,8 +46,8 @@ def safe_review(adapter: Adapter, request: ReviewInput) -> tuple[ReviewOutput, f
     return output, round(time.monotonic() - started, 3)
 
 
-def prepare(checkout: RepoCheckout, pr: dict, head: str, config: RunConfig) -> ReviewInput:
-    """Check out `head` and write the diff from the merge base; GitError if a commit is unavailable."""
+def prepare(checkout: RepoCheckout, pr: dict, head: str, config: RunConfig) -> tuple[str, Path]:
+    """Fetch and check out `head`, write the diff from the merge base; GitError if a commit is unavailable."""
     for sha in (head, pr["base_sha"]):
         if not checkout.ensure_commit(sha, pr["number"]):
             raise GitError(f"commit {sha} is not available from the remote")
@@ -54,20 +56,28 @@ def prepare(checkout: RepoCheckout, pr: dict, head: str, config: RunConfig) -> R
     diff_path = config.scratch_dir / f"{pr['number']}-{head[:12]}.diff"
     diff_path.parent.mkdir(parents=True, exist_ok=True)
     diff_path.write_text(checkout.diff(base, head), encoding="utf-8")
-    return ReviewInput(checkout.path, base, head, diff_path, None, config.timeout_s)
+    return base, diff_path
+
+
+def unavailable(exc: GitError) -> dict:
+    return {"base_sha": None, "changed_lines": None, "verdict": "unavailable", "findings": [],
+            "wall_s": None, "error": str(exc), "raw": ""}
 
 
 def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, config: RunConfig) -> dict:
+    """Review one head in a fresh sandbox: minimal env, fresh home, a repo with no refs."""
     try:
-        request = prepare(checkout, pr, head, config)
+        base, diff_path = prepare(checkout, pr, head, config)
+        with sandbox(config.scratch_dir, config.npm_cache) as box:
+            checkout.isolated_copy(head, box.repo)
+            request = ReviewInput(box.repo, base, head, diff_path, None, config.timeout_s, box.env)
+            output, wall_s = safe_review(adapter, request)
     except GitError as exc:
         print(f"warning: PR {pr['number']} head {head[:12]} unavailable: {exc}", file=sys.stderr)
-        return {"base_sha": None, "changed_lines": None, "verdict": "unavailable", "findings": [],
-                "wall_s": None, "error": str(exc), "raw": ""}
-    output, wall_s = safe_review(adapter, request)
+        return unavailable(exc)
     return {
-        "base_sha": request.base_sha,
-        "changed_lines": changed_lines(parse_hunks(request.diff_path.read_text(encoding="utf-8"))),
+        "base_sha": base,
+        "changed_lines": changed_lines(parse_hunks(diff_path.read_text(encoding="utf-8"))),
         "verdict": output.verdict,
         "findings": [dataclasses.asdict(f) for f in output.findings],
         "wall_s": wall_s,
@@ -128,4 +138,5 @@ def record_header(adapter: Adapter, repo: str, pr: int, head: str, cases: list[R
         "pr": pr,
         "head_sha": head,
         "cases": [dataclasses.asdict(c) for c in cases],
+        "env_keys": env_keys(),
     }
