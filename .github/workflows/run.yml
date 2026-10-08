@@ -1,6 +1,7 @@
 name: run
 
 # Run the free entrants on a frozen corpus, score, and make a DRAFT release
+# `run-<date>-<run id>`
 # (docs/ARCH.md). The corpus is a published `corpus-*` release (made by
 # collect.yml, checked with `bench guard`, then published), so the run's notes
 # name exactly which corpus it used. Labels must already be committed on the branch this runs on:
@@ -41,7 +42,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       - id: stamp
-        run: echo "name=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+        run: echo "name=$(date -u +%Y-%m-%d)-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
       - name: Fix the run record once (start time, entrant versions, label blob hashes)
         env:
           ENTRANTS: ${{ inputs.entrants }}
@@ -109,11 +110,25 @@ jobs:
           python -m bench run --entrants $ENTRANTS --repo "$REPO" --out "work/runs/$NAME"
       - name: Slug
         id: slug
+        if: always()
         env:
           REPO: ${{ matrix.repo }}
         run: echo "slug=${REPO/\//__}" >> "$GITHUB_OUTPUT"
-      - run: python -m bench.release_check "work/runs/${{ needs.start.outputs.name }}"
+      - name: Record this repo's job outcome
+        if: always()
+        env:
+          NAME: ${{ needs.start.outputs.name }}
+          SLUG: ${{ steps.slug.outputs.slug }}
+          OUTCOME: ${{ job.status }}
+        run: |
+          mkdir -p "work/runs/$NAME/_status"
+          echo "$OUTCOME" > "work/runs/$NAME/_status/$SLUG.txt"
+      - name: Check the records (also after a failure, to keep partial records)
+        id: check
+        if: always()
+        run: python -m bench.release_check "work/runs/${{ needs.start.outputs.name }}"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && steps.check.outcome == 'success'
         with:
           name: runs-${{ steps.slug.outputs.slug }}
           path: |
@@ -124,6 +139,8 @@ jobs:
 
   score:
     needs: [start, review]
+    # a failed repo's review job must not lose the others: score whatever was recorded
+    if: always() && needs.start.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 340  # file versions come through the rate-limited API
     env:
@@ -155,6 +172,20 @@ jobs:
         with:
           name: manifest
           path: work/runs/${{ needs.start.outputs.name }}
+      - name: List repos whose review job did not succeed
+        env:
+          REPOS: ${{ needs.start.outputs.repos }}
+        run: |
+          mkdir -p "results/$NAME"
+          : > "results/$NAME/missing-repos.txt"
+          for repo in $(echo "$REPOS" | jq -r '.[]'); do
+            status_file="work/runs/$NAME/_status/${repo/\//__}.txt"
+            outcome=$(cat "$status_file" 2>/dev/null || echo "no records")
+            if [ "$outcome" != "success" ]; then
+              echo "$repo ($outcome)" >> "results/$NAME/missing-repos.txt"
+            fi
+          done
+          cat "results/$NAME/missing-repos.txt"
       - name: Score, draw the calibration sample, report
         env:
           GH_TOKEN: ${{ github.token }}
@@ -174,6 +205,7 @@ jobs:
 
   draft-release:
     needs: [start, score]
+    if: always() && needs.score.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -200,6 +232,9 @@ jobs:
             cat "out/work/runs/$NAME/run.json"
             echo '```' 
             echo "- corpus: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/$CORPUS_TAG"
+            if [ -s "out/results/$NAME/missing-repos.txt" ]; then
+              echo "- repos whose review job did not succeed (missing heads are scored as unavailable): $(paste -sd, "out/results/$NAME/missing-repos.txt")"
+            fi
             echo "- this run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo "- commit: ${GITHUB_SHA}"
           } > notes.md

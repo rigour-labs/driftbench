@@ -351,7 +351,7 @@ explicit approval and a dollar cap, and is never part of the headline.
   `results/<date>/` the published summaries, `summary.md` and the calibration
   sample with its verdicts (added by pull request after each run).
 - GitHub Release `corpus-<date>-<id>`: the frozen corpus and points files.
-  GitHub Release `run-<date>` per run: the run records, the match ledger,
+  GitHub Release `run-<date>-<run id>` per run: the run records, the match ledger,
   `summary.md`, the calibration sample, and the full per-repository scores
   (`scores/`, raw reproducibility data; the reported results are the ones in
   `results/`). Its notes carry the run record: start time, entrant versions,

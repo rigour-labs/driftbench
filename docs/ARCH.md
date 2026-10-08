@@ -62,7 +62,11 @@ The order of a release, every step remote except labelling and the checks:
 1. **Collect** (`collect.yml`, dispatched by hand): `bench collect` and
    `bench points` with the default `GITHUB_TOKEN` (1,000 API requests an
    hour; the client waits for each reset). The API cache stays in the Actions
-   cache, never in an artifact or release, because it holds review text. A
+   cache, never in an artifact or release, because it holds review text.
+   A workflow run by a pull request from a fork can restore caches made on
+   the base branch, so this cache must only ever hold data that is already
+   public (here: public review text from public repositories), never
+   anything private. A
    draft release `corpus-<date>-<run id>` gets the corpus and points files.
 2. A maintainer downloads that draft, runs `bench guard` and
    `python -m bench.release_check` on it, and publishes it.
@@ -73,7 +77,9 @@ The order of a release, every step remote except labelling and the checks:
    record once (`bench manifest`: start time, entrant versions, label commit
    and blob hashes) and every later job reuses that file, one job per repository runs the free
    entrants, one job scores, draws the calibration sample and writes the
-   report; a draft release `run-<date>` gets the run records, ledger,
+   report (it still runs when one repository's job fails, and the release
+   notes name that repository); a draft release `run-<date>-<run id>` gets
+   the run records, ledger,
    summary and calibration sample, with `run_started_at` and the corpus tag in
    its notes. The diffs handed to tools contain the projects' code and are
    never uploaded.
