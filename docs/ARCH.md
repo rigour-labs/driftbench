@@ -27,7 +27,8 @@ score   ──► results/<date>/summary.md    committed tables
 |---|---|---|
 | `repos.py` | Load and validate `repos.yaml` | PR 1 |
 | `name_guard.py` | Refuse to publish blocked names (pre-push, pre-release) | PR 1 |
-| `collect/` | GitHub reads, PR selection, rounds, point splitting, acted-on | PR 2–3 |
+| `collect/` | GitHub reads (cached), PR selection, rounds, the frozen record | PR 2 |
+| `points/` | Point splitting, acted-on | PR 3 |
 | `labels/` | Label schema, rules pass, merge with confirmations | PR 3 |
 | `harness/` | Adapter interface, time-correct checkout, runner | PR 4 |
 | `adapters/` | One module per entrant | PR 4, 7 |
