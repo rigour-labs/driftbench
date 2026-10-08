@@ -28,7 +28,7 @@ def load_records(run_dir: Path, tool: str, repo: str) -> dict[int, list[dict]]:
 
 def ledger_row(tool: str, point: dict, match: Match | None, blocking: Match | None) -> dict:
     """One match decision: the closest finding (if any), and the closest blocking one, for one point and tool."""
-    row = {"tool": tool, "point": point["id"], "pr": point["pr"], "round": point["round"],
+    row = {"tool": tool, "repo": point["repo"], "point": point["id"], "pr": point["pr"], "round": point["round"],
            "acted_on": point["acted_on"], "distance": None,
            "blocking_distance": blocking.distance if blocking else None}
     if match:
@@ -89,7 +89,7 @@ def corpus_counts(corpus: dict, points_file: dict, scorable: list[dict]) -> dict
 
 
 def score_repo(corpus: dict, points_file: dict, run_dir: Path, tools: list[str], versions: FileVersions) -> tuple[dict, list]:
-    scorable = [p for p in points_file["points"] if location_scorable(p)]
+    scorable = [{**p, "repo": corpus["repo"]} for p in points_file["points"] if location_scorable(p)]
     results, ledger = {}, []
     for tool in tools:
         results[tool], rows = score_tool(tool, corpus, scorable, run_dir, versions)

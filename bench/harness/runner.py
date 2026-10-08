@@ -30,8 +30,12 @@ class RunConfig:
     timeout_s: int = 900
 
 
+def record_path_for(run_dir: Path, tool: str, repo: str, pr: int, head: str) -> Path:
+    return run_dir / tool / slug_of(repo) / str(pr) / f"{head[:12]}.json"
+
+
 def record_path(config: RunConfig, adapter: Adapter, repo: str, pr: int, head: str) -> Path:
-    return config.out_dir / adapter.name / slug_of(repo) / str(pr) / f"{head[:12]}.json"
+    return record_path_for(config.out_dir, adapter.name, repo, pr, head)
 
 
 def safe_review(adapter: Adapter, request: ReviewInput) -> tuple[ReviewOutput, float]:

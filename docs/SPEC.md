@@ -191,8 +191,12 @@ If a reviewer requested changes (on a trusted commit) after that approval,
 the record sets `approval_overridden`. The later points may apply to the
 approved head, so these cases are left out of the false-block denominator
 and their count is reported.
+
 Reviewers sometimes approve code with real problems, so this is an upper bound
-on the true false-block rate, not an exact count.
+on the true false-block rate, not an exact count. In particular, an approval
+that came with comments can sit on a head that is also a round head with
+review points; a blocking finding there still counts as a false block,
+because the human approved that head anyway.
 
 ## Labels
 
@@ -241,9 +245,15 @@ guards keep it honest:
    and finding volume come close to that ceiling is labelled **noise** in the
    tables, whatever its catch rate.
 3. **Calibration.** A random sample of location matches (target: 50 per
-   release, stratified by entrant) is checked by hand: *same issue: yes /
-   partly / no*. The resulting location→issue rate per entrant is published
-   alongside the headline. Until a release has a calibration sample, its
+   release, split evenly across entrants, baselines excluded) is checked by
+   hand: *same issue: yes / partly / no*. The resulting location→issue rate
+   per entrant is published alongside the headline. The same sample checks
+   acted-on decisions (10 `direct` yes, 5 `direct` no, 5 `ancestor`): *did
+   the change near the anchor respond to the point: yes / no*, with
+   agreement reported per basis. If `direct` agrees clearly less often than
+   `ancestor`, acted-on numbers are reported per basis. The sample is drawn
+   with a recorded seed (`bench calibrate draw`), never redrawn silently,
+   and committed with its verdicts. Until every entry has a verdict, the
    headline is marked **unvalidated**.
 
 **N = 3** is the headline. A sensitivity table repeats the headline at N = 0
@@ -294,6 +304,9 @@ explicit approval and a dollar cap, and is never part of the headline.
   counted and left out.
 - Both denominators are reported: **all substantive points** and **acted-on
   points**.
+- Every rate is printed with its n and a 95% Wilson interval; no rate is
+  printed without its n. With 20 to 60 points per repository, the
+  intervals are wide.
 - Each run records the tool version, settings and flags, and these appear
   with each result.
 - Every number is reported, including where any entrant (Rigour included)

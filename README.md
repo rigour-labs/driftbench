@@ -71,6 +71,8 @@ python -m venv .venv && .venv/bin/pip install -e '.[test]'
 .venv/bin/python -m bench label suggest  # suggest classes; a human confirms (docs/LABELLING.md)
 .venv/bin/python -m bench run --entrants free   # every free entrant on every reviewed head
 .venv/bin/python -m bench score --run work/runs/<date>   # catches, false blocks, noise
+.venv/bin/python -m bench calibrate draw --run work/runs/<date>   # hand-check sample (seeded)
+.venv/bin/python -m bench report --run work/runs/<date>  # results/<date>/summary.md
 .venv/bin/python -m pytest               # harness and scoring tests
 ```
 

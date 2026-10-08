@@ -1,14 +1,33 @@
 """Per-tool numbers for one repository (docs/SPEC.md, "Reporting rules")."""
 from __future__ import annotations
 
+import math
 from collections import Counter
 from statistics import median
 
 from bench.score.match import SCORED_VERDICTS, WINDOWS, Match
 
 
+Z_95 = 1.959964
+
+
 def rate(hit: int, total: int) -> float | None:
     return round(hit / total, 4) if total else None
+
+
+def wilson(hit: int, total: int) -> list[float] | None:
+    """95% Wilson score interval for hit/total; None when total is 0."""
+    if not total:
+        return None
+    p = hit / total
+    denominator = 1 + Z_95 ** 2 / total
+    centre = (p + Z_95 ** 2 / (2 * total)) / denominator
+    half = Z_95 * math.sqrt(p * (1 - p) / total + Z_95 ** 2 / (4 * total ** 2)) / denominator
+    return [round(max(0.0, centre - half), 4), round(min(1.0, centre + half), 4)]
+
+
+def proportion(hit: int, total: int) -> dict:
+    return {"caught": hit, "points": total, "rate": rate(hit, total), "ci95": wilson(hit, total)}
 
 
 def catch_rates(matches: dict[str, Match | None], acted_ids: set[str]) -> dict:
@@ -17,9 +36,8 @@ def catch_rates(matches: dict[str, Match | None], acted_ids: set[str]) -> dict:
     for window in WINDOWS:
         caught = {pid for pid, m in matches.items() if m is not None and m.distance <= window}
         result[str(window)] = {
-            "all": {"caught": len(caught), "points": len(matches), "rate": rate(len(caught), len(matches))},
-            "acted_on": {"caught": len(caught & acted_ids), "points": len(acted_ids),
-                         "rate": rate(len(caught & acted_ids), len(acted_ids))},
+            "all": proportion(len(caught), len(matches)),
+            "acted_on": proportion(len(caught & acted_ids), len(acted_ids)),
         }
     return result
 
@@ -54,6 +72,7 @@ def false_blocks(records_by_pr: dict[int, list[dict]]) -> dict:
         "approved_heads": approved,
         "approved_heads_blocked": tally["approved_blocked"],
         "false_block_rate": rate(tally["approved_blocked"], approved),
+        "false_block_ci95": wilson(tally["approved_blocked"], approved),
         "blocks_per_approved_head": round(tally["approved_blocks"] / approved, 3) if approved else None,
         "merged_fallback": {"heads": tally["merged_heads"], "blocked": tally["merged_blocked"]},
         "overridden_excluded": tally["overridden_heads"],

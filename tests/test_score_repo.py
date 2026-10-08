@@ -19,8 +19,9 @@ def test_catches_by_window_and_denominators(tmp_path):
     summary, ledger = score_repo(corpus(), points_file(points), tmp_path, ["tool"], SameFileVersions())
     catches = summary["tools"]["tool"]["catches"]
     assert catches["0"]["all"]["caught"] == 0
-    assert catches["3"]["all"] == {"caught": 2, "points": 3, "rate": 0.6667}      # a (2 away), c (1 away)
-    assert catches["3"]["acted_on"] == {"caught": 1, "points": 1, "rate": 1.0}
+    assert catches["3"]["all"] == {"caught": 2, "points": 3, "rate": 0.6667,  # a (2 away), c (1 away)
+                                   "ci95": [0.2077, 0.9385]}
+    assert catches["3"]["acted_on"] == {"caught": 1, "points": 1, "rate": 1.0, "ci95": [0.2065, 1.0]}
     assert catches["10"]["all"]["caught"] == 3
     assert {row["point"]: row["distance"] for row in ledger} == {"a": 2, "b": 10, "c": 1}
     assert {row["point"]: row["blocking_distance"] for row in ledger} == {"a": None, "b": 31, "c": 1}
@@ -57,5 +58,14 @@ def test_false_blocks_groups():
                            4: record("approved", overridden=True, blocks=1), 5: record("approved", verdict="error"),
                            6: [{"verdict": "pass", "cases": [round_case(6, 1)], "findings": []}]})
     assert result == {"approved_heads": 2, "approved_heads_blocked": 1, "false_block_rate": 0.5,
+                      "false_block_ci95": [0.0945, 0.9055],
                       "blocks_per_approved_head": 1.0, "merged_fallback": {"heads": 1, "blocked": 1},
                       "overridden_excluded": 1, "not_scored": 1}
+
+
+def test_wilson_interval_matches_reference_values():
+    from bench.score.metrics import wilson
+    assert wilson(0, 0) is None
+    assert wilson(0, 20) == [0.0, 0.1611]
+    assert wilson(10, 20) == [0.2993, 0.7007]
+    assert wilson(20, 20) == [0.8389, 1.0]
