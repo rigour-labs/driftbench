@@ -1,1 +1,0 @@
-{ "note": "Bring-your-own-key frontier model, same pipeline. The key goes in the arena HOME's ~/.rigour/settings.json (providers.claude), never on the command line.", "config": "rigour-default.yml", "flags": ["--provider", "claude"] }

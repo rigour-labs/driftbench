@@ -1,0 +1,16 @@
+[project]
+name = "driftbench"
+version = "2.0.0.dev0"
+description = "A neutral benchmark of AI code reviewers and quality gates on human-reviewed open-source pull requests"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = ["PyYAML>=6.0"]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[tool.setuptools]
+packages = ["bench"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
