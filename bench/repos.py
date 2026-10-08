@@ -29,8 +29,12 @@ class PinnedRepo:
 
     @property
     def slug(self) -> str:
-        """Filesystem-safe name, e.g. `zulip__zulip`."""
-        return self.name.replace("/", "__")
+        return slug_of(self.name)
+
+
+def slug_of(name: str) -> str:
+    """Filesystem-safe name, e.g. `zulip__zulip`."""
+    return name.replace("/", "__")
 
 
 def load_repos(path: Path, enabled_only: bool = True) -> list[PinnedRepo]:

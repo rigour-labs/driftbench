@@ -66,6 +66,7 @@ Actions, because some repositories are over 1 GB.
 ```bash
 python -m venv .venv && .venv/bin/pip install -e '.[test]'
 .venv/bin/python -m bench repos          # validate and list the pinned repos
+.venv/bin/python -m bench collect        # freeze the corpus of reviewed PRs (GitHub API, free)
 .venv/bin/python -m pytest               # harness and scoring tests
 ```
 

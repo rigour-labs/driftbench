@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 
 from bench import name_guard
+from bench.collect.corpus import collect_repo, write_corpus
+from bench.collect.github import GitHubClient, GitHubError
 from bench.repos import RepoListError, load_repos
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -29,6 +31,14 @@ def build_parser() -> argparse.ArgumentParser:
     guard.add_argument("paths", nargs="*", type=Path, help="extra files or dirs, e.g. release assets")
     guard.add_argument("--range", dest="rev_range", help="also scan commit messages, e.g. origin/main..HEAD")
     guard.set_defaults(handler=cmd_guard)
+
+    collect = commands.add_parser("collect", help="freeze the corpus of reviewed PRs from GitHub")
+    collect.add_argument("--repo", action="append", help="only this repo (repeatable); default: all enabled")
+    collect.add_argument("--max-prs", type=int, default=60, help="substantively reviewed PRs to keep per repo")
+    collect.add_argument("--max-listed", type=int, default=600, help="closed PRs to list per repo")
+    collect.add_argument("--out", type=Path, default=ROOT / "work" / "corpus")
+    collect.add_argument("--cache", type=Path, default=ROOT / "work" / "cache", help="raw API responses (never published)")
+    collect.set_defaults(handler=cmd_collect)
     return parser
 
 
@@ -58,6 +68,29 @@ def cmd_guard(args: argparse.Namespace) -> int:
         print(f"{hit.where}:{hit.line}: {hit.text}")
     print(f"guard: {len(hits)} match(es)", file=sys.stderr)
     return 1 if hits else 0
+
+
+def cmd_collect(args: argparse.Namespace) -> int:
+    try:
+        repos = load_repos(ROOT / "repos.yaml")
+    except RepoListError as exc:
+        print(f"repos.yaml invalid: {exc}", file=sys.stderr)
+        return 1
+    chosen = [r for r in repos if not args.repo or r.name in args.repo]
+    unknown = set(args.repo or []) - {r.name for r in chosen}
+    if unknown:
+        print(f"not an enabled repo in repos.yaml: {', '.join(sorted(unknown))}", file=sys.stderr)
+        return 1
+    client = GitHubClient(args.cache)
+    for repo in chosen:
+        try:
+            corpus = collect_repo(client, repo, args.max_prs, args.max_listed)
+        except GitHubError as exc:
+            print(f"{repo.name}: collection failed: {exc}", file=sys.stderr)
+            return 1
+        path = write_corpus(corpus, args.out)
+        print(f"{repo.name}: {len(corpus['prs'])} PRs -> {path}")
+    return 0
 
 
 if __name__ == "__main__":

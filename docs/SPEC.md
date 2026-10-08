@@ -36,9 +36,15 @@ no repository's code, only identifiers (see Storage).
 - Listed with the GitHub API, sorted by `updated` and then by merge date, so long-lived,
   multi-round pull requests aren't crowded out by quick ones.
 - Kept only if merged and **substantively reviewed**: at least one review by
-  someone other than the author that is `CHANGES_REQUESTED`, has a non-empty
-  body, or has inline code comments. Bare approvals don't count. Bot accounts
-  don't count as reviewers.
+  someone other than the author, submitted before the merge, that is
+  `CHANGES_REQUESTED`, or has a body or inline comments that aren't just an
+  acknowledgement. Bare approvals don't count. Bot accounts don't count as
+  reviewers.
+- **Acknowledgement (rule ACK-1):** at most six words, every one of them from
+  a fixed list ("LGTM", "Thank you!", "Looks good to me, thanks"). The list is
+  in `bench/collect/text_rules.py`.
+- The listing order changes as pull requests get new activity, so selection
+  is reproducible from the frozen corpus, not by re-listing.
 
 ### Rounds
 
@@ -158,6 +164,11 @@ explicit approval and a dollar cap, and is never part of the headline.
 
 - `main`: the method, scripts, `repos.yaml`, label files, and summary tables
   under `results/`.
-- GitHub Release `run-YYYY-MM-DD` per run: the frozen corpus (API snapshots),
-  raw tool outputs, verdict ledgers, logs and the calibration sample.
+- GitHub Release `run-YYYY-MM-DD` per run: the frozen corpus, raw tool
+  outputs, verdict ledgers, logs and the calibration sample.
+- The frozen corpus holds IDs, SHAs, anchors and timestamps, and a SHA-256
+  and length for each review or comment text, never the text itself. A run
+  fetches text by ID and checks it against the hash. Text edited or deleted
+  since the freeze is reported, not silently re-scored.
+- The raw API cache (`work/cache/`) contains text and is never published.
 - One command re-runs everything from a frozen corpus.
