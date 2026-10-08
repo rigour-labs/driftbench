@@ -1,4 +1,9 @@
-"""`bench score`: score a run directory; write summaries (committed) and the ledger (release asset)."""
+"""`bench score`: score a run directory.
+
+Full summaries and the ledger go in the run directory (release assets). The
+summaries published in results/ (committed) carry tool metrics only for
+repositories that meet the reporting minimums.
+"""
 from __future__ import annotations
 
 import argparse
@@ -12,7 +17,7 @@ from bench.harness.runner import RecordError
 from bench.points.points_file import PointsError, read_points
 from bench.repos import slug_of
 from bench.score.linemap import FileVersions
-from bench.score.repo import score_repo
+from bench.score.repo import published_summary, score_repo
 
 
 def add_score_parser(commands: argparse._SubParsersAction, root: Path) -> None:
@@ -40,7 +45,8 @@ def cmd_score(args: argparse.Namespace) -> int:
             corpus = read_corpus(corpus_path)
             points_file = read_points(args.points / corpus_path.name)
             summary, ledger = score_repo(corpus, points_file, args.run, tools, FileVersions(client, corpus["repo"]))
-            write_summary(summary, out / f"{slug_of(corpus['repo'])}.json")
+            write_summary(summary, args.run / "scores" / f"{slug_of(corpus['repo'])}.json")
+            write_summary(published_summary(summary), out / f"{slug_of(corpus['repo'])}.json")
             with ledger_path.open("a", encoding="utf-8") as handle:
                 handle.writelines(json.dumps(row, sort_keys=True) + "\n" for row in ledger)
             print(f"{corpus['repo']}: reportable={summary['reportable']} tools={', '.join(summary['tools'])}")
@@ -64,7 +70,7 @@ def read_summary(path: Path) -> dict:
         summary = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ScoreFileError(f"cannot read summary {path}: {exc}") from exc
-    if not isinstance(summary, dict) or "tools" not in summary or "method_version" not in summary:
+    if not isinstance(summary, dict) or "method_version" not in summary or "reportable" not in summary:
         raise ScoreFileError(f"{path}: not a score summary")
     return summary
 

@@ -20,9 +20,11 @@ def test_score_writes_summary_and_ledger(tmp_path, monkeypatch):
     args = ["score", "--run", str(run), "--corpus", str(tmp_path / "corpus"), "--points", str(tmp_path / "points"),
             "--out", str(tmp_path / "results")]
     assert main(args) == 0
-    summary = read_summary(tmp_path / "results" / "o__r.json")
-    assert list(summary["tools"]) == ["every-hunk"] and summary["reportable"] is False
-    assert summary["tools"]["every-hunk"]["catches"]["0"]["all"]["caught"] == 1
+    published = read_summary(tmp_path / "results" / "o__r.json")
+    assert published["reportable"] is False and "tools" not in published   # no numbers below the minimums
+    assert "1 acted-on points (minimum 20)" in published["insufficient_data"]
+    full = read_summary(run / "scores" / "o__r.json")                      # full metrics stay with the run
+    assert list(full["tools"]) == ["every-hunk"] and full["tools"]["every-hunk"]["catches"]["0"]["all"]["caught"] == 1
     ledger = read_ledger(run / "ledger.jsonl")
     assert ledger == [{"tool": "every-hunk", "repo": "o/r", "point": "a", "pr": 1, "round": 1, "acted_on": True, "distance": 0,
                        "blocking_distance": None, "head_sha": "h1", "finding": 0, "mapped_line": 10}]

@@ -253,8 +253,11 @@ guards keep it honest:
    agreement reported per basis. If `direct` agrees clearly less often than
    `ancestor`, acted-on numbers are reported per basis. The sample is drawn
    with a recorded seed (`bench calibrate draw`), never redrawn silently,
-   and committed with its verdicts. Until every entry has a verdict, the
-   headline is marked **unvalidated**.
+   and committed with its verdicts. It draws only from reportable
+   repositories. When a pool is smaller than its target, the shortfall
+   ("short: 31 of 50") is recorded and printed with the status. Until every
+   entry has a verdict, the page opens with the headline marked
+   **unvalidated**.
 
 **N = 3** is the headline. A sensitivity table repeats the headline at N = 0
 and N = 10.
@@ -296,8 +299,13 @@ explicit approval and a dollar cap, and is never part of the headline.
 - Per tool, per repository. Pooled numbers only alongside per-repo ones.
 - A repository is reported only with **at least 20 acted-on points and at
   least 10 approved heads** (trusted approvals, not overridden; counted from
-  the corpus). Below that, the table says *insufficient data* instead of a
-  number.
+  the corpus). Below that, the page says *insufficient data*, the summary
+  committed in `results/` carries only the counts and the reason, the
+  repository is left out of the calibration sample, and its full metrics stay
+  only in the run's release assets.
+- Ratios (blocks per approved head, findings per 100 changed lines) are
+  printed with their n. False blocks are also broken down: merged-head
+  fallbacks, overridden approvals left out, and heads not scored.
 - False blocks count must-not-block heads with at least one blocking
   finding, over approved heads. Heads that fell back to the merged head are
   reported separately; overridden approvals and heads the tool failed on are
@@ -329,8 +337,9 @@ explicit approval and a dollar cap, and is never part of the headline.
 
 ## Storage
 
-- `main`: the method, scripts, `repos.yaml`, label files, and summary tables
-  under `results/`.
+- `main`: the method, scripts, `repos.yaml`, label files, and under
+  `results/<date>/` the published summaries, `summary.md` and the calibration
+  sample with its verdicts (added by pull request after each run).
 - GitHub Release `run-YYYY-MM-DD` per run: the frozen corpus, raw tool
   outputs, verdict ledgers, logs and the calibration sample.
 - The frozen corpus holds IDs, SHAs, anchors and timestamps, and a SHA-256

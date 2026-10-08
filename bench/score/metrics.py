@@ -90,6 +90,7 @@ def volume_and_time(records: list[dict]) -> dict:
     return {
         "heads": dict(sorted(Counter(r["verdict"] for r in records).items())),
         "findings": findings,
+        "changed_lines": lines,
         "findings_per_100_changed_lines": round(100 * findings / lines, 2) if lines else None,
         "median_wall_s": round(median(walls), 2) if walls else None,
         "cost_usd_total": round(sum(costs), 4) if costs else None,

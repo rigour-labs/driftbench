@@ -101,3 +101,14 @@ def score_repo(corpus: dict, points_file: dict, run_dir: Path, tools: list[str],
                "minimums": {"acted_on_points": MIN_ACTED_ON_POINTS, "approved_heads": MIN_APPROVED_HEADS},
                "reportable": reportable, "corpus": counts, "tools": results}
     return summary, ledger
+
+
+def published_summary(summary: dict) -> dict:
+    """What goes in results/: everything when reportable; otherwise counts and the reason, no tool metrics."""
+    if summary["reportable"]:
+        return summary
+    corpus, mins = summary["corpus"], summary["minimums"]
+    reason = (f"{corpus['points_acted_on']} acted-on points (minimum {mins['acted_on_points']}) and "
+              f"{corpus['approved_heads']} approved heads (minimum {mins['approved_heads']})")
+    kept = ("repo", "pin", "method_version", "minimums", "reportable", "corpus")
+    return {**{key: summary[key] for key in kept}, "insufficient_data": reason}

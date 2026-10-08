@@ -82,11 +82,13 @@ def cmd_calibrate(args: argparse.Namespace) -> int:
     if path.exists() and not args.replace:
         print(f"{path} exists; pass --replace to redraw (the old draw stays in git history)", file=sys.stderr)
         return 1
-    ledger = read_ledger(args.run / "ledger.jsonl")
-    points = [{**p, "repo": repo} for repo in sorted({r["repo"] for r in ledger})
+    reportable = {s["repo"] for s in map(read_summary, sorted(results_dir(args).glob("*.json"))) if s["reportable"]}
+    ledger = [row for row in read_ledger(args.run / "ledger.jsonl") if row["repo"] in reportable]
+    points = [{**p, "repo": repo} for repo in sorted(reportable)
               for p in repo_points(args, repo)["points"] if not p["dropped"]]
-    write_calibration(draw(ledger, points, args.seed), path)
-    print(f"wrote {path}")
+    calibration = draw(ledger, points, args.seed)
+    write_calibration(calibration, path)
+    print(f"wrote {path} from {len(reportable)} reportable repo(s); {'; '.join(calibration['short']) or 'full'}")
     return 0
 
 

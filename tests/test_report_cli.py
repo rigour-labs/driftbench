@@ -20,6 +20,7 @@ def test_score_calibrate_report_end_to_end(tmp_path, monkeypatch, capsys):
     assert main(["score", *common[:2], "--corpus", str(tmp_path / "corpus"), "--points", str(tmp_path / "points"),
                  "--out", str(tmp_path / "results")]) == 0
     assert main(["calibrate", "draw", *common, *results, "--labels", str(tmp_path / "labels")]) == 0
+    assert "0 reportable repo(s); short: 0 of 50" in capsys.readouterr().out   # below-minimum repo left out
     assert main(["calibrate", "draw", *common, *results]) == 1          # no silent redraw
     assert main(["report", *common, *results, "--labels", str(tmp_path / "labels")]) == 0
     page = (tmp_path / "results" / "summary.md").read_text()

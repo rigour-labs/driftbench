@@ -55,9 +55,26 @@ def sample_acted_on(points: list[dict], rng: random.Random) -> list[dict]:
     return sample
 
 
+def shortfalls(entries: list[dict]) -> list[str]:
+    """Where the pools were too small for the targets; shown with the results, never hidden."""
+    notes = []
+    located = sum(1 for e in entries if e["kind"] == "location")
+    if located < LOCATION_TARGET:
+        notes.append(f"short: {located} of {LOCATION_TARGET} location matches")
+    for value, basis, quota in ACTED_ON_QUOTAS:
+        drawn = sum(1 for e in entries if e["kind"] == "acted_on" and e["basis"] == basis
+                    and (value is None or e["acted_on"] is value))
+        if drawn < quota:
+            label = f"{basis}" if value is None else f"{basis} {'yes' if value else 'no'}"
+            notes.append(f"short: {drawn} of {quota} acted-on ({label})")
+    return notes
+
+
 def draw(ledger: list[dict], points: list[dict], seed: int) -> dict:
+    """Sample from the ledger and points of reportable repositories only (the caller filters)."""
     rng = random.Random(seed)
-    return {"seed": seed, "entries": sample_locations(ledger, rng) + sample_acted_on(points, rng)}
+    entries = sample_locations(ledger, rng) + sample_acted_on(points, rng)
+    return {"seed": seed, "short": shortfalls(entries), "entries": entries}
 
 
 def write_calibration(calibration: dict, path: Path) -> None:
@@ -82,7 +99,7 @@ def read_calibration(path: Path) -> dict | None:
 def summarise_calibration(calibration: dict | None) -> dict:
     """Per-entrant location verdicts, per-basis acted-on agreement, and whether the sample is complete."""
     if not calibration or not calibration.get("entries"):
-        return {"validated": False, "location": {}, "acted_on": {}}
+        return {"validated": False, "short": [], "location": {}, "acted_on": {}}
     entries = calibration["entries"]
     location: dict[str, Counter] = {}
     acted: dict[str, Counter] = {}
@@ -95,6 +112,7 @@ def summarise_calibration(calibration: dict | None) -> dict:
             acted.setdefault(entry["basis"], Counter())["agree" if entry["verdict"] == "yes" else "disagree"] += 1
     return {
         "validated": all(entry["verdict"] is not None for entry in entries),
+        "short": list(calibration.get("short", [])),
         "location": {tool: dict(sorted(c.items())) for tool, c in sorted(location.items())},
         "acted_on": {basis: dict(sorted(c.items())) for basis, c in sorted(acted.items())},
     }

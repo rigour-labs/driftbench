@@ -27,9 +27,11 @@ def test_reportable_repo_renders_tables_with_intervals_and_unvalidated_status(tm
 
 def test_small_repo_says_insufficient_data(tmp_path):
     result, _ = summary(tmp_path, prs=1, points=3)
-    page = render("2026-10-08", [result], {}, {"validated": True, "location": {"alpha": {"yes": 3}}, "acted_on": {}})
+    page = render("2026-10-08", [result], {}, {"validated": True, "short": ["short: 3 of 50 location matches"],
+                                               "location": {"alpha": {"yes": 3}}, "acted_on": {}})
     assert "**Insufficient data:** 3 acted-on points (minimum 20)" in page and "| Entrant |" not in page
-    assert "Hand-checked sample: complete." in page and "alpha, same issue at a location match: yes 3" in page
+    assert "Hand-checked sample: complete (short: 3 of 50 location matches)." in page
+    assert "alpha, same issue at a location match: yes 3" in page and "left out of the calibration sample" in page
 
 
 def test_per_class_uses_only_given_labels():

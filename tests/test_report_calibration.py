@@ -49,6 +49,13 @@ def test_round_trip_validation_and_summary(tmp_path):
         read_calibration(path)
 
 
+def test_short_pools_are_recorded():
+    small = draw(ledger_rows()[:45], points()[:3], seed=1)  # only no-tool rows and three direct points
+    assert "short: 0 of 50 location matches" in small["short"]
+    assert "short: 2 of 10 acted-on (direct yes)" in small["short"]
+    assert summarise_calibration(small)["short"] == small["short"]
+
+
 def test_partial_sample_is_not_validated():
     calibration = draw(ledger_rows(), points(), seed=1)
     calibration["entries"][0]["verdict"] = "partly"
