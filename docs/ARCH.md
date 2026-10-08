@@ -36,7 +36,8 @@ score   ──► results/<date>/summary.md    committed tables
 | `labels/` | Label schema, rules pass, merge with confirmations | PR 4 |
 | `harness/` | Adapter interface, time-correct checkout, runner | PR 5 |
 | `adapters/` | One module per entrant | PR 5, 8 |
-| `score/` | Location matching, noise, false blocks, per-class tables | PR 6 |
+| `score/` | Location matching, noise, false blocks, ledger | PR 6 |
+| `report/` | Markdown tables, per-class results, calibration samples | PR 7 |
 
 ## Adapter boundary
 
@@ -47,10 +48,14 @@ knows which tool produced a finding.
 
 ## Where runs happen
 
-Runs execute in GitHub Actions with blobless clones (`--filter=blob:none`).
-Some repositories are over 1 GB, and nothing large is downloaded to a
-contributor's machine by default. Local development uses small recorded
-fixtures under `tests/fixtures/`.
+Real runs execute in GitHub Actions (or other remote compute), never on a
+contributor's machine: clones of these repositories (some over 1 GB) plus
+package caches don't belong on a laptop. Clones are blobless
+(`--filter=blob:none`). `work/` from a run is uploaded as a workflow artifact
+and attached to a **draft** release; nothing is published from CI.
+
+Local development uses synthetic fixtures (`tests/fixtures/`, `tests/*_fixtures.py`)
+and at most one small repository.
 
 The workflow is least-privilege: `contents: read` everywhere, except the
 release job that uploads run assets (`contents: write`). Third-party actions

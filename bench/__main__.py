@@ -10,6 +10,7 @@ from bench.collect.corpus import CorpusError, collect_repo, read_corpus, write_c
 from bench.collect.github import GitHubClient, GitHubError, require_gh
 from bench.harness.cli import add_run_parser
 from bench.labels.cli import add_label_parser
+from bench.score.cli import add_score_parser
 from bench.points.points_file import build_points, write_points
 from bench.repos import RepoListError, load_repos
 
@@ -51,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     add_label_parser(commands, ROOT)
     add_run_parser(commands, ROOT)
+    add_score_parser(commands, ROOT)
     return parser
 
 

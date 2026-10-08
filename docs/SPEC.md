@@ -248,6 +248,28 @@ guards keep it honest:
 **N = 3** is the headline. A sensitivity table repeats the headline at N = 0
 and N = 10.
 
+How a match is decided (`bench score`):
+- Only location-scorable points count: kept, with a round, inline, with a
+  line on the new side.
+- A tool may use its findings on the head of any round from 1 up to the
+  point's own round; never a later one.
+- A finding in the point's file is carried from its head to the commit the
+  point was written on. The file at the two commits is diffed: an unchanged
+  line keeps its place, and a line in a changed region maps to where that
+  region starts. Its distance to the anchored line (or range) is measured,
+  and the closest finding decides. A file that can't be read at either
+  commit gives no match.
+- A head the tool failed on (`error`) or couldn't get (`unavailable`) gives
+  it no findings, so it counts as a miss. The counts of `error` and
+  `unavailable` heads are reported per entrant next to its scores, so
+  failures can't pass for silence.
+- Every decision, with the closest finding and its distance, is written to
+  the match ledger (a release asset).
+
+**Rule NOISE-1:** an entrant is labelled **noise** when its N = 3 catch rate is
+at least 75% of every-hunk's and its findings per 100 changed lines are at
+least 50% of every-hunk's.
+
 Body points have no anchor, so location matching can't score them. They are
 counted and reported as *not location-scorable*. An LLM judge for body points
 and semantic matches is a planned **optional, paid** column. It runs only with
@@ -257,8 +279,13 @@ explicit approval and a dollar cap, and is never part of the headline.
 
 - Per tool, per repository. Pooled numbers only alongside per-repo ones.
 - A repository is reported only with **at least 20 acted-on points and at
-  least 10 approved heads**. Below that, the table says *insufficient data*
-  instead of a number.
+  least 10 approved heads** (trusted approvals, not overridden; counted from
+  the corpus). Below that, the table says *insufficient data* instead of a
+  number.
+- False blocks count must-not-block heads with at least one blocking
+  finding, over approved heads. Heads that fell back to the merged head are
+  reported separately; overridden approvals and heads the tool failed on are
+  counted and left out.
 - Both denominators are reported: **all substantive points** and **acted-on
   points**.
 - Each run records the tool version, settings and flags, and these appear
