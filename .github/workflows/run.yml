@@ -1,0 +1,209 @@
+name: run
+
+# Run the free entrants on a frozen corpus, score, and make a DRAFT release
+# (docs/ARCH.md). The corpus is a published `corpus-*` release (made by
+# collect.yml, checked with `bench guard`, then published), so the run's notes
+# name exactly which corpus it used. Labels must already be committed on the branch this runs on:
+# `bench report` withholds per-class results otherwise. Paid entrants are
+# refused by the harness. The diffs handed to tools (work/runs/*/_scratch)
+# contain the projects' code and are never uploaded.
+
+on:
+  workflow_dispatch:
+    inputs:
+      corpus_tag:
+        description: Published corpus release tag, e.g. corpus-2026-10-09-123456789
+        required: true
+      entrants:
+        description: Entrants (space separated; `free` = every free entrant)
+        default: free
+
+permissions:
+  contents: read
+
+concurrency:
+  group: run
+  cancel-in-progress: false
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      name: ${{ steps.stamp.outputs.name }}
+      repos: ${{ steps.repos.outputs.repos }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - id: stamp
+        run: echo "name=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      - name: Fix the run record once (start time, entrant versions, label blob hashes)
+        env:
+          ENTRANTS: ${{ inputs.entrants }}
+          NAME: ${{ steps.stamp.outputs.name }}
+        run: |
+          # word splitting of ENTRANTS is intended: one argument per entrant name
+          python -m bench manifest --entrants $ENTRANTS --out "manifest/$NAME"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: manifest
+          path: manifest/${{ steps.stamp.outputs.name }}/run.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Fetch the frozen corpus
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.corpus_tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'corpus-*.json' --dir release
+          mkdir -p work/corpus
+          for f in release/corpus-*.json; do mv "$f" "work/corpus/${f#release/corpus-}"; done
+      - id: repos
+        run: |
+          python3 -c "import json,pathlib; print('repos=' + json.dumps(sorted(json.loads(p.read_text())['repo'] for p in pathlib.Path('work/corpus').glob('*.json'))))" >> "$GITHUB_OUTPUT"
+
+  review:
+    needs: start
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: ${{ fromJSON(needs.start.outputs.repos) }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+      - run: pip install -e .
+      - name: Fetch the frozen corpus
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.corpus_tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.json' --dir release
+          mkdir -p work/corpus work/points
+          for f in release/corpus-*.json; do mv "$f" "work/corpus/${f#release/corpus-}"; done
+          for f in release/points-*.json; do mv "$f" "work/points/${f#release/points-}"; done
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: manifest
+          path: work/runs/${{ needs.start.outputs.name }}
+      - name: Review every head (run.json from the start job is kept, never recomputed)
+        env:
+          ENTRANTS: ${{ inputs.entrants }}
+          REPO: ${{ matrix.repo }}
+          NAME: ${{ needs.start.outputs.name }}
+        run: |
+          # word splitting of ENTRANTS is intended: one argument per entrant name
+          python -m bench run --entrants $ENTRANTS --repo "$REPO" --out "work/runs/$NAME"
+      - name: Slug
+        id: slug
+        env:
+          REPO: ${{ matrix.repo }}
+        run: echo "slug=${REPO/\//__}" >> "$GITHUB_OUTPUT"
+      - run: python -m bench.release_check "work/runs/${{ needs.start.outputs.name }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runs-${{ steps.slug.outputs.slug }}
+          path: |
+            work/runs/${{ needs.start.outputs.name }}
+            !work/runs/${{ needs.start.outputs.name }}/_scratch
+          if-no-files-found: error
+          retention-days: 90
+
+  score:
+    needs: [start, review]
+    runs-on: ubuntu-latest
+    timeout-minutes: 340  # file versions come through the rate-limited API
+    env:
+      NAME: ${{ needs.start.outputs.name }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0  # label commit times are checked against the run's start
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Fetch the frozen corpus
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.corpus_tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.json' --dir release
+          mkdir -p work/corpus work/points
+          for f in release/corpus-*.json; do mv "$f" "work/corpus/${f#release/corpus-}"; done
+          for f in release/points-*.json; do mv "$f" "work/points/${f#release/points-}"; done
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: runs-*
+          merge-multiple: true
+          path: work/runs/${{ needs.start.outputs.name }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: manifest
+          path: work/runs/${{ needs.start.outputs.name }}
+      - name: Score, draw the calibration sample, report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m bench score --run "work/runs/$NAME" --out "results/$NAME"
+          python -m bench calibrate draw --run "work/runs/$NAME" --results "results/$NAME" --seed "$GITHUB_RUN_ID"
+          python -m bench report --run "work/runs/$NAME" --results "results/$NAME"
+      - run: python -m bench.release_check "results/$NAME" "work/runs/$NAME"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: results
+          path: |
+            results/${{ needs.start.outputs.name }}
+            work/runs/${{ needs.start.outputs.name }}
+          if-no-files-found: error
+          retention-days: 90
+
+  draft-release:
+    needs: [start, score]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      NAME: ${{ needs.start.outputs.name }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: results
+          path: out
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CORPUS_TAG: ${{ inputs.corpus_tag }}
+        run: |
+          tar -czf "runs-$NAME.tar.gz" -C "out/work/runs" "$NAME"
+          {
+            echo "Run of the free entrants (draft; not published until checked with \`bench guard\`)."
+            echo
+            echo "- run record (start time, entrant versions, label commit and blob hashes):"
+            echo
+            echo '```json'
+            cat "out/work/runs/$NAME/run.json"
+            echo '```' 
+            echo "- corpus: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/$CORPUS_TAG"
+            echo "- this run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- commit: ${GITHUB_SHA}"
+          } > notes.md
+          gh release create "run-$NAME" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
+            --title "run-$NAME" --notes-file notes.md \
+            "runs-$NAME.tar.gz" "out/work/runs/$NAME/ledger.jsonl" \
+            "out/results/$NAME/summary.md" "out/results/$NAME/calibration.yaml"

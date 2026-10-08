@@ -15,8 +15,9 @@ from pathlib import Path
 from bench.harness.cases import ReviewCase, cases_for_pr, heads_to_run
 from bench.harness.diffstat import changed_lines, parse_hunks
 from bench.harness.gitrepo import GitError, RepoCheckout
+from bench.harness.publish import published_finding
 from bench.harness.sandbox import env_keys, sandbox
-from bench.harness.types import Adapter, AdapterError, ReviewInput, ReviewOutput
+from bench.harness.types import Adapter, ReviewInput, ReviewOutput
 from bench.repos import slug_of
 
 RECORD_SCHEMA = 1
@@ -46,8 +47,7 @@ def safe_review(adapter: Adapter, request: ReviewInput) -> tuple[ReviewOutput, f
         output = adapter.review(request)
     except Exception as exc:  # the harness must outlive any adapter failure
         print(f"warning: {adapter.name} failed on {request.head_sha[:12]}: {exc}", file=sys.stderr)
-        raw = exc.raw if isinstance(exc, AdapterError) else ""
-        output = ReviewOutput(findings=[], verdict="error", raw=raw, error=f"{type(exc).__name__}: {exc}")
+        output = ReviewOutput(findings=[], verdict="error", error=f"{type(exc).__name__}: {exc}")
     return output, round(time.monotonic() - started, 3)
 
 
@@ -66,7 +66,7 @@ def prepare(checkout: RepoCheckout, pr: dict, head: str, config: RunConfig) -> t
 
 def unavailable(exc: GitError) -> dict:
     return {"base_sha": None, "changed_lines": None, "verdict": "unavailable", "findings": [],
-            "wall_s": None, "error": str(exc), "raw": ""}
+            "wall_s": None, "error": str(exc)}
 
 
 def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, config: RunConfig) -> dict:
@@ -84,20 +84,18 @@ def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, conf
         "base_sha": base,
         "changed_lines": changed_lines(parse_hunks(diff_path.read_text(encoding="utf-8"))),
         "verdict": output.verdict,
-        "findings": [dataclasses.asdict(f) for f in output.findings],
+        "findings": [published_finding(dataclasses.asdict(f)) for f in output.findings],
         "wall_s": wall_s,
         "cost_usd": output.cost_usd,
         "input_tokens": output.input_tokens,
         "output_tokens": output.output_tokens,
-        "error": output.error,
-        "raw": output.raw,
+        "error": output.error[:300],
     }
 
 
 def write_record(path: Path, header: dict, result: dict) -> None:
+    """The record only: findings already reduced (bench/harness/publish.py); no raw tool output."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    raw = result.pop("raw", "")
-    path.with_suffix(".raw.txt").write_text(raw, encoding="utf-8")
     path.write_text(json.dumps({**header, **result}, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
 

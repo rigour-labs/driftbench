@@ -18,6 +18,8 @@ from typing import Any
 MIN_INTERVAL_S = 0.8
 MAX_RETRIES = 6
 RATE_LIMIT_MARKERS = ("rate limit", "abuse detection", "http 429")
+PRIMARY_LIMIT_MARKER = "api rate limit exceeded"  # hourly quota; wait for its reset
+MAX_RESET_WAIT_S = 3700
 MIN_GH_VERSION = (2, 48, 0)  # first release with `gh api --slurp`
 
 Runner = Callable[[list[str]], subprocess.CompletedProcess]
@@ -51,10 +53,12 @@ def require_gh(runner: Runner = run_gh) -> None:
 
 
 class GitHubClient:
-    def __init__(self, cache_dir: Path | None, runner: Runner = run_gh, sleep: Callable[[float], None] = time.sleep):
+    def __init__(self, cache_dir: Path | None, runner: Runner = run_gh, sleep: Callable[[float], None] = time.sleep,
+                 clock: Callable[[], float] = time.time):
         self.cache_dir = cache_dir
         self.runner = runner
         self.sleep = sleep
+        self.clock = clock
         self.last_call = 0.0
 
     def get(self, path: str, params: dict[str, str] | None = None) -> Any:
@@ -102,8 +106,20 @@ class GitHubClient:
                 return None
             if not any(marker in output.lower() for marker in RATE_LIMIT_MARKERS):
                 raise GitHubError(f"gh api {path} failed: {output.strip()[:300]}")
-            self.sleep(60 * (attempt + 1))
+            if PRIMARY_LIMIT_MARKER in output.lower():
+                self.wait_for_reset()
+            else:
+                self.sleep(60 * (attempt + 1))
         raise GitHubError(f"gh api {path}: still rate limited after {MAX_RETRIES} attempts")
+
+    def wait_for_reset(self) -> None:
+        """Sleep until the hourly quota resets (from `gh api rate_limit`), at most MAX_RESET_WAIT_S."""
+        result = self.runner(["gh", "api", "rate_limit"])
+        try:
+            reset = int(json.loads(result.stdout)["resources"]["core"]["reset"])
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+            reset = int(self.clock()) + 60
+        self.sleep(max(5.0, min(reset - self.clock() + 5, MAX_RESET_WAIT_S)))
 
     def throttle(self) -> None:
         wait = MIN_INTERVAL_S - (time.monotonic() - self.last_call)

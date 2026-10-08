@@ -350,8 +350,16 @@ explicit approval and a dollar cap, and is never part of the headline.
 - `main`: the method, scripts, `repos.yaml`, label files, and under
   `results/<date>/` the published summaries, `summary.md` and the calibration
   sample with its verdicts (added by pull request after each run).
-- GitHub Release `run-YYYY-MM-DD` per run: the frozen corpus, raw tool
-  outputs, verdict ledgers, logs and the calibration sample.
+- GitHub Release `corpus-<date>-<id>`: the frozen corpus and points files.
+  GitHub Release `run-<date>` per run: the run records, the match ledger,
+  `summary.md`, the calibration sample, and the full per-repository scores
+  (`scores/`, raw reproducibility data; the reported results are the ones in
+  `results/`). Its notes carry the run record: start time, entrant versions,
+  and the label commit and blob hashes.
+- **Tools' own output is reduced to rule, location and a short message
+  without code** (at most 80 characters; anything quoted or after "Found:"
+  removed). A tool's raw output is not stored. The projects' code is never
+  republished, and neither are the diffs handed to tools.
 - The frozen corpus holds IDs, SHAs, anchors and timestamps, and a SHA-256
   and length for each review or comment text, never the text itself. A run
   fetches text by ID and checks it against the hash. Text edited or deleted

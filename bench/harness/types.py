@@ -35,7 +35,6 @@ class ReviewInput:
 class ReviewOutput:
     findings: list[Finding]
     verdict: str              # "pass", "fail" (the tool blocks) or "error"
-    raw: str = ""             # the tool's own output, published with the run
     cost_usd: float | None = None
     input_tokens: int | None = None
     output_tokens: int | None = None
@@ -43,11 +42,7 @@ class ReviewOutput:
 
 
 class AdapterError(RuntimeError):
-    """An adapter couldn't produce a review; `raw` keeps whatever the tool printed."""
-
-    def __init__(self, message: str, raw: str = ""):
-        super().__init__(message)
-        self.raw = raw
+    """An adapter couldn't produce a review."""
 
 
 class Adapter(Protocol):

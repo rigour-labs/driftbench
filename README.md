@@ -49,7 +49,7 @@ In short:
 **Disclosure:** this repository is maintained by Rigour Labs, which makes one
 of the entrants. Rigour gets no special handling: it is one adapter behind the
 same interface as the others, and the scoring code doesn't know which tool
-produced a finding. Every raw output is published so anyone can check this.
+produced a finding. Every run record is published so anyone can check this.
 
 ## Repositories
 

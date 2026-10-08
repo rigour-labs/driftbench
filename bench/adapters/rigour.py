@@ -30,7 +30,7 @@ def load_report(stdout: str, returncode: int) -> dict:
     try:
         return json.loads(stdout)
     except json.JSONDecodeError as exc:
-        raise AdapterError(f"exit {returncode}: no JSON report", raw=stdout) from exc
+        raise AdapterError(f"exit {returncode}: no JSON report") from exc
 
 
 def parse_report(report: dict) -> list[Finding]:
@@ -54,4 +54,4 @@ class RigourDeterministic:
             raise AdapterError(f"timed out after {request.timeout_s}s") from exc
         report = load_report(result.stdout, result.returncode)
         verdict = "fail" if report.get("status") == "FAIL" else "pass"
-        return ReviewOutput(findings=parse_report(report), verdict=verdict, raw=result.stdout)
+        return ReviewOutput(findings=parse_report(report), verdict=verdict)

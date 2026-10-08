@@ -17,7 +17,7 @@ points  ──► work/points/<repo>.json      review points, drop rules, acted-
 label   ──► labels/<repo>.yaml           committed; point IDs, suggested and confirmed class (no text)
    │
    ▼
-run     ──► work/runs/<date>/<tool>/<repo>/<pr>/<head>.json (+ .raw.txt)
+run     ──► work/runs/<date>/<tool>/<repo>/<pr>/<head>.json
    │         one record per (tool, reviewed head): cases on that head, findings,
    │         verdict, changed lines, wall time, usage, tool version; resumable
    ▼
@@ -57,9 +57,33 @@ and attached to a **draft** release; nothing is published from CI.
 Local development uses synthetic fixtures (`tests/fixtures/`, `tests/*_fixtures.py`)
 and at most one small repository.
 
-The workflow is least-privilege: `contents: read` everywhere, except the
-release job that uploads run assets (`contents: write`). Third-party actions
-are pinned by commit SHA.
+The order of a release, every step remote except labelling and the checks:
+
+1. **Collect** (`collect.yml`, dispatched by hand): `bench collect` and
+   `bench points` with the default `GITHUB_TOKEN` (1,000 API requests an
+   hour; the client waits for each reset). The API cache stays in the Actions
+   cache, never in an artifact or release, because it holds review text. A
+   draft release `corpus-<date>-<run id>` gets the corpus and points files.
+2. A maintainer downloads that draft, runs `bench guard` and
+   `python -m bench.release_check` on it, and publishes it.
+3. **Label**: the maintainer draws the sample from that corpus's points file
+   and labels it locally (`bench label sample`, `bench label next`); only the
+   label files are committed, before step 4.
+4. **Run** (`run.yml`, input: the corpus tag): one job writes the run
+   record once (`bench manifest`: start time, entrant versions, label commit
+   and blob hashes) and every later job reuses that file, one job per repository runs the free
+   entrants, one job scores, draws the calibration sample and writes the
+   report; a draft release `run-<date>` gets the run records, ledger,
+   summary and calibration sample, with `run_started_at` and the corpus tag in
+   its notes. The diffs handed to tools contain the projects' code and are
+   never uploaded.
+5. A maintainer runs `bench guard` and the release check on the draft's
+   assets, publishes it, fills the calibration verdicts, and opens a pull
+   request adding `results/<date>/`.
+
+The workflows are dispatched by hand and least-privilege: `contents: read`
+everywhere, except the job that creates a draft release (`contents: write`).
+Actions are pinned by commit SHA, and no personal token is used.
 
 ## Paid entrants
 

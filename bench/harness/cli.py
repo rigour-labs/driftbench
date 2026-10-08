@@ -27,6 +27,12 @@ def add_run_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     run.add_argument("--labels", type=Path, default=root / "labels", help="label files fixed at run start")
     run.set_defaults(handler=cmd_run)
 
+    manifest = commands.add_parser("manifest", help="write <out>/run.json once, before a run split across jobs")
+    manifest.add_argument("--entrants", nargs="+", default=["free"])
+    manifest.add_argument("--out", type=Path, required=True)
+    manifest.add_argument("--labels", type=Path, default=root / "labels")
+    manifest.set_defaults(handler=cmd_manifest)
+
 
 def cmd_run(args: argparse.Namespace) -> int:
     try:
@@ -63,6 +69,8 @@ def run_manifest(out: Path, adapters: list, labels_dir: Path) -> dict:
 
     It fixes the labels by content (bench/labels/fingerprint.py): the HEAD
     commit and the blob hash of every label file at the moment the run began.
+    A run split across jobs writes it once (`bench manifest`) and gives every
+    job the same file, so nothing is recomputed per job.
     """
     path = out / "run.json"
     if path.exists():
@@ -75,6 +83,16 @@ def run_manifest(out: Path, adapters: list, labels_dir: Path) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     return manifest
+
+
+def cmd_manifest(args: argparse.Namespace) -> int:
+    try:
+        manifest = run_manifest(args.out, select_adapters(args.entrants), args.labels)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(json.dumps(manifest, sort_keys=True))
+    return 0
 
 
 def read_manifest(path: Path) -> dict:

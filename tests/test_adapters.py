@@ -36,9 +36,8 @@ def test_rigour_review_verdicts(tmp_path, monkeypatch):
     assert output.verdict == "fail" and len([f for f in output.findings if f.blocking]) == 2
 
     monkeypatch.setattr(rigour.subprocess, "run", lambda args, **k: subprocess.CompletedProcess(args, 2, "oops", "err"))
-    with pytest.raises(AdapterError, match="no JSON report") as no_json:
+    with pytest.raises(AdapterError, match="no JSON report"):
         rigour.RigourDeterministic().review(request(tmp_path))
-    assert no_json.value.raw == "oops"
 
     def timeout(args, **kwargs):
         raise subprocess.TimeoutExpired(args, 5)

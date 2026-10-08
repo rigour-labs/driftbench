@@ -32,7 +32,7 @@ class FailingTool:
     name, version, paid, reads_history = "failing", "1", False, False
 
     def review(self, request):
-        raise AdapterError("no report", raw="partial output")
+        raise AdapterError("no report")
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ def test_one_record_per_head_with_cases_diff_and_timing(setup):
     second = read(config, EveryHunk(), origin["head2"])
     assert [c["case_id"] for c in second["cases"]] == ["5-round-2", "5-must-not-block"]  # shared head, run once
     assert second["cases"][1]["source"] == "approved" and second["wall_s"] >= 0
-    assert record_path(config, EveryHunk(), "o/r", 5, origin["head2"]).with_suffix(".raw.txt").exists()
+    assert not record_path(config, EveryHunk(), "o/r", 5, origin["head2"]).with_suffix(".raw.txt").exists()
 
 
 def test_no_state_survives_between_heads(setup):
@@ -78,8 +78,8 @@ def test_crash_is_recorded_and_runs_resume(setup):
     assert "RuntimeError: boom" in read(config, CrashingTool(), origin["head1"])["error"]
     assert run_corpus(CrashingTool(), checkout, corpus, config) == {"written": 0, "skipped": 2}
     run_corpus(FailingTool(), checkout, corpus, config)
-    path = record_path(config, FailingTool(), "o/r", 5, origin["head1"])
-    assert path.with_suffix(".raw.txt").read_text() == "partial output"
+    record = read(config, FailingTool(), origin["head1"])
+    assert record["error"] == "AdapterError: no report" and "raw" not in record
 
 
 def test_unavailable_commit_and_history_adapters(setup):
@@ -105,32 +105,40 @@ def test_read_record_rejects_bad_files(tmp_path):
 
 
 class EnvTool:
-    """Reports the environment a child process of the tool actually gets."""
+    """Keeps the environment a child process of the tool actually gets, per head."""
     name, version, paid, reads_history = "env", "1", False, False
+
+    def __init__(self):
+        self.seen: dict[str, str] = {}
 
     def review(self, request):
         dump = subprocess.run(["env"], env=request.env, capture_output=True, text=True, check=True).stdout
-        return ReviewOutput([Finding(None, None, False, dump)], "pass")
+        self.seen[request.head_sha] = dump
+        return ReviewOutput([], "pass")
 
 
 class RefsTool:
-    """Reports every ref and every commit reachable from any ref in its workdir."""
+    """Keeps every ref and every commit reachable from any ref in its workdir, per head."""
     name, version, paid, reads_history = "refs", "1", False, False
+
+    def __init__(self):
+        self.seen: dict[str, str] = {}
 
     def review(self, request):
         def git_out(*args):
             return subprocess.run(["git", "-C", str(request.workdir), *args], capture_output=True, text=True).stdout
-        seen = git_out("for-each-ref") + "|" + git_out("log", "--all", "--format=%H")
-        return ReviewOutput([Finding(None, None, False, seen)], "pass")
+        self.seen[request.head_sha] = git_out("for-each-ref") + "|" + git_out("log", "--all", "--format=%H")
+        return ReviewOutput([], "pass")
 
 
 def test_tools_get_a_minimal_env_and_a_fresh_home(setup, monkeypatch):
     corpus, checkout, config, origin = setup
     for name in ("RIGOUR_TEAM_ID", "GH_TOKEN", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
         monkeypatch.setenv(name, "planted-secret")
-    run_corpus(EnvTool(), checkout, corpus, config)
-    record = read(config, EnvTool(), origin["head1"])
-    dump = record["findings"][0]["message"]
+    tool = EnvTool()
+    run_corpus(tool, checkout, corpus, config)
+    record = read(config, tool, origin["head1"])
+    dump = tool.seen[origin["head1"]]
     assert "planted-secret" not in dump
     env = dict(line.split("=", 1) for line in dump.splitlines() if "=" in line)
     assert env["HOME"] != str(Path.home()) and env["RIGOUR_TELEMETRY"] == "0" and env["DO_NOT_TRACK"] == "1"
@@ -142,8 +150,9 @@ def test_tools_cannot_see_refs_or_commits_after_the_head(setup):
     corpus, checkout, config, origin = setup
     future = commit_file(Path(origin["path"]), "app.py", "def f():\n    return 99\n", "future on main")
     git(Path(origin["path"]), "tag", "v9", future)
-    run_corpus(RefsTool(), checkout, corpus, config)
-    refs, reachable = read(config, RefsTool(), origin["head1"])["findings"][0]["message"].split("|")
+    tool = RefsTool()
+    run_corpus(tool, checkout, corpus, config)
+    refs, reachable = tool.seen[origin["head1"]].split("|")
     assert refs == ""                                   # no origin/main, no branches, no tags
     assert future not in reachable and origin["head2"] not in reachable
     assert set(reachable.split()) == {origin["base"], origin["head1"]}
@@ -160,3 +169,13 @@ def test_run_manifest_keeps_the_first_start_and_fixes_the_labels(tmp_path):
     assert first["entrants"] == {"no-tool": "1"} and set(first["labels"]["files"]) == {"o__r.yaml"}
     assert len(first["labels"]["commit"]) == 40
     assert run_manifest(tmp_path / "run", [EveryHunk()], repo / "labels") == first   # resume keeps it
+
+
+def test_manifest_command_writes_once_for_split_jobs(tmp_path, capsys):
+    from bench.__main__ import main
+    out = tmp_path / "run"
+    assert main(["manifest", "--entrants", "free", "--out", str(out), "--labels", str(tmp_path / "none")]) == 0
+    written = (out / "run.json").read_text()
+    assert main(["manifest", "--entrants", "no-tool", "--out", str(out), "--labels", str(tmp_path / "none")]) == 0
+    assert (out / "run.json").read_text() == written          # the first record is kept
+    assert '"rigour": "6.8.1"' in written and '"files": {}' in written

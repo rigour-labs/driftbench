@@ -40,7 +40,6 @@ class Adapter(Protocol):
 | `error` | Why, when `verdict` is `"error"` |
 | `cost_usd` | Dollars if the tool reports them, else `None` |
 | `input_tokens`, `output_tokens` | If reported, else `None` |
-| `raw` | The tool's own output, stored as a release asset |
 
 **`blocking`** must follow the tool's own semantics: the finding fails the
 check, or the tool marks it as must-fix. Don't map severities to "blocking"
@@ -63,8 +62,9 @@ just to look stricter or quieter. The mapping is reviewed in the pull request.
 
 Open a pull request with the adapter and its test. A maintainer runs the
 free entrants on the next scheduled run. Paid entrants run when someone funds
-the run. Either way the run's raw outputs are published, so you can check how
-your tool was invoked.
+the run. Either way the run records are published, so you can check how your
+tool was invoked. Each finding is kept as rule, location and a short message:
+the harness strips quoted code and doesn't keep raw output.
 
 ## Other contributions
 
