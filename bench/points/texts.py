@@ -37,3 +37,16 @@ class TextSource:
             items = self.client.get_all(KIND_PATHS[kind].format(repo=self.repo, pr=pr))
             self.loaded[key] = {item["id"]: item.get("body") or "" for item in items}
         return self.loaded[key]
+
+
+POINT_KINDS = {"inline": "inline", "body": "review", "conversation": "conversation"}
+
+
+def point_text(texts: TextSource, point: dict) -> str | None:
+    """A point's own text (its span of the source), or None if the source changed (TEXT-1)."""
+    source = {"id": point["source_id"], "body_sha256": point["body_sha256"]}
+    text = texts.verified_text(point["pr"], POINT_KINDS[point["kind"]], source)
+    if text is None or not point.get("span"):
+        return text
+    start, end = point["span"]
+    return text[start:end]

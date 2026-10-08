@@ -1,6 +1,7 @@
 """Turn each frozen PR record into review points (docs/SPEC.md, "Review points").
 
-A point keeps IDs, a character span and an anchor, never text. A dropped
+A point keeps IDs, a character span, an anchor and its source text's
+SHA-256 (so the text can be fetched and checked later), never text. A dropped
 point stays in the output with the rule that dropped it. A point is
 `scorable` when it isn't dropped and has a round (a reviewed head to run a
 tool on).
@@ -49,6 +50,7 @@ def inline_points(pr: dict, texts: TextSource, acted: Acted) -> list[dict]:
     for comment in pr["comments"]:
         anchor = {key: comment[key] for key in ("path", "line", "start_line", "side", "commit_sha")}
         base = {"pr": pr["number"], "kind": "inline", "source_id": comment["id"], "round": comment["round"],
+                "body_sha256": comment["body_sha256"],
                 "head_sha": comment["commit_sha"], "anchor": anchor, "acted_on": None, "acted_basis": None}
         dropped = "AUTHOR-1" if comment["by_author"] else "THREAD-1" if comment["in_reply_to"] else None
         if not dropped:
@@ -65,6 +67,7 @@ def body_points(pr: dict, texts: TextSource) -> list[dict]:
     for review in pr["reviews"]:
         if review["body_chars"]:
             base = {"pr": pr["number"], "kind": "body", "source_id": review["id"], "round": review["round"],
+                    "body_sha256": review["body_sha256"],
                     "head_sha": review["commit_sha"], "anchor": None, "acted_on": None}
             points += split_points(base, texts.verified_text(pr["number"], "review", review))
     return points
@@ -74,6 +77,7 @@ def conversation_points(pr: dict, texts: TextSource) -> list[dict]:
     points = []
     for comment in pr["conversation"]:
         base = {"pr": pr["number"], "kind": "conversation", "source_id": comment["id"], "round": comment["round"],
+                "body_sha256": comment["body_sha256"],
                 "head_sha": comment["head_sha"], "head_source": comment["head_source"], "anchor": None,
                 "acted_on": None}
         if comment["by_author"]:

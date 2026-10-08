@@ -14,7 +14,7 @@ collect ──► work/corpus/<repo>.json      frozen GitHub data: PRs, rounds, 
 points  ──► work/points/<repo>.json      review points, drop rules, acted-on (no text)
    │
    ▼
-label   ──► labels/<repo>.yaml           committed; IDs, spans, classes (no comment text)
+label   ──► labels/<repo>.yaml           committed; point IDs, suggested and confirmed class (no text)
    │
    ▼
 run     ──► work/runs/<date>/<tool>/<repo>/<pr>/<round>.json

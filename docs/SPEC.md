@@ -177,14 +177,16 @@ types or callers promise), **user journey** (behaviour a user sees),
 The labelling is a reproducible step, and the label files are part of every release:
 
 1. A rules pass (`bench label suggest`) proposes a class from the point text
-   and the files it touches. Its rules are in the repository and versioned.
+   by keyword (`bench/labels/rules.py`, versioned). It is only a suggestion.
 2. A human confirms or corrects each suggestion in `labels/<repo>.yaml`,
    recording the labeller and the guideline version (`docs/LABELLING.md`).
 3. Unconfirmed points are reported as `unclassified`, never under a guessed
    class.
 
-Label files hold comment IDs, character spans and classes, never the comment
-text. The text is fetched from GitHub when a run needs it.
+Label files hold point IDs, the suggested class, the confirmed class and the
+labeller, never the comment text. The text is fetched from GitHub when a
+labeller or a run needs it. The share of confirmed labels that match the
+suggestion is reported.
 
 **Disclosed limit:** the labeller for the first releases is the maintainer of
 this repository, who also maintains one entrant (Rigour). Labels are confirmed
