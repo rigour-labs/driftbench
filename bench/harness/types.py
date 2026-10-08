@@ -1,0 +1,57 @@
+"""The adapter boundary (CONTRIBUTING.md, "Adding a tool").
+
+The harness owns checkout, the diff, what history is visible, timing and
+scoring. An adapter only turns a ReviewInput into a ReviewOutput.
+"""
+from __future__ import annotations
+
+import dataclasses
+from pathlib import Path
+from typing import Protocol
+
+
+@dataclasses.dataclass(frozen=True)
+class Finding:
+    path: str | None
+    line: int | None  # head side; None when the finding has no line
+    blocking: bool    # the tool's own semantics: this finding fails its check
+    message: str
+    rule: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class ReviewInput:
+    workdir: Path        # checkout at head_sha; treat as read-only
+    base_sha: str        # merge base of the pull request's base and head_sha
+    head_sha: str
+    diff_path: Path      # unified diff base_sha...head_sha
+    history: dict | None  # only for adapters with reads_history; None otherwise
+    timeout_s: int
+
+
+@dataclasses.dataclass(frozen=True)
+class ReviewOutput:
+    findings: list[Finding]
+    verdict: str              # "pass", "fail" (the tool blocks) or "error"
+    raw: str = ""             # the tool's own output, published with the run
+    cost_usd: float | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    error: str = ""
+
+
+class AdapterError(RuntimeError):
+    """An adapter couldn't produce a review; `raw` keeps whatever the tool printed."""
+
+    def __init__(self, message: str, raw: str = ""):
+        super().__init__(message)
+        self.raw = raw
+
+
+class Adapter(Protocol):
+    name: str
+    version: str
+    paid: bool
+    reads_history: bool
+
+    def review(self, request: ReviewInput) -> ReviewOutput: ...

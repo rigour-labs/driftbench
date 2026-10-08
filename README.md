@@ -69,6 +69,7 @@ python -m venv .venv && .venv/bin/pip install -e '.[test]'
 .venv/bin/python -m bench collect        # freeze the corpus of reviewed PRs (GitHub API, free)
 .venv/bin/python -m bench points         # split reviews into points; check which were acted on
 .venv/bin/python -m bench label suggest  # suggest classes; a human confirms (docs/LABELLING.md)
+.venv/bin/python -m bench run --entrants free   # every free entrant on every reviewed head
 .venv/bin/python -m pytest               # harness and scoring tests
 ```
 

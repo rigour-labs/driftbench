@@ -24,7 +24,7 @@ class Adapter(Protocol):
 
 | Field | Meaning |
 |---|---|
-| `workdir` | Checkout of the repository at the round's head, read-only by convention |
+| `workdir` | Checkout of the repository at the round's head, read-only by convention. Anything the tool writes there is deleted before the next run (`git clean -ffdx`), so no state carries between rounds |
 | `base_sha`, `head_sha` | Merge base and the reviewed head |
 | `diff_path` | Unified diff `base_sha...head_sha` |
 | `history` | Only if `reads_history`: PR title, body, and comments posted before this round |
@@ -35,6 +35,8 @@ class Adapter(Protocol):
 | Field | Meaning |
 |---|---|
 | `findings` | List of `{path, line, blocking, message, rule}`. `line` is on the head side, or `None` if the finding has no line |
+| `verdict` | `"fail"` if the tool would block the change, `"pass"` if not, `"error"` if it couldn't review |
+| `error` | Why, when `verdict` is `"error"` |
 | `cost_usd` | Dollars if the tool reports them, else `None` |
 | `input_tokens`, `output_tokens` | If reported, else `None` |
 | `raw` | The tool's own output, stored as a release asset |

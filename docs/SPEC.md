@@ -107,6 +107,26 @@ scored: there is no reviewed head to compare a tool on. That count is
 reported. Points are reported by head source (`push`, `review`,
 `commit_date`); `commit_date` is approximate.
 
+### Running a tool
+
+`bench run` gives every entrant the same input for every distinct reviewed
+head (each round's head and the must-not-block head; a head shared by two
+cases is reviewed once):
+
+- a checkout of the repository at that head, forced and cleaned
+  (`git clean -ffdx`) before every run, so nothing a tool wrote in one run
+  (caches, its own state) reaches the next;
+- the diff from the merge base of the pull request's recorded base commit
+  and the head;
+- a time limit (default 900 s).
+
+No free entrant reads history, and this version gives history to no
+adapter; an adapter that declares it reads history is refused until a
+time-correct history builder exists. A head whose commit GitHub no longer
+serves is recorded as `unavailable` and reported, not dropped. The two
+baselines: `no-tool` (no findings) and `every-hunk` (one non-blocking
+finding on the first added line of every changed hunk).
+
 ### Review points
 
 `bench points` turns each frozen record into points. A point holds IDs, a

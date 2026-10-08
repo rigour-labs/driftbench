@@ -60,7 +60,9 @@ If the splitting rules or the comment change, the same ID can name different
 text. So `set` stores `text_sha256`, the hash of the exact text the labeller
 read. A label is used only while the point's current text has that hash;
 otherwise it is **stale**, reported as unclassified, and never carried over.
-`bench label status` counts stale labels.
+`bench label status` counts stale labels. `stale` includes labels whose point
+no longer exists; `dropped_ids` counts those again on their own, so don't add
+the two together.
 
 ## How to label
 

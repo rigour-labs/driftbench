@@ -17,8 +17,9 @@ points  ──► work/points/<repo>.json      review points, drop rules, acted-
 label   ──► labels/<repo>.yaml           committed; point IDs, suggested and confirmed class (no text)
    │
    ▼
-run     ──► work/runs/<date>/<tool>/<repo>/<pr>/<round>.json
-   │         one file per (tool, round): findings, usage, wall time, tool version
+run     ──► work/runs/<date>/<tool>/<repo>/<pr>/<head>.json (+ .raw.txt)
+   │         one record per (tool, reviewed head): cases on that head, findings,
+   │         verdict, changed lines, wall time, usage, tool version; resumable
    ▼
 score   ──► results/<date>/summary.md    committed tables
             work/runs/<date>/ledger.jsonl  every match decision, published as a release asset
