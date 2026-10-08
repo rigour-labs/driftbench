@@ -140,8 +140,10 @@ the merged head, or the file was removed. The basis is recorded:
   compare patch is exactly the later change;
 - `direct`: the branch was amended or force-pushed in place (it gained no
   upstream commits), so the file at the two commits is diffed directly;
-- `rebased`: the merged head was rebased onto newer upstream commits; a
-  direct diff would mix in upstream changes, so acted-on is unknown.
+- `rebased`: the merged head gained upstream commits, by a rebase onto a
+  newer base or by merging the base branch in; a direct diff would mix in
+  upstream changes, so acted-on is unknown. The test is the compare's
+  `ahead_by` against the pull request's own commit count.
 
 In a 10-PR tailscale sample, 26 of 35 kept inline points got an answer (24
 yes); 8 were `rebased` and 1 was on the old side.
