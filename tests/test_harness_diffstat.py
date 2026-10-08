@@ -38,6 +38,7 @@ def test_hunks_paths_and_first_added_line():
         ("new.py", 1, 1, 0),
     ]
     assert changed_lines(hunks) == 7
+    assert [h.last_line for h in hunks] == [3, 21, 0, 1]
 
 
 def test_plain_unified_diff_without_git_header():

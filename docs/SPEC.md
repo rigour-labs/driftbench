@@ -235,8 +235,9 @@ guards keep it honest:
 
 1. **Noise next to every number.** Every catch rate is published alongside
    *findings per 100 changed lines* and *blocks per approved head*.
-2. **An every-hunk baseline.** A pseudo-tool that flags every changed hunk
-   sets the ceiling a spraying tool could reach. An entrant whose catch rate
+2. **An every-hunk baseline.** A pseudo-tool that flags every changed hunk,
+   each finding spanning the hunk's added lines, sets the ceiling a spraying
+   tool could reach. An entrant whose catch rate
    and finding volume come close to that ceiling is labelled **noise** in the
    tables, whatever its catch rate.
 3. **Calibration.** A random sample of location matches (target: 50 per
@@ -257,8 +258,13 @@ How a match is decided (`bench score`):
   point was written on. The file at the two commits is diffed: an unchanged
   line keeps its place, and a line in a changed region maps to where that
   region starts. Its distance to the anchored line (or range) is measured,
-  and the closest finding decides. A file that can't be read at either
-  commit gives no match.
+  and the closest finding decides. A finding that covers a range of lines
+  (every-hunk spans each hunk's added lines) is at distance 0 when the
+  ranges overlap. A file that can't be read at either commit gives no match.
+- Catch rates are reported twice, with the same windows and denominators:
+  for **any finding**, and for **blocking findings only** ("would it have
+  stopped this"). An advisory note at the spot is weaker than a block
+  there.
 - A head the tool failed on (`error`) or couldn't get (`unavailable`) gives
   it no findings, so it counts as a miss. The counts of `error` and
   `unavailable` heads are reported per entrant next to its scores, so

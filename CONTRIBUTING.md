@@ -35,7 +35,7 @@ class Adapter(Protocol):
 
 | Field | Meaning |
 |---|---|
-| `findings` | List of `{path, line, blocking, message, rule}`. `line` is on the head side, or `None` if the finding has no line |
+| `findings` | List of `{path, line, blocking, message, rule, end_line}`. `line` is on the head side, or `None` if the finding has no line; `end_line` only when one finding covers a range |
 | `verdict` | `"fail"` if the tool would block the change, `"pass"` if not, `"error"` if it couldn't review |
 | `error` | Why, when `verdict` is `"error"` |
 | `cost_usd` | Dollars if the tool reports them, else `None` |

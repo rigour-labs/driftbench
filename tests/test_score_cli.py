@@ -25,7 +25,7 @@ def test_score_writes_summary_and_ledger(tmp_path, monkeypatch):
     assert summary["tools"]["every-hunk"]["catches"]["0"]["all"]["caught"] == 1
     ledger = read_ledger(run / "ledger.jsonl")
     assert ledger == [{"tool": "every-hunk", "point": "a", "pr": 1, "round": 1, "acted_on": True, "distance": 0,
-                       "head_sha": "h1", "finding": 0, "mapped_line": 10}]
+                       "blocking_distance": None, "head_sha": "h1", "finding": 0, "mapped_line": 10}]
 
 
 def test_score_fails_cleanly_without_points(tmp_path, monkeypatch):

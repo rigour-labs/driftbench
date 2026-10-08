@@ -17,6 +17,7 @@ class Finding:
     blocking: bool    # the tool's own semantics: this finding fails its check
     message: str
     rule: str = ""
+    end_line: int | None = None  # last line when a finding covers a range; None for a single line
 
 
 @dataclasses.dataclass(frozen=True)

@@ -23,6 +23,8 @@ def test_catches_by_window_and_denominators(tmp_path):
     assert catches["3"]["acted_on"] == {"caught": 1, "points": 1, "rate": 1.0}
     assert catches["10"]["all"]["caught"] == 3
     assert {row["point"]: row["distance"] for row in ledger} == {"a": 2, "b": 10, "c": 1}
+    assert {row["point"]: row["blocking_distance"] for row in ledger} == {"a": None, "b": 31, "c": 1}
+    assert summary["tools"]["tool"]["catches_blocking"]["3"]["all"]["caught"] == 1
     blocks = summary["tools"]["tool"]["false_blocks"]
     assert (blocks["approved_heads"], blocks["approved_heads_blocked"], blocks["blocks_per_approved_head"]) == (1, 1, 1.0)
     assert summary["tools"]["tool"]["findings_per_100_changed_lines"] == 1.5

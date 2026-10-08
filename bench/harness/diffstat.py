@@ -14,6 +14,7 @@ class Hunk:
     first_line: int  # first added line, or the hunk's head-side start when it only deletes
     added: int
     removed: int
+    last_line: int = 0  # last added line (first_line when the hunk only deletes)
 
 
 def parse_hunks(diff: str) -> list[Hunk]:
@@ -36,7 +37,7 @@ def parse_hunks(diff: str) -> list[Hunk]:
             flush(hunks, current)
             in_header = False
             current = {"path": path, "start": int(hunk.group(1)), "line": int(hunk.group(1)),
-                       "first": None, "added": 0, "removed": 0}
+                       "first": None, "last": None, "added": 0, "removed": 0}
         elif current is not None and not in_header:
             track(current, row)
     flush(hunks, current)
@@ -46,6 +47,7 @@ def parse_hunks(diff: str) -> list[Hunk]:
 def track(current: dict, row: str) -> None:
     if row.startswith("+"):
         current["first"] = current["first"] or current["line"]
+        current["last"] = current["line"]
         current["added"] += 1
         current["line"] += 1
     elif row.startswith("-"):
@@ -57,7 +59,8 @@ def track(current: dict, row: str) -> None:
 def flush(hunks: list[Hunk], current: dict | None) -> None:
     if current is None or current["path"] is None:
         return
-    hunks.append(Hunk(current["path"], current["first"] or current["start"], current["added"], current["removed"]))
+    first = current["first"] or current["start"]
+    hunks.append(Hunk(current["path"], first, current["added"], current["removed"], current["last"] or first))
 
 
 def changed_lines(hunks: list[Hunk]) -> int:

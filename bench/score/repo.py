@@ -26,10 +26,11 @@ def load_records(run_dir: Path, tool: str, repo: str) -> dict[int, list[dict]]:
     return by_pr
 
 
-def ledger_row(tool: str, point: dict, match: Match | None) -> dict:
-    """One match decision: the closest finding (if any) for one point and one tool."""
+def ledger_row(tool: str, point: dict, match: Match | None, blocking: Match | None) -> dict:
+    """One match decision: the closest finding (if any), and the closest blocking one, for one point and tool."""
     row = {"tool": tool, "point": point["id"], "pr": point["pr"], "round": point["round"],
-           "acted_on": point["acted_on"], "distance": None}
+           "acted_on": point["acted_on"], "distance": None,
+           "blocking_distance": blocking.distance if blocking else None}
     if match:
         row.update(head_sha=match.head_sha, finding=match.finding_index, mapped_line=match.mapped_line,
                    distance=match.distance)
@@ -39,16 +40,18 @@ def ledger_row(tool: str, point: dict, match: Match | None) -> dict:
 def score_tool(tool: str, corpus: dict, points: list[dict], run_dir: Path, versions: FileVersions) -> tuple[dict, list]:
     by_pr = load_records(run_dir, tool, corpus["repo"])
     rounds = {pr["number"]: pr["rounds"] for pr in corpus["prs"]}
-    matches, ledger = {}, []
+    matches, blocking, ledger = {}, {}, []
     for point in points:
         records = {r["head_sha"]: r for r in by_pr.get(point["pr"], [])}
-        match = closest_match(point, eligible_heads(point, rounds[point["pr"]]), records, versions)
-        matches[point["id"]] = match
-        ledger.append(ledger_row(tool, point, match))
+        heads = eligible_heads(point, rounds[point["pr"]])
+        matches[point["id"]] = closest_match(point, heads, records, versions)
+        blocking[point["id"]] = closest_match(point, heads, records, versions, blocking_only=True)
+        ledger.append(ledger_row(tool, point, matches[point["id"]], blocking[point["id"]]))
     acted = {p["id"] for p in points if p["acted_on"] is True}
     all_records = [r for records in by_pr.values() for r in records]
     tool_version = all_records[0]["tool_version"] if all_records else None
     metrics = {"version": tool_version, "catches": catch_rates(matches, acted),
+               "catches_blocking": catch_rates(blocking, acted),
                "false_blocks": false_blocks(by_pr), **volume_and_time(all_records)}
     return metrics, ledger
 
