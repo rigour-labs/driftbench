@@ -204,3 +204,10 @@ def test_smoke_runs_are_recorded_and_never_scored(tmp_path, capsys):
     full = tmp_path / "full"
     assert main(["manifest", "--entrants", "free", "--out", str(full), "--labels", str(tmp_path)]) == 0
     assert "smoke" not in read_manifest(full / "run.json")
+
+
+def test_a_failing_entrant_in_a_smoke_run_makes_one_attempt(setup):
+    corpus, checkout, config, origin = setup
+    smoke = dataclasses.replace(config, max_heads=1, min_changed_lines=5)
+    assert run_corpus(FailingTool(), checkout, corpus, smoke) == {"written": 1, "skipped": 0, "error": 1}
+    assert not record_path(smoke, FailingTool(), "o/r", 5, origin["head2"]).exists()

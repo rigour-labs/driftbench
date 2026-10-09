@@ -93,7 +93,7 @@ jobs:
         run: |
           paid_args=(--max-heads "$MAX_HEADS")
           if [ "$PAID" = "true" ]; then
-            paid_args=(--model "$MODEL" --max-usd "$MAX_USD" --provider "$PROVIDER")
+            paid_args+=(--model "$MODEL" --max-usd "$MAX_USD" --provider "$PROVIDER")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
           fi
           # word splitting of ENTRANTS is intended: one argument per entrant name
@@ -143,7 +143,7 @@ jobs:
           python-version: "3.12"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "20"
+          node-version: "22"  # Claude Code 2.1.285 requires >= 22
       - run: pip install -e .
       - name: Fetch the frozen corpus
         env:
@@ -162,7 +162,11 @@ jobs:
         if: needs.start.outputs.paid == 'true'
         env:
           CLAUDE_CODE: ${{ needs.start.outputs.claude_code }}
-        run: npm install --global "@anthropic-ai/claude-code@${CLAUDE_CODE}"
+        run: |
+          npm install --global "@anthropic-ai/claude-code@${CLAUDE_CODE}"
+          # the CLI must start, at exactly the pinned version, before any paid review
+          found=$(claude --version | awk '{print $1}')
+          if [ "$found" != "$CLAUDE_CODE" ]; then echo "claude CLI is '$found', expected $CLAUDE_CODE" >&2; exit 1; fi
       - name: Review every head (run.json from the start job is kept, never recomputed)
         # shorter than the job's 350 so the always() steps below still record and upload partial records
         timeout-minutes: 320
@@ -185,7 +189,7 @@ jobs:
           if [ "$PAID" = "true" ]; then
             # this job's share of the run's cap: the cap split evenly across the repo jobs
             share=$(python3 -c "import json, os; print(round(float(os.environ['MAX_USD']) / len(json.loads(os.environ['REPOS'])), 4))")
-            paid_args=(--model "$MODEL" --max-usd "$share" --provider "$PROVIDER")
+            paid_args+=(--model "$MODEL" --max-usd "$share" --provider "$PROVIDER")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
           fi
           # word splitting of ENTRANTS is intended: one argument per entrant name
@@ -205,19 +209,31 @@ jobs:
         run: |
           mkdir -p "work/runs/$NAME/_status"
           echo "$OUTCOME" > "work/runs/$NAME/_status/$SLUG.txt"
-      - name: Check the records (also after a failure, to keep partial records)
+      - name: Check the records (never gates the upload; a failure marks the draft instead)
         id: check
         if: always()
-        run: python -m bench.release_check "work/runs/${{ needs.start.outputs.name }}"
+        env:
+          NAME: ${{ needs.start.outputs.name }}
+          SLUG: ${{ steps.slug.outputs.slug }}
+        run: |
+          mkdir -p "work/runs/$NAME/_status"
+          if python -m bench.release_check "work/runs/$NAME" 2> check.log; then
+            echo ok > "work/runs/$NAME/_status/$SLUG-check.txt"
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            { echo "check failed:"; tail -n 5 check.log; } > "work/runs/$NAME/_status/$SLUG-check.txt"
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always() && steps.check.outcome == 'success'
+        if: always()
         with:
           name: runs-${{ steps.slug.outputs.slug }}
           path: |
             work/runs/${{ needs.start.outputs.name }}
             !work/runs/${{ needs.start.outputs.name }}/_scratch
           if-no-files-found: error
-          retention-days: 90
+          # records that failed the check stay only long enough to inspect and fix (public repo artifacts)
+          retention-days: ${{ steps.check.outputs.passed == 'true' && 90 || 3 }}
 
   score:
     needs: [start, review]
@@ -283,7 +299,16 @@ jobs:
           spend_args=()
           if [ "$PROVIDER" = "openrouter" ]; then spend_args=(--openrouter); fi
           python -m bench spend --run "work/runs/$NAME" "${spend_args[@]}" > "results/$NAME/spend.md"
-      - run: python -m bench.release_check "results/$NAME" "work/runs/$NAME"
+      - name: Check results and records (a failure marks the draft "check failed"; nothing is dropped)
+        run: |
+          : > "results/$NAME/check-failed.txt"
+          for status in work/runs/$NAME/_status/*-check.txt; do
+            if [ -f "$status" ] && ! grep -qx ok "$status"; then cat "$status" >> "results/$NAME/check-failed.txt"; fi
+          done
+          if ! python -m bench.release_check "results/$NAME" "work/runs/$NAME" 2> check.log; then
+            { echo "check failed (results):"; tail -n 5 check.log; } >> "results/$NAME/check-failed.txt"
+          fi
+          cat "results/$NAME/check-failed.txt"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: results
@@ -316,6 +341,12 @@ jobs:
         run: |
           tar -czf "runs-$NAME.tar.gz" -C "out/work/runs" "$NAME"
           {
+            if [ -s "out/results/$NAME/check-failed.txt" ]; then
+              echo "**CHECK FAILED: do not publish.** The records are kept for inspection; a repo job whose records failed the check uploads them with a 3-day retention (90 when they pass):"
+              echo
+              sed 's/^/    /' "out/results/$NAME/check-failed.txt"
+              echo
+            fi
             if [ "$MAX_HEADS" != "0" ]; then
               echo "**SMOKE run, never scored:** at most $MAX_HEADS head(s) per entrant per repo (the first with at least 20 changed lines). It checks that the paid entrants work and what a head costs; it is not a result."
               echo

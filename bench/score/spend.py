@@ -52,16 +52,20 @@ def openrouter_billed(usages: list[dict]) -> dict:
 
 
 def billed_line(billed: dict, spend: dict[str, dict]) -> list[str]:
-    estimated = round(sum(t["estimated_usd"] for t in spend.values()), 2)
+    estimated = f"${sum(t['estimated_usd'] for t in spend.values()):.2f}" if spend else "unknown (no records)"
     if billed["billed_usd"] is None:
-        return ["", f"- all paid entrants: estimated ${estimated:.2f}; billed by OpenRouter: unavailable "
+        return ["", f"- all paid entrants: estimated {estimated}; billed by OpenRouter: unavailable "
                     f"({billed['reason']})"]
-    return ["", f"- all paid entrants: estimated ${estimated:.2f}; billed by OpenRouter ${billed['billed_usd']:.2f} "
+    return ["", f"- all paid entrants: estimated {estimated}; billed by OpenRouter ${billed['billed_usd']:.2f} "
                 f"(the key's usage from {billed['from']} to {billed['to']}; exact when the key is used only "
                 "for this run)"]
 
 
 def spend_notes(spend: dict[str, dict], billed: dict | None = None) -> str:
+    if not spend:
+        lines = ["Spend: estimate unknown. The run has no entrant records (none were written, or they were lost), "
+                 "so it is not $0."]
+        return "\n".join(lines + (billed_line(billed, spend) if billed is not None else [])) + "\n"
     source = ("billed = OpenRouter's reported usage of the run's key, below" if billed is not None
               else "billed = the Anthropic Console amount for the run window, filled in by the maintainer")
     lines = ["Spend: list-price estimate from token counts (Claude Code's figure, both tool families); "

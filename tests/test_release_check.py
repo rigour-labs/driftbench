@@ -33,3 +33,16 @@ def test_cli_scans_directories(tmp_path):
     write(tmp_path / "d" / "x.json", {"diff": "--- a\n+++ b"})
     assert main([str(tmp_path / "d")]) == 1
     assert main([str(write(tmp_path / "ok.json", {"id": 1}))]) == 0
+
+
+def test_scratch_is_skipped_and_an_undecodable_file_is_a_problem_not_a_crash(tmp_path):
+    from bench.release_check import check_paths
+    run = tmp_path / "run"
+    (run / "_scratch" / "home").mkdir(parents=True)
+    (run / "_scratch" / "home" / "cache.json").write_bytes(b"\xff\xfe binary")
+    (run / "tool").mkdir()
+    (run / "tool" / "ok.json").write_text('{"verdict": "pass"}')
+    assert check_paths([run]) == []
+    (run / "tool" / "bad.json").write_bytes(b"\xff\xfe binary")
+    found = check_paths([run])
+    assert len(found) == 1 and "bad.json: unreadable (UnicodeDecodeError)" in found[0]

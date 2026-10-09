@@ -107,7 +107,9 @@ the provider's secret (`ANTHROPIC_API_KEY`, or `OPENROUTER_API_KEY`) is
 exposed only in the paid review step; the score job writes `spend.md`
 (`bench spend`, with `--openrouter` for that provider) into the draft
 release notes. Run locally, the harness reads the same variable from the
-shell.
+shell. Records are never lost: each repo job uploads them whatever happened,
+and the release check never gates that upload; a failed check marks the
+draft "CHECK FAILED: do not publish" with the reason.
 
 Paid entrants: `rigour-reviewer`, `rigour-reviewer-orchestrated` and
 `claude-code-review`. All drive the same pinned Claude Code CLI with the same
