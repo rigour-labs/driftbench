@@ -1,3 +1,4 @@
+import dataclasses
 import subprocess
 from pathlib import Path
 

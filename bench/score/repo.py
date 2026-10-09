@@ -50,9 +50,10 @@ def score_tool(tool: str, corpus: dict, points: list[dict], run_dir: Path, versi
     acted = {p["id"] for p in points if p["acted_on"] is True}
     all_records = [r for records in by_pr.values() for r in records]
     tool_version = all_records[0]["tool_version"] if all_records else None
-    metrics = {"version": tool_version, "catches": catch_rates(matches, acted),
-               "catches_blocking": catch_rates(blocking, acted),
-               "false_blocks": false_blocks(by_pr), **volume_and_time(all_records)}
+    blocks_at_all = all(r.get("blocking_semantics", True) for r in all_records)
+    metrics = {"version": tool_version, "blocking_semantics": blocks_at_all, "catches": catch_rates(matches, acted),
+               "catches_blocking": catch_rates(blocking, acted) if blocks_at_all else None,
+               "false_blocks": false_blocks(by_pr) if blocks_at_all else None, **volume_and_time(all_records)}
     return metrics, ledger
 
 

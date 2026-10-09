@@ -31,9 +31,9 @@ def finding(line: int | None, blocking: bool = False, path: str = "app.py") -> d
 
 
 def write_run(run_dir: Path, tool: str, pr: int, head: str, findings: list, cases: list, verdict: str = "pass",
-              changed: int = 100) -> None:
+              changed: int = 100, blocking_semantics: bool = True) -> None:
     header = {"schema": 1, "tool": tool, "tool_version": "1", "repo": "o/r", "pr": pr, "head_sha": head,
-              "cases": cases, "env_keys": []}
+              "cases": cases, "env_keys": [], "blocking_semantics": blocking_semantics}
     result = {"base_sha": "b", "changed_lines": changed, "verdict": verdict, "findings": findings, "wall_s": 1.5,
               "cost_usd": None, "input_tokens": None, "output_tokens": None, "error": "", "raw": ""}
     write_record(run_dir / tool / slug_of("o/r") / str(pr) / f"{head}.json", header, result)

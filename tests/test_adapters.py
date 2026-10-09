@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from bench.adapters import ADAPTERS, select_adapters
+from bench.adapters import PaidSettings, select_adapters
 from bench.adapters import rigour
 from bench.harness.types import AdapterError, ReviewInput
 
@@ -46,15 +46,16 @@ def test_rigour_review_verdicts(tmp_path, monkeypatch):
         rigour.RigourDeterministic().review(request(tmp_path))
 
 
-def test_select_free_unknown_and_paid(monkeypatch):
+def test_select_free_unknown_and_paid():
     assert [a.name for a in select_adapters(["free"])] == ["no-tool", "every-hunk", "rigour"]
     assert [a.name for a in select_adapters(["rigour", "free"])] == ["rigour", "no-tool", "every-hunk"]
     with pytest.raises(ValueError, match="unknown"):
         select_adapters(["nope"])
-
-    class Paid:
-        name, version, paid, reads_history = "paid-tool", "1", True, False
-    monkeypatch.setitem(ADAPTERS, "paid-tool", Paid)
-    assert "paid-tool" not in [a.name for a in select_adapters(["free"])]
-    with pytest.raises(ValueError, match="dollar cap"):
-        select_adapters(["paid-tool"])
+    assert all(not a.paid for a in select_adapters(["free"]))          # free never includes a paid entrant
+    for missing in (None, PaidSettings(model="", max_usd=5), PaidSettings(model="m", max_usd=0)):
+        with pytest.raises(ValueError, match="--max-usd"):
+            select_adapters(["claude-code-review"], missing)
+    paid = select_adapters(["rigour-reviewer", "rigour-reviewer-orchestrated", "claude-code-review"],
+                           PaidSettings(model="model-x", max_usd=5))
+    assert [a.name for a in paid] == ["rigour-reviewer", "rigour-reviewer-orchestrated", "claude-code-review"]
+    assert all(a.paid and a.model == "model-x" and a.env_extra == ("ANTHROPIC_API_KEY",) for a in paid)

@@ -62,3 +62,13 @@ def test_range_note_when_acted_on_rests_mostly_on_range(tmp_path):
     assert "rest mostly on the `range` basis" in page
     result["corpus"]["acted_on_by_basis"] = {"range": 10, "ancestor": 15}
     assert range_note(result, checked) == ""
+
+
+def test_a_tool_that_never_blocks_shows_n_a_not_zero(tmp_path):
+    from bench.report.markdown import block_row, tool_row
+    result, _ = summary(tmp_path, prs=10, points=25)
+    metrics = {**result["tools"]["every-hunk"], "catches_blocking": None, "false_blocks": None,
+               "blocking_semantics": False}
+    row = tool_row("claude-code-review", metrics)
+    assert row.count("n/a (never blocks)") == 3 and "0%" not in row.split("|")[5]
+    assert block_row("claude-code-review", metrics).count("n/a (never blocks)") == 4

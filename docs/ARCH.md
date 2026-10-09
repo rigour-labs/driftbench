@@ -93,6 +93,13 @@ Actions are pinned by commit SHA, and no personal token is used.
 
 ## Paid entrants
 
-Adapters declare `paid = True`. The `free` entrant set excludes them, and
-running a paid adapter requires `--max-usd`. The harness stops before a
-round's estimated cost would exceed it.
+Adapters declare `paid = True`. The `free` entrant set excludes them; naming
+one requires `--model` (one model for every paid entrant, by full ID) and
+`--max-usd` (the hard cap for that invocation; a run split across N jobs
+gives each job its share). Each paid entrant also needs `--head-bound
+NAME=USD`, its per-head upper bound from the run estimate, so the very first
+review is bounded (bench/harness/budget.py, bench/harness/paid.py).
+
+Paid entrants: `rigour-reviewer`, `rigour-reviewer-orchestrated` and
+`claude-code-review`. All drive the same pinned Claude Code CLI with the same
+model and timeout, recorded in `run.json` under `paid`.

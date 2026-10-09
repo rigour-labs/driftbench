@@ -17,6 +17,7 @@ class NoTool:
     version = "1"
     paid = False
     reads_history = False
+    env_extra: tuple[str, ...] = ()
 
     def review(self, request: ReviewInput) -> ReviewOutput:
         return ReviewOutput(findings=[], verdict="pass")
@@ -27,6 +28,7 @@ class EveryHunk:
     version = "1"
     paid = False
     reads_history = False
+    env_extra: tuple[str, ...] = ()
 
     def review(self, request: ReviewInput) -> ReviewOutput:
         hunks = parse_hunks(request.diff_path.read_text(encoding="utf-8"))

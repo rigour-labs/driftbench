@@ -69,3 +69,13 @@ def test_wilson_interval_matches_reference_values():
     assert wilson(0, 20) == [0.0, 0.1611]
     assert wilson(10, 20) == [0.2993, 0.7007]
     assert wilson(20, 20) == [0.8389, 1.0]
+
+
+def test_tools_without_blocking_semantics_get_no_blocking_numbers(tmp_path):
+    points = [inline_point("a", 1, 1, 10, True)]
+    write_run(tmp_path, "reviewer", 1, "h1", [finding(10)], [round_case(1, 1)], blocking_semantics=False)
+    write_run(tmp_path, "reviewer", 1, "h2", [], [round_case(1, 2), mnb_case(1)], blocking_semantics=False)
+    summary_, _ = score_repo(corpus(), points_file(points), tmp_path, ["reviewer"], SameFileVersions())
+    tool = summary_["tools"]["reviewer"]
+    assert tool["catches_blocking"] is None and tool["false_blocks"] is None and tool["blocking_semantics"] is False
+    assert tool["catches"]["3"]["all"]["caught"] == 1
