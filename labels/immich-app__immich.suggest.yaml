@@ -1,0 +1,114 @@
+points:
+  28938-inline-3387347513-0:
+    suggested: null
+    suggested_now: null
+  29013-inline-3830370807-0:
+    suggested: claim/contract
+    suggested_now: claim/contract
+  29013-inline-3830381938-0:
+    suggested: performance
+    suggested_now: performance
+  29013-inline-3830385232-0:
+    suggested: judgment
+    suggested_now: judgment
+  29013-inline-3844761940-0:
+    suggested: null
+    suggested_now: null
+  30179-inline-3845358903-0:
+    suggested: null
+    suggested_now: null
+  30179-inline-3845396274-0:
+    suggested: null
+    suggested_now: null
+  30179-inline-3845463339-0:
+    suggested: null
+    suggested_now: null
+  30179-inline-3845502814-0:
+    suggested: judgment
+    suggested_now: judgment
+  30199-inline-3924733793-0:
+    suggested: null
+    suggested_now: null
+  30262-inline-3757952365-0:
+    suggested: null
+    suggested_now: null
+  30262-inline-3757971976-0:
+    suggested: null
+  30262-inline-3757982013-0:
+    suggested: null
+  30262-inline-3758022686-0:
+    suggested: mechanical
+  30262-inline-4065323663-0:
+    suggested: null
+  30769-inline-4095197093-0:
+    suggested: null
+  30769-inline-4095316661-0:
+    suggested: claim/contract
+  30901-inline-3832553110-0:
+    suggested: null
+  30909-inline-3833026666-0:
+    suggested: claim/contract
+  30909-inline-3833081445-0:
+    suggested: null
+  30909-inline-3845745753-0:
+    suggested: null
+  30909-inline-3850714125-0:
+    suggested: null
+  30909-inline-3850725214-0:
+    suggested: null
+  30909-inline-3862893388-0:
+    suggested: null
+  31039-inline-3865751032-0:
+    suggested: claim/contract
+  31093-inline-3882059601-0:
+    suggested: null
+  31146-inline-3991877231-0:
+    suggested: judgment
+  31146-inline-3991906380-0:
+    suggested: null
+  31146-inline-4074163462-0:
+    suggested: null
+  31254-inline-3972113160-0:
+    suggested: null
+  31254-inline-3972120389-0:
+    suggested: null
+  31254-inline-3972128675-0:
+    suggested: null
+  31362-inline-3972312840-0:
+    suggested: judgment
+  31557-inline-4039969723-0:
+    suggested: null
+  31557-inline-4040030770-0:
+    suggested: null
+  31557-inline-4040032645-0:
+    suggested: judgment
+  31606-inline-4037007415-0:
+    suggested: null
+  31753-inline-4086590463-0:
+    suggested: mechanical
+  31768-inline-4103604135-0:
+    suggested: claim/contract
+  31768-inline-4103609680-0:
+    suggested: null
+  31772-inline-4130655765-0:
+    suggested: null
+  31841-inline-4125532363-0:
+    suggested: null
+  31928-inline-4142236158-0:
+    suggested: null
+  31942-inline-4146688541-0:
+    suggested: null
+  31989-inline-4165180993-0:
+    suggested: null
+  31998-inline-4164196200-0:
+    suggested: security/privacy
+  31998-inline-4164208016-0:
+    suggested: null
+  31998-inline-4164214601-0:
+    suggested: null
+  32088-inline-4182800817-0:
+    suggested: judgment
+  32113-inline-4195316914-0:
+    suggested: mechanical
+repo: immich-app/immich
+rules_version: 2

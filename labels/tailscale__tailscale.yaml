@@ -1,0 +1,204 @@
+consensus:
+  agreed: 36
+  both_labelled: 47
+  dropped_by_class:
+    first:
+      claim/contract: 1
+      judgment: 6
+      mechanical: 3
+      user journey: 1
+    second:
+      claim/contract: 4
+      judgment: 2
+      mechanical: 1
+      performance: 2
+      user journey: 2
+  first_role: a Claude model working as DriftBench's builder, which knows the benchmark
+    and its guide
+  kappa: 0.6917
+  sources:
+    first: claude-opus-5-5
+    second: openai/gpt-6.1-sol
+guideline: 1
+points:
+  20829-inline-4037673511-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: d3f44e6935371ad879653508b2848512a102e8e92ffbfd0a8cb3004e39127f4e
+  20829-inline-4037688664-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: a95929eb576b034003becd78ed765c9b5d1917d651f8a8ea2fc1182f4a8dcf83
+  20836-inline-3861422128-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: f61e23e8d77ba6d1c3c0612b949ce073c45f521851ee597b05c1fe2e457e55e9
+  21017-inline-4011139941-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: f4438e8026d330ad2d5976b39b4316b852e5c7f7bbf1c0b08d9c482e15659601
+  21017-inline-4011253447-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 81a4821714fbfae532461b559e1d7b66f30097dcecff708168ed6633f86de710
+  21017-inline-4011316522-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 8260d03c98f26c25b9bf23a2a6de6bc7a3b017015741badf25d520c2b8815d98
+  21038-inline-3991561782-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: f2c7aee1e3220b6c2567a82bf7aca51645d360b3794a248761f97bc738396b6c
+  21133-inline-4125635283-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 83dc9b10d8047bf54599f856264b6a2f9b678b5ceb4cae6fd67ec2b90fa35599
+  21172-inline-4069565145-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 14942839577389d29ec829ffe120161fd86413f152e53fa1ef56c9dc07605575
+  21172-inline-4072092590-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: d0fa73ec4fab99d3059468a5a0e6054181bc5bf8117e3219435e7b5fce47c633
+  21332-inline-4031117089-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: bbe4eb271d2b70df5e419137404d7a32e3d9c8fe8b29b4bbcca536620a73f69c
+  21358-inline-4041704667-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 49361b20a9a570a85b6d9058ebd342f3c1cbbf58a2c7d21c6af8519eedc80d9a
+  21366-inline-4051022049-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: cd2ff2a7714efbcb1f704831557855e40ce27c17a6ecf6f3b1a14797359abee9
+  21374-inline-4061769951-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: e7db8b22c3be4380384761399946f5176ba5a13412cd5c9cad26632a897bf950
+  21405-inline-4063062368-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 35ad8164fe1d9cd8081766c46e3ab305ee223287018afe135a3bb2959c5a26f2
+  21405-inline-4063082387-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 79d113ca42d45bed63effa715b91e2de9dd6bd8e3d053eced1a8661cc96887ac
+  21433-inline-4083948930-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 1cb4d24332241e97213a1f7caf8eaac4432712d7f7fc828e876be04f9a77e1a6
+  21444-inline-4085780786-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: c78a90ba39b452bf71ad0f34702ca5fcf01dea1eb7b61fce6ee7f9819ffe9737
+  21451-inline-4123688579-0:
+    blind: true
+    label: security/privacy
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 4ebb6f0a956697139f0852c8ef6fb27d080039439712b1c0eee8ff77ef569a01
+  21463-inline-4097137595-0:
+    blind: true
+    label: security/privacy
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 3d144e9b6809f0d71fcc2ea48169f3b329ce8d777b83887a5c25f5040b8d19a2
+  21467-inline-4097428178-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 43b0cad81a4b1fe7f5b2f1d5442ffac96b7bdafdab85e2b00a755b6538680cb9
+  21467-inline-4097492396-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 9b26fb31b43183f21501d3b13c1cbffc6e5c648545fa8825aa3d9d980db748a2
+  21485-inline-4123540613-0:
+    blind: true
+    label: performance
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 693f95204686ded3ebcd749e9e252ae164d00c0014ff33df0c951e20c84e5ed1
+  21575-inline-4135467280-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: c3ea1ad57ae9c192d167eb4016a82fb7a8532073ca60bc9e4b70e9dfcb822867
+  21588-inline-4156468111-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 1cba1b771552e5169befc7cf9dcf21a3765b5791d80b370c8e409812feb51035
+  21595-inline-4147528669-0:
+    blind: true
+    label: user journey
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 2fb849d6bab8b45ac6ecebf7221a6bf198d3e563d34d2c651fe6d5de84815863
+  21606-inline-4184818418-0:
+    blind: true
+    label: performance
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 06452df06ac2f99b1c6607b4fd6d6bd9d760226871fddaca947ef01f1007c27c
+  21606-inline-4185571080-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 9def0ba83ef46f33fa4681d09de63af8b465da7cd609c938b4dd1d00be1bf4a9
+  21606-inline-4185589592-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: dec72ea0da54b3f441248cd5c4a19f2a6b1144bd0806c373f0e8ee2a8eec12f9
+  21615-inline-4161521434-0:
+    blind: true
+    label: claim/contract
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: a1aac149b66bf26462443687cca312399e4721a3a0b06dfd6a3cae693643f515
+  21633-inline-4166271661-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 77c35b6e3c33626f98b5f090816ca01f789c31e0cf9e092d5d11d9e491942650
+  21633-inline-4166288486-0:
+    blind: true
+    label: judgment
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 9d3482813fa1466e1b1da5acf01318f91353192a71e6574998ff22bb59bcc0b7
+  21672-inline-4199463472-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 051562fc80dfa01bbbf3ff862c5731320d2d605c5223ee04eec4d463181e7239
+  21672-inline-4199494901-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: e44a333f0bb9cbb2c4db2ec28c03d66282f70cf6ce12aa1dcfd87dcdfe995065
+  21672-inline-4199614079-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 3c8a18982dab13b2ff858954a297586972ce7b920f55766f2d5a53e1552bdd59
+  21672-inline-4199632909-0:
+    blind: true
+    label: mechanical
+    labeller: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+    text_sha256: 55464a8ff06259e40c555d56033152e14b3590dc5552ea7fe63bb0cf9e9167e7
+repo: tailscale/tailscale

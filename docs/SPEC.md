@@ -242,8 +242,8 @@ The labelling is a reproducible step, and the label files are part of every rele
 
 1. A rules pass (`bench label suggest`) proposes a class from the point text
    by keyword (`bench/labels/rules.py`, versioned). It is only a suggestion.
-2. A human confirms or corrects each suggestion in `labels/<repo>.yaml`,
-   recording the labeller and the guideline version (`docs/LABELLING.md`).
+2. A labeller confirms or corrects each point in `labels/<repo>.yaml`,
+   recording who labelled and the guideline version (`docs/LABELLING.md`).
 3. Unconfirmed points are reported as `unclassified`, never under a guessed
    class.
 
@@ -255,13 +255,10 @@ only while the point's text still has that hash; otherwise it is stale and
 the point counts as unclassified. The share of blind labels that match the
 suggestion is reported.
 
-Labels may be assisted by a non-Claude model's suggestions (docs/LABELLING.md, "Model suggestions"); agreement
-is reported on a seeded blind 20% only, and the calibration sample is never shown one.
-
-**Disclosed limit:** the labeller for the first releases is the maintainer of
-this repository, who also maintains one entrant (Rigour). Labels are confirmed
-without looking at any tool's output, and the label files are published so
-anyone can audit or relabel them.
+**Disclosed limit:** run 1 uses AI-consensus labels. A class is used only where claude-opus-5-5 (a Claude model
+working as DriftBench's builder, which knows the benchmark and its guide; Rigour's reviewer also runs on Claude) and
+a model outside the Claude family agree; the rest are unclassified, and the report shows what each class lost to
+disagreement (docs/LABELLING.md, "AI-consensus labels"). The label files are published so anyone can audit them.
 
 ## Matching a finding to a point
 

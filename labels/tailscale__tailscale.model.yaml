@@ -1,0 +1,368 @@
+blind_fraction: 0.2
+blind_ids:
+- 21017-inline-4011253447-0
+- 21017-inline-4011316522-0
+- 21172-inline-4072092590-0
+- 21358-inline-4041704667-0
+- 21374-inline-4061769951-0
+- 21479-inline-4106552835-0
+- 21588-inline-4156468111-0
+- 21664-inline-4191135163-0
+- 21672-inline-4199463472-0
+- 21672-inline-4199614079-0
+model: openai/gpt-6.1-sol
+points:
+  20794-inline-3843817949-0:
+    cost_usd: 0.003371
+    reason: The new logic overlaps with existing Swift-side monitoring, causing unnecessary
+      duplicate work.
+    served_model: openai/gpt-6.1-sol
+    suggested: performance
+    suggested_by: openai/gpt-6.1-sol
+  20829-inline-4037673511-0:
+    cost_usd: 0.0035535
+    reason: The reviewer requests a different testing approach without identifying
+      a correctness or performance problem.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  20829-inline-4037688664-0:
+    cost_usd: 0.0037935
+    reason: The reviewer warns that timing-dependent flakiness could let the test
+      pass when the behavior it should verify is broken.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  20829-inline-4037749754-0:
+    cost_usd: 0.003238
+    reason: 'The reviewer is asking for more precise comment wording: a response with
+      an rcode, not the rcode itself, is a complete answer.'
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  20836-inline-3861422128-0:
+    cost_usd: 0.0040535
+    reason: The suggestion replaces context.Background() with the test-context idiom
+      t.Context() without identifying a correctness issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21017-inline-4011139941-0:
+    cost_usd: 0.002326
+    reason: The reviewer is asking to move the implementation into a new feature package,
+      which is a code organization decision.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21017-inline-4011158289-0:
+    cost_usd: 0.002742
+    reason: The cached exit node name is lost on restarts or profile switches, preventing
+      the warning from reliably naming the unavailable exit node.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21017-inline-4011253447-0:
+    cost_usd: 0.003711
+    reason: The reviewer proposes replacing a NetworkMap dependency with a backend
+      validity check to improve modularity, without identifying incorrect behavior.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21017-inline-4011316522-0:
+    cost_usd: 0.004001
+    reason: The reviewer suggests reusing existing name-computation helpers instead
+      of implementing separate display-name logic.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21038-inline-3991561782-0:
+    cost_usd: 0.0034435
+    reason: The reviewer requests a table-driven test structure with broader case
+      coverage, without identifying a specific bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21133-inline-4125635283-0:
+    cost_usd: 0.002428
+    reason: The reviewer asks for a clearer code comment that makes sense outside
+      the context of the change.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21172-inline-4069565145-0:
+    cost_usd: 0.003161
+    reason: Returning here aborts processing all remaining Connectors instead of skipping
+      the one whose ProxyClass lookup failed.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21172-inline-4072092590-0:
+    cost_usd: 0.004226
+    reason: The error reports ports used by multiple resources rather than replicas
+      allocated to this resource, producing an incorrect allocation count.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21332-inline-4031117089-0:
+    cost_usd: 0.002234
+    reason: The reviewer asks to check context cancellation before continuing so the
+      loop exits promptly when canceled.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21358-inline-4041704667-0:
+    cost_usd: 0.002034
+    reason: The reviewer requests documentation for an exported constant, a code-style
+      requirement.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21362-inline-4064330037-0:
+    cost_usd: 0.0039685
+    reason: Using packet.Generate preserves the original packet bytes needed for the
+      injected payload to contain the correct copied data.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21366-inline-4051022049-0:
+    cost_usd: 0.0032535
+    reason: The reviewer flags a potentially infinite loop that could prevent pending
+      pongs from being sent.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21374-inline-4061769951-0:
+    cost_usd: 0.002332
+    reason: The reviewer suggests removing an unnecessary closure and centralizing
+      the wrapper as a structural simplification.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21405-inline-4063062368-0:
+    cost_usd: 0.0024
+    reason: The reviewer suggests extracting reusable IP_PKTINFO code into a shared
+      package and noting that reuse opportunity in an existing TODO.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21405-inline-4063082387-0:
+    cost_usd: 0.003801
+    reason: The reviewer requests consistent parameter ordering for readability, without
+      identifying a functional bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21433-inline-4083948930-0:
+    cost_usd: 0.002196
+    reason: The timeout is too short for slow CI runners and can cause flaky test
+      failures.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21441-inline-4085062951-0:
+    cost_usd: 0.003346
+    reason: The reviewer suggests a newer error-handling API as a matter of preference,
+      without identifying a bug or performance issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21444-inline-4085780786-0:
+    cost_usd: 0.002412
+    reason: The reviewer requests an explanatory comment clarifying where ExtraFiles
+      were populated, without changing behavior.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21447-inline-4087924654-0:
+    cost_usd: 0.00204
+    reason: The reviewer asks why the change is needed without identifying a correctness,
+      style, or performance problem.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21451-inline-4123688579-0:
+    cost_usd: 0.002314
+    reason: The reviewer warns that logging DNS domains and IP addresses risks exposing
+      sensitive information and recommends a counter instead.
+    served_model: openai/gpt-6.1-sol
+    suggested: security/privacy
+    suggested_by: openai/gpt-6.1-sol
+  21463-inline-4097137595-0:
+    cost_usd: 0.003146
+    reason: The default grants LocalAPI access to all users instead of restricting
+      access when tailscaled runs as a specific user.
+    served_model: openai/gpt-6.1-sol
+    suggested: security/privacy
+    suggested_by: openai/gpt-6.1-sol
+  21463-inline-4124988804-0:
+    cost_usd: 0.003901
+    reason: Using usernames without domain prefixes can cause pipe-name collisions
+      between distinct users in the same AD forest.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21467-inline-4097428178-0:
+    cost_usd: 0.003076
+    reason: The documentation incorrectly describes where the listener binds and how
+      the annotation makes it reachable via the Pod IP.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21467-inline-4097492396-0:
+    cost_usd: 0.002642
+    reason: The reviewer suggests renaming the environment variable to more clearly
+      describe its behavior.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21472-inline-4099738881-0:
+    cost_usd: 0.002932
+    reason: The reviewer wants less repetitive logging so test output is clearer and
+      less noisy.
+    served_model: openai/gpt-6.1-sol
+    suggested: user journey
+    suggested_by: openai/gpt-6.1-sol
+  21479-inline-4106552835-0:
+    cost_usd: 0.0021
+    reason: The reviewer is checking that the early return is safe because the mutex
+      has already been unlocked.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21485-inline-4123540613-0:
+    cost_usd: 0.0036635
+    reason: The reviewer questions taking a lock for reads when the client map supports
+      lock-free reading.
+    served_model: openai/gpt-6.1-sol
+    suggested: performance
+    suggested_by: openai/gpt-6.1-sol
+  21575-inline-4135467280-0:
+    cost_usd: 0.00201
+    reason: The reviewer requests an inline comment explaining the variable's later
+      use.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21588-inline-4156468111-0:
+    cost_usd: 0.0035835
+    reason: The reviewer flags a mismatch between the documented support for IPv6
+      extension headers and parsing that assumes a fixed 40-byte IP header.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21595-inline-4147528669-0:
+    cost_usd: 0.002824
+    reason: The CLI starts authentication but exits without showing the auth URL or
+      telling the user how to complete login.
+    served_model: openai/gpt-6.1-sol
+    suggested: user journey
+    suggested_by: openai/gpt-6.1-sol
+  21595-inline-4147542479-0:
+    cost_usd: 0.0034135
+    reason: The reviewer identifies that `up` returns before the backend is Running
+      in minimal builds, affecting scripts and init as well as the harness.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21606-inline-4184818418-0:
+    cost_usd: 0.002442
+    reason: The reviewer requests a fast-path return to skip unnecessary work when
+      the connector is not configured.
+    served_model: openai/gpt-6.1-sol
+    suggested: performance
+    suggested_by: openai/gpt-6.1-sol
+  21606-inline-4185571080-0:
+    cost_usd: 0.0028885
+    reason: The reviewer optionally suggests a different atomic abstraction without
+      identifying a correctness or performance problem.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21606-inline-4185589592-0:
+    cost_usd: 0.002338
+    reason: Storing routes before configFromNodeView succeeds can leave new routes
+      paired with old configuration when an error occurs.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21615-inline-4161521434-0:
+    cost_usd: 0.0032135
+    reason: The reviewer identifies a missing timestamp update when transitioning
+      from idle to active as a blocking correctness bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  21633-inline-4166271661-0:
+    cost_usd: 0.002276
+    reason: The reviewer questions whether higher-level logout semantics belong in
+      a client intended to only speak the protocol.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21633-inline-4166288486-0:
+    cost_usd: 0.0033385
+    reason: The reviewer proposes alternative API designs for exposing registration
+      expiry rather than adding a dedicated Logout method.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21664-inline-4191135163-0:
+    cost_usd: 0.002628
+    reason: The reviewer asks for explanatory context about the platform check, not
+      a code correction.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  21672-inline-4199446928-0:
+    cost_usd: 0.003076
+    reason: The reviewer suggests reusing the DNS configuration instead of constructing
+      it on every call.
+    served_model: openai/gpt-6.1-sol
+    suggested: performance
+    suggested_by: openai/gpt-6.1-sol
+  21672-inline-4199463472-0:
+    cost_usd: 0.003196
+    reason: The reviewer suggests renaming the constant to follow Go's initialism
+      capitalization convention.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21672-inline-4199494901-0:
+    cost_usd: 0.0031785
+    reason: The reviewer suggests rewriting the string construction for legibility.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21672-inline-4199614079-0:
+    cost_usd: 0.003641
+    reason: The suggestion makes an unmodified command string a constant rather than
+      a variable.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21672-inline-4199630481-0:
+    cost_usd: 0.004126
+    reason: The reviewer asks for a clearer failure message so readers understand
+      what the error means.
+    served_model: openai/gpt-6.1-sol
+    suggested: user journey
+    suggested_by: openai/gpt-6.1-sol
+  21672-inline-4199632909-0:
+    cost_usd: 0.0039035
+    reason: The optional suggestion only changes the formatting of the function call.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  21694-inline-4211772915-0:
+    cost_usd: 0.003908
+    reason: 'invalid output: no known class'
+    served_model: openai/gpt-6.1-sol
+    suggested: null
+    suggested_by: openai/gpt-6.1-sol
+prompt_sha256: f8354f427cdac997b138f79361e5a646dd3e8df0cc292965e684afedbc7e8f0b
+prompt_version: 1
+repo: tailscale/tailscale
+rules_version: 2
+spent_usd: 0.153824
+unsuggested:
+  21694-inline-4211772915-0: 'invalid output: no known class'

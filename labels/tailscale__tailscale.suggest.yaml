@@ -1,0 +1,103 @@
+points:
+  20794-inline-3843817949-0:
+    suggested: judgment
+  20829-inline-4037673511-0:
+    suggested: null
+  20829-inline-4037688664-0:
+    suggested: null
+  20829-inline-4037749754-0:
+    suggested: null
+  20836-inline-3861422128-0:
+    suggested: null
+  21017-inline-4011139941-0:
+    suggested: null
+  21017-inline-4011158289-0:
+    suggested: null
+  21017-inline-4011253447-0:
+    suggested: user journey
+  21017-inline-4011316522-0:
+    suggested: judgment
+  21038-inline-3991561782-0:
+    suggested: null
+  21133-inline-4125635283-0:
+    suggested: null
+  21172-inline-4069565145-0:
+    suggested: null
+  21172-inline-4072092590-0:
+    suggested: mechanical
+  21332-inline-4031117089-0:
+    suggested: null
+  21358-inline-4041704667-0:
+    suggested: null
+  21362-inline-4064330037-0:
+    suggested: null
+  21366-inline-4051022049-0:
+    suggested: judgment
+  21374-inline-4061769951-0:
+    suggested: judgment
+  21405-inline-4063062368-0:
+    suggested: null
+  21405-inline-4063082387-0:
+    suggested: judgment
+  21433-inline-4083948930-0:
+    suggested: judgment
+  21441-inline-4085062951-0:
+    suggested: null
+  21444-inline-4085780786-0:
+    suggested: null
+  21447-inline-4087924654-0:
+    suggested: null
+  21451-inline-4123688579-0:
+    suggested: security/privacy
+  21463-inline-4097137595-0:
+    suggested: user journey
+  21463-inline-4124988804-0:
+    suggested: user journey
+  21467-inline-4097428178-0:
+    suggested: judgment
+  21467-inline-4097492396-0:
+    suggested: null
+  21472-inline-4099738881-0:
+    suggested: user journey
+  21479-inline-4106552835-0:
+    suggested: claim/contract
+  21485-inline-4123540613-0:
+    suggested: null
+  21575-inline-4135467280-0:
+    suggested: judgment
+  21588-inline-4156468111-0:
+    suggested: claim/contract
+  21595-inline-4147528669-0:
+    suggested: user journey
+  21595-inline-4147542479-0:
+    suggested: claim/contract
+  21606-inline-4184818418-0:
+    suggested: null
+  21606-inline-4185571080-0:
+    suggested: claim/contract
+  21606-inline-4185589592-0:
+    suggested: null
+  21615-inline-4161521434-0:
+    suggested: claim/contract
+  21633-inline-4166271661-0:
+    suggested: null
+  21633-inline-4166288486-0:
+    suggested: judgment
+  21664-inline-4191135163-0:
+    suggested: judgment
+  21672-inline-4199446928-0:
+    suggested: null
+  21672-inline-4199463472-0:
+    suggested: judgment
+  21672-inline-4199494901-0:
+    suggested: judgment
+  21672-inline-4199614079-0:
+    suggested: null
+  21672-inline-4199630481-0:
+    suggested: judgment
+  21672-inline-4199632909-0:
+    suggested: null
+  21694-inline-4211772915-0:
+    suggested: claim/contract
+repo: tailscale/tailscale
+rules_version: 2

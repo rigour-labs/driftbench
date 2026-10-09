@@ -12,6 +12,7 @@ from bench.labels.store import (LabelError, confirm, effective_labels, label_sta
 from bench.labels.suggestions import (confirm_time_suggestions, merge_suggestions, read_suggestions,
                                       suggestions_path, write_suggestions)
 from bench.labels.sample import SampleError, read_sample, sample_path
+from bench.labels.consensus_cli import add_consensus_action
 from bench.labels.model_agreement import model_agreement
 from bench.labels.model_file import model_path, read_model_file
 from bench.labels.prelabel_cli import add_prelabel_action
@@ -46,6 +47,7 @@ def add_label_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     actions.add_parser("status", help="confirmed counts per repo").set_defaults(label_handler=cmd_status)
     add_sample_actions(actions)
     add_prelabel_action(actions, root)
+    add_consensus_action(actions)
 
 
 def cmd_suggest(args: argparse.Namespace) -> int:
@@ -107,7 +109,9 @@ def cmd_status(args: argparse.Namespace) -> int:
             usable = effective_labels(labels, texts)
             print(f"  sample (seed {sample['seed']}): {sample_status(labels, usable, sample['point_ids'])}")
             model_data = read_model_file(model_path(args.labels, repo), repo)
-            if model_data:
+            if labels.get("consensus"):
+                print(f"  AI consensus: {labels['consensus']}")
+            elif model_data:
                 in_sample = {pid: label for pid, label in usable.items() if pid in set(sample["point_ids"])}
                 agreement = model_agreement(labels["points"], in_sample, model_data, sample["point_ids"])
                 print(f"  model suggestions: {agreement}")

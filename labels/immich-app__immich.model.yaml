@@ -1,0 +1,369 @@
+blind_fraction: 0.2
+blind_ids:
+- 29013-inline-3830370807-0
+- 29013-inline-3830381938-0
+- 30262-inline-3757971976-0
+- 30262-inline-3757982013-0
+- 30262-inline-3758022686-0
+- 31146-inline-4074163462-0
+- 31254-inline-3972113160-0
+- 31753-inline-4086590463-0
+- 31768-inline-4103604135-0
+- 31768-inline-4103609680-0
+model: openai/gpt-6.1-sol
+points:
+  28938-inline-3387347513-0:
+    cost_usd: 0.002108
+    reason: The reviewer suggests simplifying the lifecycle implementation by using
+      onMount instead of an effect.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  29013-inline-3830370807-0:
+    cost_usd: 0.002594
+    reason: The reviewer wants default handling moved to the caller to remove unnecessary
+      indirection and simplify the design.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  29013-inline-3830381938-0:
+    cost_usd: 0.003686
+    reason: The reviewer says the condition is redundant because default handling
+      already occurs elsewhere.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  29013-inline-3830385232-0:
+    cost_usd: 0.0036685
+    reason: The reviewer asks for general code cleanup without identifying a functional
+      bug or proposing a design change.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  29013-inline-3844761940-0:
+    cost_usd: 0.003381
+    reason: The suggestion removes a redundant explicit parameter type annotation
+      while preserving the type guard.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  30179-inline-3845358903-0:
+    cost_usd: 0.002166
+    reason: The reviewer questions redundant metadata already supplied by the history
+      builder, without identifying a bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30179-inline-3845396274-0:
+    cost_usd: 0.003486
+    reason: The reviewer suggests a simpler validation approach without identifying
+      a correctness or performance problem.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30179-inline-3845463339-0:
+    cost_usd: 0.002138
+    reason: The comment is an acknowledgment and raises no specific correctness, style,
+      or other concrete issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30179-inline-3845502814-0:
+    cost_usd: 0.002014
+    reason: The reviewer requests renaming the abbreviated field `o` to `offset` for
+      clarity.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  30199-inline-3924733793-0:
+    cost_usd: 0.003038
+    reason: The suggestion simplifies the return statement by removing the explicit
+      await.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  30262-inline-3757952365-0:
+    cost_usd: 0.002344
+    reason: The reviewer objects to the comments’ documentation format and wording,
+      not the code’s behavior.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  30262-inline-3757971976-0:
+    cost_usd: 0.003462
+    reason: The reviewer objects to redundant validation because the year constraint
+      is already enforced elsewhere.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30262-inline-3757982013-0:
+    cost_usd: 0.002412
+    reason: The force unwrap can fail when fileCreatedAt is null but localDateTime
+      is non-null.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  30262-inline-3758022686-0:
+    cost_usd: 0.00197
+    reason: The reviewer identifies dead code, which is an unused-code issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  30262-inline-4065323663-0:
+    cost_usd: 0.002702
+    reason: The reviewer suggests consolidating the update blocks without identifying
+      a bug or a specific performance cost.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30769-inline-4095197093-0:
+    cost_usd: 0.002322
+    reason: The reviewer proposes unconditional eviction as a design simplification
+      without identifying a correctness bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30769-inline-4095316661-0:
+    cost_usd: 0.0041585
+    reason: The reviewer prefers returning the newly created object directly rather
+      than retrieving it from the collection, without identifying a bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30901-inline-3832553110-0:
+    cost_usd: 0.0026
+    reason: The reviewer proposes a simpler implementation instead of the PR's more
+      verbose approach.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30909-inline-3833026666-0:
+    cost_usd: 0.002332
+    reason: The reviewer suggests returning upload counts from the API rather than
+      collecting them through callbacks, which is an API design preference.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  30909-inline-3833081445-0:
+    cost_usd: 0.0030585
+    reason: The reviewer requests an explicit for loop instead of forEach as a style
+      change.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  30909-inline-3845745753-0:
+    cost_usd: 0.0031935
+    reason: The reviewer questions returning a successful completion status when the
+      backup did not complete.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  30909-inline-3850714125-0:
+    cost_usd: 0.002056
+    reason: The other non-sequential branch is missing the callback needed to consistently
+      report skipped uploads.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  30909-inline-3850725214-0:
+    cost_usd: 0.003241
+    reason: The reviewer flags a redundant candidate fetch because uploadCandidates
+      already performs it internally.
+    served_model: openai/gpt-6.1-sol
+    suggested: performance
+    suggested_by: openai/gpt-6.1-sol
+  30909-inline-3862893388-0:
+    cost_usd: 0.0033885
+    reason: The reviewer questions the design of using both a network-constrained
+      retry worker and retries of the main worker.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31039-inline-3865751032-0:
+    cost_usd: 0.002312
+    reason: The reviewer questions whether reading inside the transaction actually
+      prevents the claimed race and notes that upgrading to a write transaction may
+      fail.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  31093-inline-3882059601-0:
+    cost_usd: 0.002192
+    reason: The reviewer questions whether changes beyond this line were necessary.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31146-inline-3991877231-0:
+    cost_usd: 0.0035885
+    reason: The reviewer suggests extracting the permission and prompt logic into
+      a helper to make the control flow clearer.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31146-inline-3991906380-0:
+    cost_usd: 0.002312
+    reason: The reviewer asks for clearer wording in the test name to distinguish
+      "asks" from "warning".
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  31146-inline-4074163462-0:
+    cost_usd: 0.0035985
+    reason: The reviewer asks for clearer conditional structure without identifying
+      incorrect behavior.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31254-inline-3972113160-0:
+    cost_usd: 0.002212
+    reason: The reviewer questions the presence of an unnecessary code comment, not
+      the code's behavior.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  31254-inline-3972120389-0:
+    cost_usd: 0.0031035
+    reason: The reviewer questions the need for a special verification step without
+      identifying a concrete bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31254-inline-3972128675-0:
+    cost_usd: 0.002272
+    reason: The reviewer objects to including this change without identifying a specific
+      correctness or style issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31362-inline-3972312840-0:
+    cost_usd: 0.0030435
+    reason: The reviewer objects to the code's readability as a design preference,
+      without identifying a specific style issue or bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31557-inline-4039969723-0:
+    cost_usd: 0.002196
+    reason: The launch check must run regardless of the paused state, so nesting it
+      under the pause condition misses a required case.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  31557-inline-4040030770-0:
+    cost_usd: 0.002788
+    reason: The suggested logic ensures a pending full sync on first launch is not
+      incorrectly skipped because the app was never paused.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  31557-inline-4040032645-0:
+    cost_usd: 0.002462
+    reason: The reviewer asks for an explanatory comment, not a change to the code’s
+      behavior or design.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  31606-inline-4037007415-0:
+    cost_usd: 0.003711
+    reason: The reviewer is asking whether the platform override is necessary to avoid
+      spawning a native component during tests.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31753-inline-4086590463-0:
+    cost_usd: 0.002476
+    reason: The reviewer prefers declaring the default in the usage spec rather than
+      handling it in the script.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31768-inline-4103604135-0:
+    cost_usd: 0.00256
+    reason: 'The reviewer asks for consistency with the handlers’ return convention:
+      return true on success and undefined otherwise.'
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  31768-inline-4103609680-0:
+    cost_usd: 0.002402
+    reason: The reviewer suggests restructuring the conditional and action handling
+      without identifying a correctness issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31772-inline-4130655765-0:
+    cost_usd: 0.002422
+    reason: The reviewer is correcting the misspelling "disppearing" to "disappearing"
+      in the comment.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  31841-inline-4125532363-0:
+    cost_usd: 0.003456
+    reason: The option labels do not react to language changes, leaving translations
+      stale when the language changes.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  31928-inline-4142236158-0:
+    cost_usd: 0.002414
+    reason: The reviewer suggests using a disposable resource-management pattern instead
+      of the existing setup and cleanup hooks.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31942-inline-4146688541-0:
+    cost_usd: 0.00233
+    reason: The reviewer questions the tests' value and recommends testing onIosUpload
+      directly instead.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31989-inline-4165180993-0:
+    cost_usd: 0.00283
+    reason: The suggestion only adds a TODO comment explaining when to remove the
+      existing condition, without changing its behavior.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  31998-inline-4164196200-0:
+    cost_usd: 0.002756
+    reason: The reviewer says this permission setting is unnecessary because the workflow
+      token below already supplies what is needed.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  31998-inline-4164208016-0:
+    cost_usd: 0.0033385
+    reason: The reviewer questions consistency with other workflows without identifying
+      a specific bug or mechanical change.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  31998-inline-4164214601-0:
+    cost_usd: 0.0036785
+    reason: The reviewer suggests alternative runner image organization without identifying
+      a bug or explicit performance issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  32088-inline-4182800817-0:
+    cost_usd: 0.00234
+    reason: The reviewer prefers a hard-coded offset over dynamically tracking dimensions,
+      a design choice without an identified bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  32113-inline-4195316914-0:
+    cost_usd: 0.0037335
+    reason: The reviewer requests a simpler color access instead of an unnecessary
+      full text-style merge.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+prompt_sha256: f8354f427cdac997b138f79361e5a646dd3e8df0cc292965e684afedbc7e8f0b
+prompt_version: 1
+repo: immich-app/immich
+rules_version: 2
+spent_usd: 0.140045
+unsuggested: {}
