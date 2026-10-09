@@ -54,6 +54,10 @@ Pinned at `a89b32904fe5`. 60 PRs, 67 rounds, 111 location-scorable points (91 ac
 | no-tool | 1 | 0% (0/111; 95% CI 0 to 3%) | 0% (0/91; 95% CI 0 to 4%) | 0% (0/111; 95% CI 0 to 3%) | 0% (0/59; 95% CI 0 to 6%) | 0.0 (n=59 heads) | 0.0 (n=31667 lines) | 0 / 0 / 0 / 0 | 0.0 | n/a |  |
 | rigour | 6.10.0 | 2% (2/111; 95% CI 0 to 6%) | 2% (2/91; 95% CI 1 to 8%) | 0% (0/111; 95% CI 0 to 3%) | 2% (1/59; 95% CI 0 to 9%) | 0.017 (n=59 heads) | 0.08 (n=31667 lines) | 0 / 0 / 0 / 0 | 3.38 | n/a |  |
 
+Same-spot matches are positions, not meaning; the spot-check reads them:
+
+- rigour: same issue on spot-check: 0 of 2 checked (AI verdict, non-Claude model).
+
 False blocks in detail:
 
 | Entrant | Approved heads blocked | Merged-head fallback: blocked / heads | Overridden approvals (left out) | Must-not-block heads not scored |
@@ -91,6 +95,10 @@ Pinned at `29fbc01fa823`. 60 PRs, 88 rounds, 152 location-scorable points (115 a
 | every-hunk | 1 | 95% (144/152; 95% CI 90 to 97%) | 95% (109/115; 95% CI 89 to 98%) | 0% (0/152; 95% CI 0 to 2%) | 0% (0/11; 95% CI 0 to 26%) | 0.0 (n=11 heads) | 7.01 (n=37965 lines) | 0 / 0 / 0 / 0 | 0.0 | n/a | ceiling |
 | no-tool | 1 | 0% (0/152; 95% CI 0 to 2%) | 0% (0/115; 95% CI 0 to 3%) | 0% (0/152; 95% CI 0 to 2%) | 0% (0/11; 95% CI 0 to 26%) | 0.0 (n=11 heads) | 0.0 (n=37965 lines) | 0 / 0 / 0 / 0 | 0.0 | n/a |  |
 | rigour | 6.10.0 | 1% (1/152; 95% CI 0 to 4%) | 1% (1/115; 95% CI 0 to 5%) | 0% (0/152; 95% CI 0 to 2%) | 0% (0/11; 95% CI 0 to 26%) | 0.0 (n=11 heads) | 0.09 (n=37965 lines) | 0 / 0 / 0 / 0 | 7.23 | n/a |  |
+
+Same-spot matches are positions, not meaning; the spot-check reads them:
+
+- rigour: same issue on spot-check: 0 of 1 checked (AI verdict, non-Claude model).
 
 Acted-on points here rest mostly on the `range` basis (101 of 115); range calibration agreement (all repos): agree 6, disagree 3.
 
@@ -130,3 +138,5 @@ Spot-check sample: complete, with AI verdicts, not a human check (consensus: cla
 - acted-on (ancestor): agree 4, disagree 1
 - acted-on (direct): agree 8, disagree 3
 - acted-on (range): agree 6, disagree 3
+
+Per-basis agreement differs, but not clearly at these sample sizes; acted-on is pooled.

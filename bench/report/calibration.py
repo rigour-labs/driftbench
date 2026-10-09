@@ -141,11 +141,18 @@ def summarise_calibration(calibration: dict | None) -> dict:
             agrees = (entry["verdict"] == "yes") == bool(entry["acted_on"])
             acted.setdefault(entry["basis"], Counter())["agree" if agrees else "disagree"] += 1
     judges = Counter(entry.get("verdict_by") or "human" for entry in entries if entry["verdict"] is not None)
+    by_repo: dict[str, dict[str, dict]] = {}
+    for entry in (e for e in entries if e["kind"] == "location" and e["verdict"] is not None):
+        tally = by_repo.setdefault(entry["repo"], {}).setdefault(entry["tool"], {"verdicts": Counter(), "judges": set()})
+        tally["verdicts"][entry["verdict"]] += 1
+        tally["judges"].add(entry.get("verdict_by") or "human")
     return {
         "validated": all(entry["verdict"] is not None or entry.get("disputed") for entry in entries),
         "judges": dict(sorted(judges.items())),
         "disputed": sum(1 for entry in entries if entry.get("disputed")),
         "short": list(calibration.get("short", [])),
         "location": {tool: dict(sorted(c.items())) for tool, c in sorted(location.items())},
+        "location_by_repo": {repo: {tool: {"verdicts": dict(t["verdicts"]), "judges": sorted(t["judges"])}
+                                    for tool, t in tools.items()} for repo, tools in by_repo.items()},
         "acted_on": {basis: dict(sorted(c.items())) for basis, c in sorted(acted.items())},
     }

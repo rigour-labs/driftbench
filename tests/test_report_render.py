@@ -110,3 +110,24 @@ def test_ai_consensus_labels_are_named_with_their_disagreements_next_to_the_clas
     assert page.index("| Entrant | mechanical") < table_end                    # right after the class table
     assert "claude-opus-5-5: judgment 4, mechanical 2; example-org/example-model: mechanical 6" in page
     assert "human-labelled" not in page and "agree with the model" not in page
+
+
+def test_the_spot_check_sits_under_the_headline_table_and_the_basis_note_follows_the_data(tmp_path):
+    from bench.report.calibration import summarise_calibration
+    from bench.report.markdown import basis_note
+    result, _ = summary(tmp_path, prs=10, points=25)
+    entries = [{"kind": "location", "tool": "every-hunk", "repo": "o/r", "point": f"p{n}", "verdict": v,
+                "verdict_by": "model: example-org/example-model"} for n, v in enumerate(("no", "no", "partly"))]
+    entries += [{"kind": "acted_on", "repo": "o/r", "point": f"a{n}", "basis": b, "acted_on": True, "verdict": v,
+                 "verdict_by": "consensus: x + y"}
+                for n, (b, v) in enumerate([("ancestor", "yes")] * 4 + [("ancestor", "no")] + [("direct", "yes")] * 8
+                                           + [("direct", "no")] * 3)]
+    calibration = summarise_calibration({"seed": 1, "short": [], "entries": entries})
+    page = render("r", [result], {}, calibration)
+    line = "- every-hunk: same issue on spot-check: 0 of 3 checked, partly 1 (AI verdict, non-Claude model)."
+    assert line in page
+    assert page.index("| every-hunk | 1 |") < page.index(line) < page.index("False blocks in detail")
+    assert "not clearly at these sample sizes; acted-on is pooled" in page
+    assert basis_note({"ancestor": {"agree": 30}, "range": {"agree": 2, "disagree": 28}}).startswith(
+        "Per-basis agreement differs clearly")
+    assert basis_note({"direct": {"agree": 3}}) == ""
