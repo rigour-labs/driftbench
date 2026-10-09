@@ -17,11 +17,12 @@ def map_line(old: str, new: str, line: int) -> int | None:
     """`line` (1-based) in `old`, as a line number in `new`; None if `line` is outside `old`."""
     old_lines, new_lines = old.splitlines(), new.splitlines()
     index = line - 1
-    if not 0 <= index < max(len(old_lines), 1):
+    if not 0 <= index < len(old_lines):
         return None
     matcher = difflib.SequenceMatcher(a=old_lines, b=new_lines, autojunk=False)
+    # An insert covers no old lines, so it never holds `line`; the block after it does.
     for tag, i1, i2, j1, _ in matcher.get_opcodes():
-        if i1 <= index < i2 or (i1 == i2 == index):
+        if i1 <= index < i2:
             return j1 + (index - i1) + 1 if tag == "equal" else j1 + 1
     return None
 
