@@ -1,0 +1,3 @@
+105:        // The verdict's judges, as reported; kept for compatibility. spent_usd is every run, and 0 for a cached verdict.
+106:        cost_usd: result.costUsd ?? null,
+107:        spent_usd: result.spentUsd ?? 0,

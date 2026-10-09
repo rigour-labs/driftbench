@@ -1,7 +1,7 @@
 {
  "status": "FAIL",
  "checked": {
-  "rigour_version": "6.9.0",
+  "rigour_version": "6.10.0",
   "base": "HEAD~1",
   "base_sha": "1c3cb91502afe7779a3faff57926387e3cf25429",
   "head_sha": "dcbaab95263f99aabe415ae843abb04813cac168",

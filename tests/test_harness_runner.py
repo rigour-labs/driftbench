@@ -179,4 +179,4 @@ def test_manifest_command_writes_once_for_split_jobs(tmp_path, capsys):
     written = (out / "run.json").read_text()
     assert main(["manifest", "--entrants", "no-tool", "--out", str(out), "--labels", str(tmp_path / "none")]) == 0
     assert (out / "run.json").read_text() == written          # the first record is kept
-    assert '"rigour": "6.9.0"' in written and '"files": {}' in written
+    assert '"rigour": "6.10.0"' in written and '"files": {}' in written
