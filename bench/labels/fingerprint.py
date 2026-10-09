@@ -35,11 +35,17 @@ def repo_label_files(repo: str) -> tuple[str, str]:
     return f"{slug}.yaml", f"{slug}.sample.yaml"
 
 
+def optional_label_files(labels_dir: Path, recorded: dict, repo: str) -> list[str]:
+    """The model suggestions file, checked whenever it exists now or existed at run start."""
+    name = f"{slug_of(repo)}.model.yaml"
+    return [name] if (labels_dir / name).exists() or name in recorded.get("files", {}) else []
+
+
 def labels_unchanged(labels_dir: Path, recorded: dict | None, repo: str) -> tuple[bool, str]:
     """(ok, reason): this repo's label and sample files are committed and match the run's record."""
     if not recorded:
         return False, "the run recorded no label fingerprint"
-    for name in repo_label_files(repo):
+    for name in (*repo_label_files(repo), *optional_label_files(labels_dir, recorded, repo)):
         path = labels_dir / name
         if not path.exists():
             return False, f"{name} is missing"
