@@ -109,10 +109,25 @@ def range_note(summary: dict, calibration: dict) -> str:
             f"range calibration agreement (all repos): {agreement}.")
 
 
+def consensus_lines(consensus: dict) -> list[str]:
+    """Who made AI-consensus labels, how far they agreed, and what each class lost to disagreement."""
+    sources, dropped = consensus["sources"], consensus["dropped_by_class"]
+
+    def counts(side: str) -> str:
+        return ", ".join(f"{label} {n}" for label, n in dropped[side].items()) or "none"
+    return [f"AI-consensus labels: a class is used only where {sources['first']} ({consensus['first_role']}) and "
+            f"{sources['second']} (outside the Claude family) agree. They agree on {consensus['agreed']} of "
+            f"{consensus['both_labelled']} points (kappa {consensus['kappa']}); the rest are unclassified.", "",
+            f"Dropped as disagreements, by the class each labeller gave: {sources['first']}: {counts('first')}; "
+            f"{sources['second']}: {counts('second')}. Classes that lose more here are undercounted above.", ""]
+
+
 def model_line(agreement: dict | None) -> list[str]:
     """How far the labels agree with the model suggestions; a rate only on the blind subset."""
     if not agreement:
         return []
+    if "consensus" in agreement:
+        return consensus_lines(agreement["consensus"])
     blind = agreement["blind"]
     rate = (f"{blind['rate']:.0%}" if blind["rate"] is not None else f"too few for a rate (n<{MIN_RATE_N})")
     pre = (f" ({blind['pre_suggestion']} of them blind: pre-suggestion, from a sample answered in full before "
@@ -143,7 +158,8 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", 
     if class_note:
         lines += [f"Results by class withheld: {class_note}.", ""]
     elif classes:
-        lines += ["By class (N=3), from the labelled random sample only; points outside it are unclassified. "
+        source = "AI-consensus labels on the" if agreement and "consensus" in agreement else "the labelled"
+        lines += [f"By class (N=3), from {source} random sample only; points outside it are unclassified. "
                   "Each class has few points, so these intervals are wide: read them as rough, not as rankings.",
                   "", *class_table(classes), "", *model_line(agreement)]
     return lines

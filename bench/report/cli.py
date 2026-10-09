@@ -87,7 +87,10 @@ def class_results(args: argparse.Namespace, repo: str, ledger: list[dict],
     in_sample = set(sample["point_ids"])
     usable = {pid: label for pid, label in effective_labels(labels, texts).items() if pid in in_sample}
     model_data = read_model_file(model_path(args.labels, repo), repo)
-    agreement = model_agreement(labels["points"], usable, model_data, sample["point_ids"]) if model_data else None
+    if labels.get("consensus"):
+        agreement = {"consensus": labels["consensus"]}
+    else:
+        agreement = model_agreement(labels["points"], usable, model_data, sample["point_ids"]) if model_data else None
     return per_class([row for row in ledger if row["repo"] == repo], usable), "", agreement
 
 

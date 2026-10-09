@@ -140,9 +140,8 @@ Rules for the labeller:
   the code if the text alone doesn't say what's wrong.
 - When unsure, leave the point unconfirmed. It is reported as `unclassified`;
   a wrong label is worse than none.
-- Record who you are with `--labeller`. The first releases are labelled by
-  the repository's maintainer, who also maintains one entrant (Rigour); that
-  is a disclosed limit (docs/SPEC.md, "Labels").
+- Record who you are with `--labeller`. Run 1 uses AI-consensus labels
+  instead (below); that is a disclosed limit (docs/SPEC.md, "Labels").
 
 ## Model suggestions
 
@@ -184,6 +183,30 @@ python -m bench label next --repo immich-app/immich --labeller <name>   # blind 
 
 `bench label next` shows the blind subset first. On the other points it shows
 the model's class and reason; Enter accepts it, a number overrides it.
+
+## AI-consensus labels
+
+Run 1's classes are AI-consensus labels, not human ones. Two labellers from
+different model families label the same sample independently:
+
+- **claude-opus-5-5**, a Claude model working as DriftBench's builder, which
+  knows the benchmark and its guide. It labelled blind, from this guide and
+  each point's comment and code, before any model suggestion existed, into
+  `labels-claude/`. Rigour's reviewer also runs on Claude.
+- **The non-Claude model** from `bench label prelabel` ("Model
+  suggestions" above), which never saw the Claude labels.
+
+`bench label consensus --repo <repo> --from labels-claude` writes a class
+only where the two agree; every disagreement stays unclassified. The non-Claude
+model's veto caps the Claude labeller's bias. The label file records both
+sources, how many points both labelled, how many agreed, Cohen's kappa, and
+per class how many points each labeller lost to disagreement. Disagreements
+cluster in judgment and the boundary classes, so those classes are
+undercounted; the report prints the losses next to the class table. The
+command refuses to overwrite labels that aren't AI consensus.
+
+The wording everywhere is "AI-consensus labels", never "validated" or
+"human-labelled".
 
 ## What the label files contain
 

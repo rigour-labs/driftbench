@@ -67,3 +67,13 @@ def test_errors_return_1(workspace, tmp_path):
     assert main([*base, "set", "--repo", "o/r", "missing-id", "judgment", "--labeller", "m"]) == 1
     assert main([*base, "set", "--repo", "o/r", "7-body-10-2", "judgment", "--labeller", "m"]) == 1  # dropped
     assert main(["label", "--points", str(tmp_path / "nothing"), "status"]) == 1
+
+
+def test_consensus_refuses_to_overwrite_human_labels(workspace, capsys):
+    base, tmp_path = workspace
+    assert main([*base, "set", "--repo", "o/r", "7-body-10-0", "judgment", "--labeller", "m"]) == 0
+    (tmp_path / "labels" / "o__r.sample.yaml").write_text("repo: o/r\nseed: 1\npoint_ids: [7-body-10-0]\n")
+    (tmp_path / "labels" / "o__r.model.yaml").write_text(
+        "repo: o/r\nmodel: example-org/example-model\nblind_ids: []\npoints: {7-body-10-0: {suggested: judgment}}\n")
+    assert main([*base, "consensus", "--repo", "o/r", "--from", str(tmp_path / "labels")]) == 1
+    assert "aren't AI consensus" in capsys.readouterr().err

@@ -1,0 +1,362 @@
+blind_fraction: 0.2
+blind_ids:
+- 37212-inline-2724171832-0
+- 38630-inline-3829591126-0
+- 39307-inline-3688451735-0
+- 39691-inline-3643180893-0
+- 39691-inline-3942917902-0
+- 39891-inline-3754845758-0
+- 39891-inline-4081968189-0
+- 40139-inline-4120582623-0
+- 40141-inline-4041168619-0
+- 40141-inline-4041411648-0
+model: openai/gpt-6.1-sol
+points:
+  37212-inline-2691713060-0:
+    cost_usd: 0.00205
+    reason: The reviewer suggests simplifying the helper's interface by obtaining
+      its arguments from message_edit_request.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  37212-inline-2691803279-0:
+    cost_usd: 0.002342
+    reason: The reviewer wants to avoid an additional query when the visibility policy
+      is already known to be set.
+    served_model: openai/gpt-6.1-sol
+    suggested: performance
+    suggested_by: openai/gpt-6.1-sol
+  37212-inline-2724171832-0:
+    cost_usd: 0.0028835
+    reason: The reviewer suggests removing the preliminary SELECT to reduce database
+      queries by updating the policy directly.
+    served_model: openai/gpt-6.1-sol
+    suggested: performance
+    suggested_by: openai/gpt-6.1-sol
+  37212-inline-3332153439-0:
+    cost_usd: 0.001992
+    reason: The reviewer asks to reuse existing logic rather than duplicate it.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  37212-inline-3333350950-0:
+    cost_usd: 0.002746
+    reason: The reviewer asks to clarify the comment’s wording, noting that the check
+      is an optimization rather than a correctness requirement.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  37212-inline-3333371466-0:
+    cost_usd: 0.00213
+    reason: The reviewer wants an explicit API design choice requiring callers to
+      consider the parameter rather than rely on a default.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  38422-inline-2955920706-0:
+    cost_usd: 0.0031635
+    reason: The reviewer flags outdated wording in a code comment, not a behavioral
+      bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  38630-inline-3829591126-0:
+    cost_usd: 0.002346
+    reason: The reviewer requests a discussion of API limits and event queue rates
+      without identifying a specific bug or contract violation.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39307-inline-3267597312-0:
+    cost_usd: 0.002024
+    reason: The reviewer questions a redundant code comment whose wording covers all
+      cases and adds no useful information.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39307-inline-3267606892-0:
+    cost_usd: 0.0032435
+    reason: The reviewer requests reordering entries to match their usage order for
+      readability.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39307-inline-3267620926-0:
+    cost_usd: 0.003171
+    reason: The reviewer suggests separating independent changes rather than raising
+      a correctness or performance problem.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39307-inline-3267649813-0:
+    cost_usd: 0.0031485
+    reason: The reviewer flags an unused variable, which is a mechanical cleanup issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39307-inline-3267653550-0:
+    cost_usd: 0.00232
+    reason: The reviewer accepts the rename but asks to separate it into its own commit,
+      a change-organization preference.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39307-inline-3688451735-0:
+    cost_usd: 0.00205
+    reason: The commit fails tests on its own and depends on a later commit to work
+      correctly.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  39593-inline-4118887694-0:
+    cost_usd: 0.003271
+    reason: The call passes a parameter that no longer exists, making it incompatible
+      with the current function signature.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  39686-inline-3806039665-0:
+    cost_usd: 0.0030635
+    reason: The reviewer questions redundant documentation and suggests a shorter
+      description without identifying an error.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39686-inline-3920278132-0:
+    cost_usd: 0.00233
+    reason: The reviewer requests a terminology cleanup from "list of JSON objects"
+      to "array of objects".
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39691-inline-3643180893-0:
+    cost_usd: 0.0033735
+    reason: The reviewer flags duplicated label-computation logic and potential divergence
+      without identifying a concrete correctness bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39691-inline-3643205613-0:
+    cost_usd: 0.00293
+    reason: The reviewer asks for a clarifying comment explaining the intentional
+      distinction between editing a message and using compose state.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39691-inline-3762842175-0:
+    cost_usd: 0.002026
+    reason: The reviewer flags an incorrect function name in the commit message.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39691-inline-3942917902-0:
+    cost_usd: 0.003014
+    reason: The reviewer questions the necessity of the addition without identifying
+      a bug or performance cost.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39735-inline-3628994743-0:
+    cost_usd: 0.002082
+    reason: The reviewer requests an explanatory comment to improve code readability.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39735-inline-3669760269-0:
+    cost_usd: 0.002168
+    reason: The change affects three navigation keys despite explicitly promising
+      that keys other than Down Arrow remain unchanged.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  39735-inline-3891211698-0:
+    cost_usd: 0.00204
+    reason: The reviewer suggests extracting shared logic into a helper to reduce
+      duplication.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39891-inline-3754845758-0:
+    cost_usd: 0.0029585
+    reason: The reviewer requests removing a code comment, a form-only cleanup.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39891-inline-3754869252-0:
+    cost_usd: 0.002472
+    reason: The reviewer asks to remove an unnecessary code comment, a form-only change.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39891-inline-3754902225-0:
+    cost_usd: 0.001846
+    reason: The reviewer requests a punctuation style change in commit messages.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39891-inline-4081968189-0:
+    cost_usd: 0.0035935
+    reason: The reviewer asks to replace the verbose explanatory comment with a simple
+      one-line comment.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  39921-inline-3933557521-0:
+    cost_usd: 0.0041885
+    reason: The reviewer suggests adding assertions for future two-tier billing support
+      and notes a possible test relocation, without identifying a current bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39921-inline-3933587807-0:
+    cost_usd: 0.00216
+    reason: The reviewer raises a possible future billing-model change rather than
+      identifying a current bug or required behavior.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39973-inline-3840556553-0:
+    cost_usd: 0.003156
+    reason: The reviewer is asking how the fix should be organized across commits,
+      including the analogous streams change.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  39973-inline-4023916673-0:
+    cost_usd: 0.002444
+    reason: The reviewer flags a race where an old form's completed request could
+      incorrectly re-enable buttons while the current form's request is still pending.
+    served_model: openai/gpt-6.1-sol
+    suggested: claim/contract
+    suggested_by: openai/gpt-6.1-sol
+  39973-inline-4044604736-0:
+    cost_usd: 0.002498
+    reason: The reviewer proposes a clearer result-object design for distinguishing
+      success from failure, without identifying a correctness bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  40130-inline-4137910279-0:
+    cost_usd: 0.002434
+    reason: The reviewer suggests a wording change in the documentation without identifying
+      a functional or usability problem.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40139-inline-4120582623-0:
+    cost_usd: 0.002584
+    reason: The reviewer wants to retain one-second polling to avoid adding up to
+      four seconds of restart latency.
+    served_model: openai/gpt-6.1-sol
+    suggested: performance
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041148641-0:
+    cost_usd: 0.003221
+    reason: The reviewer suggests an optional addition to the guidance rather than
+      identifying an error or broken user flow.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041168619-0:
+    cost_usd: 0.003141
+    reason: The reviewer suggests adding contributor guidance about how best to discover
+      worthwhile problems to fix.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041176061-0:
+    cost_usd: 0.002044
+    reason: The reviewer suggests a wording edit for clarity and concision.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041184050-0:
+    cost_usd: 0.002164
+    reason: The reviewer suggests a wording change to the documentation, not a functional
+      or design correction.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041221884-0:
+    cost_usd: 0.0037685
+    reason: The suggestion corrects a missing article and adds a serial comma in the
+      documentation.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041291178-0:
+    cost_usd: 0.003911
+    reason: The reviewer suggests a wording change in the documentation without identifying
+      a functional problem.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041307758-0:
+    cost_usd: 0.003086
+    reason: The suggestion rephrases the documentation as an explicit instruction
+      without identifying a behavioral bug.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041322334-0:
+    cost_usd: 0.002886
+    reason: The suggestion adds quotation marks around the label name to improve the
+      documentation's wording.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041346153-0:
+    cost_usd: 0.0030985
+    reason: The suggestion changes the word order in documentation without changing
+      its meaning.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041411648-0:
+    cost_usd: 0.005121
+    reason: The suggestion broadens contributor policy to discourage opening issues
+      solely to find work.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  40141-inline-4041649793-0:
+    cost_usd: 0.0035235
+    reason: The reviewer flags inconsistent hyphenation, while treating the link destination
+      as an open design choice.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40165-inline-4059430768-0:
+    cost_usd: 0.002554
+    reason: The reviewer says truncation on narrow screens hides what search items
+      mean and suggests handling those screens differently.
+    served_model: openai/gpt-6.1-sol
+    suggested: user journey
+    suggested_by: openai/gpt-6.1-sol
+  40165-inline-4104158327-0:
+    cost_usd: 0.00261
+    reason: The reviewer asks to remove CSS rules made obsolete by the new description
+      layout.
+    served_model: openai/gpt-6.1-sol
+    suggested: mechanical
+    suggested_by: openai/gpt-6.1-sol
+  40165-inline-4104170727-0:
+    cost_usd: 0.002278
+    reason: The reviewer questions whether the added styling is necessary without
+      identifying a bug or specific user-facing issue.
+    served_model: openai/gpt-6.1-sol
+    suggested: judgment
+    suggested_by: openai/gpt-6.1-sol
+  40165-inline-4131259249-0:
+    cost_usd: 0.00255
+    reason: The reviewer flags an inconsistent responsive layout where the search
+      box and typeahead become narrower at a wider viewport.
+    served_model: openai/gpt-6.1-sol
+    suggested: user journey
+    suggested_by: openai/gpt-6.1-sol
+prompt_sha256: f8354f427cdac997b138f79361e5a646dd3e8df0cc292965e684afedbc7e8f0b
+prompt_version: 1
+repo: zulip/zulip
+rules_version: 2
+spent_usd: 0.138195
+unsuggested: {}

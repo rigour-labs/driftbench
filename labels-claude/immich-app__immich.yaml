@@ -1,0 +1,243 @@
+guideline: 1
+points:
+  28938-inline-3387347513-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 67a7c1c6d7e82cc5529f3ef1602dc3bbc7976896d30da06db60d4a0126471b0f
+  29013-inline-3830370807-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 865ee4ec7574c9ed649ee02e9d37840c22939c8831f198526111fd863ad390d0
+  29013-inline-3830381938-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 4d0ca8dd8525b0604bef9c3de5755264fba264c62666dba1596bc701af5c603c
+  29013-inline-3830385232-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 5ab275734564a1d3a46c268660c9292550c796112ec03620145f71831d7f4761
+  29013-inline-3844761940-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: d28f5d8f37b929e3ebe5c792fd729e50fada868e7a3f23246275cb70eb2afd71
+  30179-inline-3845358903-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: ce2935de24f65228afdcfd7fa778e255fc26d7b15ad290eed9d5ce05ef2970dc
+  30179-inline-3845396274-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: ebbdc10f693c0a3690c7a9e0b5ed61aae664a597b1cd562dbca1a766ec82429d
+  30179-inline-3845502814-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 3e7b705e35eb2a7181a0f2effb8806513850b5d792bcaa77d964b894b5ffece9
+  30199-inline-3924733793-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: e43969fe5acf97b129b7b462d95434dcf39d4c1d45390b9b17ab2c2383dcae49
+  30262-inline-3757952365-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 084adc822505bb7042cbb4f39b09a933905239518bc6ca859ed01b3c99755f66
+  30262-inline-3757971976-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: a8c8204fca9a448d2e602283073c01c36589b83825a7a9b6663d594fa9833b35
+  30262-inline-3757982013-0:
+    blind: true
+    label: claim/contract
+    labeller: claude-opus-5-5
+    text_sha256: ad10b216fd56eb678a665818033891a17f8dc8284a2e7239282d2a22e1e6400e
+  30262-inline-3758022686-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 81afaef94fefe1ebbd0012620d3dc39db9501fae39a44c0143685c65caa78aeb
+  30262-inline-4065323663-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 0880734f61c908a122ee52f6c5da8f8834854c6b3ed3f8de01cfc487f80d4792
+  30769-inline-4095197093-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 30d874becd5a7e383757a7231a13fa00e5e74d7219d266abd71ef7a4db5fdb15
+  30769-inline-4095316661-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: a974240341832a3a74102f040e681534a25253a5b1047ecc3921e69ae93448d6
+  30901-inline-3832553110-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 099e494cd33974c91b80e8c3f29fbddab161a7c11781dfa8aefe15287c661e35
+  30909-inline-3833026666-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: f60f24f3ab8b096b3d2ed5391b9df6bf55239559e0187b96b1e052945b402714
+  30909-inline-3833081445-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: fc14992bf45caba0f1a96a9e05bfcc687881b1141bbd02b891e42f713e0ff879
+  30909-inline-3845745753-0:
+    blind: true
+    label: claim/contract
+    labeller: claude-opus-5-5
+    text_sha256: 9fd3ca8abcfb0cd3902db16bedccc8fbba48555082582f5e89e363a381f3ea20
+  30909-inline-3850714125-0:
+    blind: true
+    label: claim/contract
+    labeller: claude-opus-5-5
+    text_sha256: 231dfd8616bebd25eccd3bd2c267e3af73dc1b1c9ba5bb8972be02c6fcf4daf2
+  30909-inline-3850725214-0:
+    blind: true
+    label: performance
+    labeller: claude-opus-5-5
+    text_sha256: 4b73c9f875726516bd7fbfdd5bc9ca32a61b7e0c4765eac8798dd9d82c6cb87c
+  30909-inline-3862893388-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 1c97a4c7fbff68e3b8270cd0a32dd0a95899c325875726e273b2c68ed6b06a60
+  31039-inline-3865751032-0:
+    blind: true
+    label: claim/contract
+    labeller: claude-opus-5-5
+    text_sha256: 1678c60c6a5d707239cf441dc82764f034bd080569cdebf82a9b951d5b9e7a91
+  31093-inline-3882059601-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: ba925b960eccb49e5dba478615862bfd6a615fb6acbb3ae11572dd27bb1a4b1a
+  31146-inline-3991877231-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: cd9b330b724cdbfc6cc90e4c15469aed7af202ad282171fadab08b416205c118
+  31146-inline-3991906380-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 7e72364ea086634eea508e0381fdbf74f95bda7bbeadbde8064a97b351823c15
+  31146-inline-4074163462-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 299076882fa8e3d20b163c1cc828edf4aa65c87bbf87c96d8e1bdc57c88a73c8
+  31254-inline-3972113160-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 85e986557a7f5245b1b4ba8a7338abe6e03021f662c63783c618d6e7d07a5822
+  31254-inline-3972120389-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 838540e20c7f131f4cebb92cbbacc54e75ef5ef697746ae73cf5a6b7509d042c
+  31254-inline-3972128675-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 413f19d37010d9605323e9eaecf4733842c49db6b7e0682aa5ccba321cd1d4e5
+  31362-inline-3972312840-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 00f23203a0634d6c952fc24de6f6909277d60409430e4b5a6da2027b070f6de4
+  31557-inline-4039969723-0:
+    blind: true
+    label: claim/contract
+    labeller: claude-opus-5-5
+    text_sha256: 0f5682d73814d1583645120ef6c55a4942b0e8b872c2cbbf3c45b60a27814116
+  31557-inline-4040030770-0:
+    blind: true
+    label: claim/contract
+    labeller: claude-opus-5-5
+    text_sha256: ddd19d6e4567681667560c0ac2dcad897095ea73d1d21ba9d1d6627fe2668580
+  31557-inline-4040032645-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 10a8abbb7b936f1777c39b33f83f1c5e320bc00939e37de5858d3767579db98c
+  31753-inline-4086590463-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 398c40e10648da0da221bd2555d94b665bc3539ca5f0092eff7c5d45f6bb8f79
+  31768-inline-4103604135-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 4758d39621055a1f10695913b5026ca647ce8a7fb68c987c4ea0d7e855b1553e
+  31768-inline-4103609680-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 3aeac4449b7c778763f16939fcb1e1c9f2d5ff5c401a42c9e3d24b73fb6c2b3d
+  31772-inline-4130655765-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 54b0e390d8d79753948c70bb15046cb498792e621a4e026f20f2190a7cc8ae5e
+  31841-inline-4125532363-0:
+    blind: true
+    label: user journey
+    labeller: claude-opus-5-5
+    text_sha256: 59702f2505b896eab24d711a8169de1693d3e59aca98674460f825cb13020cbf
+  31928-inline-4142236158-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 680b23c5386b9f4aeada1337a81500a1533ca3f260b089c14d195f8bf2b6394a
+  31942-inline-4146688541-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: cdb6ed762cabc13f01c5080fe1095753a1d7e115436e1f2f36d99c5df5004ada
+  31989-inline-4165180993-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: c1da800b6283e4f1106ee7e34d08adfe2670745ea79244d2abb9302c044aeaf2
+  31998-inline-4164196200-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 70420f8db239ddbac25d2cdddbffd80e820c3c2981721f99d78a777e6a67c9d7
+  31998-inline-4164208016-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: e07579b980c8125173c95271f7755ed12fbd2156b5c128607a65d4d201c7f860
+  31998-inline-4164214601-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: 0c028c04eb5c5248d1a90c3c25d9cc20f48096bd1972e91244046e30c6779aa3
+  32088-inline-4182800817-0:
+    blind: true
+    label: judgment
+    labeller: claude-opus-5-5
+    text_sha256: bd490a56a9830c73dd713f5ed7e1721852e22175ddf6426af78af0f2a1e302b0
+  32113-inline-4195316914-0:
+    blind: true
+    label: mechanical
+    labeller: claude-opus-5-5
+    text_sha256: 7df884602da091738486c685738acc1625e0f2abd3ebb3dd1fba475c91f60cb0
+repo: immich-app/immich

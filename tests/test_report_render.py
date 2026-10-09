@@ -92,3 +92,21 @@ def test_model_assisted_labels_report_blind_agreement_and_anchoring(tmp_path):
     page = render("r", [result], {"o/r": classes}, {"validated": False, "location": {}, "acted_on": {}},
                   {}, {"o/r": pre})
     assert "40 of 48 (40 of them blind: pre-suggestion" in page and ": 83%" in page
+
+
+def test_ai_consensus_labels_are_named_with_their_disagreements_next_to_the_class_table(tmp_path):
+    result, ledger = summary(tmp_path, prs=10, points=25)
+    classes = per_class(ledger, {"p1": "mechanical"})
+    consensus = {"sources": {"first": "claude-opus-5-5", "second": "example-org/example-model"},
+                 "first_role": "a Claude model working as DriftBench's builder, which knows the benchmark and its guide",
+                 "both_labelled": 48, "agreed": 42, "kappa": 0.81,
+                 "dropped_by_class": {"first": {"judgment": 4, "mechanical": 2}, "second": {"mechanical": 6}}}
+    page = render("r", [result], {"o/r": classes}, {"validated": False, "location": {}, "acted_on": {}},
+                  {}, {"o/r": {"consensus": consensus}})
+    assert "By class (N=3), from AI-consensus labels on the random sample only" in page
+    assert "working as DriftBench's builder, which knows the benchmark and its guide" in page
+    assert "agree on 42 of 48 points (kappa 0.81)" in page
+    table_end = page.index("Dropped as disagreements")
+    assert page.index("| Entrant | mechanical") < table_end                    # right after the class table
+    assert "claude-opus-5-5: judgment 4, mechanical 2; example-org/example-model: mechanical 6" in page
+    assert "human-labelled" not in page and "agree with the model" not in page
