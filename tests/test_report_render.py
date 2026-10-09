@@ -48,3 +48,17 @@ def test_withheld_per_class_note_replaces_the_table(tmp_path):
                   {"o/r": "o__r.yaml was committed after the run started"})
     assert "Results by class withheld: o__r.yaml was committed after the run started." in page
     assert "By class" not in page
+
+
+def test_range_note_when_acted_on_rests_mostly_on_range(tmp_path):
+    from bench.report.markdown import range_note
+    result, _ = summary(tmp_path, prs=10, points=25)
+    result["corpus"]["acted_on_by_basis"] = {"range": 20, "direct": 5}
+    assert range_note(result, {}) == ("Acted-on points here rest mostly on the `range` basis (20 of 25); "
+                                      "its calibration agreement: not yet hand-checked.")
+    checked = {"acted_on": {"range": {"agree": 8, "disagree": 2}}}
+    assert "agree 8, disagree 2" in range_note(result, checked)
+    page = render("r", [result], {}, {"validated": False, "short": [], "location": {}, "acted_on": {}})
+    assert "rest mostly on the `range` basis" in page
+    result["corpus"]["acted_on_by_basis"] = {"range": 10, "ancestor": 15}
+    assert range_note(result, checked) == ""

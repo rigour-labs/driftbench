@@ -274,10 +274,14 @@ guards keep it honest:
    release, split evenly across entrants, baselines excluded) is checked by
    hand: *same issue: yes / partly / no*. The resulting location→issue rate
    per entrant is published alongside the headline. The same sample checks
-   acted-on decisions (10 `direct` yes, 5 `direct` no, 5 `ancestor`): *did
-   the change near the anchor respond to the point: yes / no*, with
-   agreement reported per basis (5 `range` cases are added to the sample). If `direct` agrees clearly less often than
-   `ancestor`, acted-on numbers are reported per basis. The sample is drawn
+   acted-on decisions (10 `direct` yes, 5 `direct` no, 5 `ancestor`, 5
+   `range` yes, 5 `range` no; at least half of the `range` cases come from
+   the repository whose acted-on points rest most on `range`): *did the
+   change near the anchor respond to the point: yes / no*, with agreement
+   reported per basis. If `direct` or `range` agrees clearly less often than
+   `ancestor`, acted-on numbers are reported per basis. Where most of a
+   repository's acted-on points come from `range`, the page says so next
+   to them, with `range`'s agreement. The sample is drawn
    with a recorded seed (`bench calibrate draw`), never redrawn silently,
    and committed with its verdicts. It draws only from reportable
    repositories. When a pool is smaller than its target, the shortfall

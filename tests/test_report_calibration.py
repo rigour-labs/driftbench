@@ -31,7 +31,7 @@ def test_draw_is_reproducible_stratified_and_skips_baselines():
     acted = [(e["basis"], e["acted_on"]) for e in first["entries"] if e["kind"] == "acted_on"]
     assert acted.count(("direct", True)) == 10 and acted.count(("direct", False)) == 5
     assert sum(1 for basis, _ in acted if basis == "ancestor") == 5
-    assert "short: 0 of 5 acted-on (range)" in first["short"]      # no range points in this pool
+    assert {"short: 0 of 5 acted-on (range yes)", "short: 0 of 5 acted-on (range no)"} <= set(first["short"])
 
 
 def test_round_trip_validation_and_summary(tmp_path):
@@ -62,3 +62,32 @@ def test_partial_sample_is_not_validated():
     calibration["entries"][0]["verdict"] = "partly"
     summary = summarise_calibration(calibration)
     assert summary["validated"] is False and summary["location"] == {calibration["entries"][0]["tool"]: {"partly": 1}}
+
+
+def range_points():
+    """zulip leans on range (most of its decisions); immich only a little."""
+    pts = [{"id": f"z{n}", "repo": "z/z", "pr": 1, "acted_basis": "range", "acted_on": n % 3 != 0} for n in range(30)]
+    pts += [{"id": f"zd{n}", "repo": "z/z", "pr": 1, "acted_basis": "direct", "acted_on": True} for n in range(3)]
+    pts += [{"id": f"i{n}", "repo": "i/i", "pr": 2, "acted_basis": "range", "acted_on": n % 2 == 0} for n in range(10)]
+    pts += [{"id": f"ia{n}", "repo": "i/i", "pr": 2, "acted_basis": "ancestor", "acted_on": True} for n in range(40)]
+    return pts
+
+
+def test_range_focus_repo_is_the_one_leaning_on_range_most():
+    from bench.report.calibration import range_focus_repo
+    assert range_focus_repo(range_points()) == "z/z"
+    assert range_focus_repo([p for p in range_points() if p["acted_basis"] != "range"]) is None
+
+
+def test_range_quota_is_ten_with_half_from_the_focus_repo():
+    for seed in range(5):
+        entries = [e for e in draw([], range_points(), seed=seed)["entries"] if e["basis"] == "range"]
+        assert sum(e["acted_on"] for e in entries) == 5 and sum(not e["acted_on"] for e in entries) == 5
+        assert sum(e["repo"] == "z/z" for e in entries) >= 5
+
+
+def test_small_focus_pool_is_filled_from_other_repos():
+    pts = [p for p in range_points() if not (p["repo"] == "z/z" and p["acted_basis"] == "range" and p["acted_on"])][:]
+    pts += [{"id": "zt", "repo": "z/z", "pr": 1, "acted_basis": "range", "acted_on": True}]
+    entries = [e for e in draw([], pts, seed=1)["entries"] if e["basis"] == "range" and e["acted_on"]]
+    assert len(entries) == 5 and sum(e["repo"] == "z/z" for e in entries) == 1
