@@ -77,7 +77,21 @@ def class_table(classes: dict[str, dict]) -> list[str]:
     return lines
 
 
-def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "") -> list[str]:
+def range_note(summary: dict, calibration: dict) -> str:
+    """When most acted-on points come from the `range` basis, say so next to them, with its agreement."""
+    by_basis = summary["corpus"].get("acted_on_by_basis", {})
+    acted = summary["corpus"]["points_acted_on"]
+    on_range = by_basis.get("range", 0)
+    if not acted or on_range * 2 <= acted:
+        return ""
+    counts = calibration.get("acted_on", {}).get("range")
+    agreement = (f"agree {counts.get('agree', 0)}, disagree {counts.get('disagree', 0)}" if counts
+                 else "not yet hand-checked")
+    return (f"Acted-on points here rest mostly on the `range` basis ({on_range} of {acted}); "
+            f"its calibration agreement: {agreement}.")
+
+
+def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", calibration: dict | None = None) -> list[str]:
     lines = [f"## {summary['repo']}", "", f"Pinned at `{summary['pin'][:12]}`. {corpus_line(summary)}", ""]
     if not summary["reportable"]:
         mins, c = summary["minimums"], summary["corpus"]
@@ -86,6 +100,9 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "") 
                         f"{mins['approved_heads']}). No scores are reported for this repository, and it "
                         "is left out of the calibration sample.", ""]
     lines += [MAIN_HEADER, "|---" * MAIN_COLUMNS + "|", *(tool_row(n, m) for n, m in summary["tools"].items()), ""]
+    note = range_note(summary, calibration or {})
+    if note:
+        lines += [note, ""]
     lines += ["False blocks in detail:", "", BLOCK_HEADER, "|---" * 5 + "|",
               *(block_row(n, m) for n, m in summary["tools"].items()), ""]
     lines += ["Sensitivity (all location-scorable points):", "", *sensitivity(summary), ""]
@@ -119,6 +136,7 @@ def render(run_name: str, summaries: list[dict], classes: dict[str, dict], calib
              "`python -m bench report` from the score summaries in this directory.", "",
              f"**Status:** {calibration_status(calibration)}", ""]
     for summary in summaries:
-        lines += repo_section(summary, classes.get(summary["repo"], {}), (class_notes or {}).get(summary["repo"], ""))
+        lines += repo_section(summary, classes.get(summary["repo"], {}), (class_notes or {}).get(summary["repo"], ""),
+                              calibration)
     lines += calibration_section(calibration)
     return "\n".join(lines).rstrip() + "\n"

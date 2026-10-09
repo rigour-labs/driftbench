@@ -3,7 +3,9 @@
 Two samples, drawn with a fixed seed so anyone can redraw the same one:
 - location matches (distance <= 3) per real entrant, judged "same issue":
   yes / partly / no; this gives each entrant's location-to-issue rate;
-- acted-on decisions (10 direct-true, 5 direct-false, 5 ancestor, 5 range), judged
+- acted-on decisions (10 direct-true, 5 direct-false, 5 ancestor, 5 range-true,
+  5 range-false; half of each range quota from the repo that relies on range
+  most), judged
   "did the change near the anchor respond to the point": yes / no; this
   gives agreement per ACTED-1 basis.
 A human fills `verdict`; until every entry has one, the headline is unvalidated.
@@ -19,7 +21,9 @@ import yaml
 
 BASELINES = ("no-tool", "every-hunk")
 LOCATION_TARGET = 50
-ACTED_ON_QUOTAS = ((True, "direct", 10), (False, "direct", 5), (None, "ancestor", 5), (None, "range", 5))
+ACTED_ON_QUOTAS = ((True, "direct", 10), (False, "direct", 5), (None, "ancestor", 5),
+                   (True, "range", 5), (False, "range", 5))
+FOCUS_BASIS = "range"  # half of each range quota (rounded up) comes from the repo that relies on it most
 LOCATION_VERDICTS = ("yes", "partly", "no")
 ACTED_VERDICTS = ("yes", "no")
 
@@ -41,16 +45,36 @@ def sample_locations(ledger: list[dict], rng: random.Random) -> list[dict]:
     return sample
 
 
+def range_focus_repo(points: list[dict]) -> str | None:
+    """The repo whose acted-on decisions rest most on FOCUS_BASIS (largest share), or None if none use it."""
+    shares = {}
+    for repo in {p["repo"] for p in points}:
+        decided = [p for p in points if p["repo"] == repo and p["acted_on"] is not None]
+        focus = sum(1 for p in decided if p.get("acted_basis") == FOCUS_BASIS)
+        if focus:
+            shares[repo] = focus / len(decided)
+    return max(sorted(shares), key=shares.get) if shares else None
+
+
+def draw_quota(pool: list[dict], quota: int, focus: str | None, rng: random.Random) -> list[dict]:
+    """`quota` points from `pool`; for FOCUS_BASIS, half (rounded up) from the focus repo first."""
+    if focus is None or not pool or pool[0].get("acted_basis") != FOCUS_BASIS:
+        return rng.sample(pool, min(quota, len(pool)))
+    from_focus = [p for p in pool if p["repo"] == focus]
+    chosen = rng.sample(from_focus, min(math.ceil(quota / 2), len(from_focus)))
+    rest = [p for p in pool if p not in chosen]
+    return chosen + rng.sample(rest, min(quota - len(chosen), len(rest)))
+
+
 def sample_acted_on(points: list[dict], rng: random.Random) -> list[dict]:
     """`points` carry their `repo`; quotas per (acted_on, basis) from ACTED_ON_QUOTAS."""
-    by_id = {p["id"]: p for p in points}
+    focus = range_focus_repo(points)
     sample = []
     for value, basis, quota in ACTED_ON_QUOTAS:
-        pool = sorted(pid for pid, p in by_id.items() if p.get("acted_basis") == basis
-                      and p["acted_on"] is not None and (value is None or p["acted_on"] is value))
-        for point_id in rng.sample(pool, min(quota, len(pool))):
-            point = by_id[point_id]
-            sample.append({"kind": "acted_on", "repo": point["repo"], "point": point_id, "pr": point["pr"],
+        pool = sorted((p for p in points if p.get("acted_basis") == basis and p["acted_on"] is not None
+                       and (value is None or p["acted_on"] is value)), key=lambda p: p["id"])
+        for point in draw_quota(pool, quota, focus, rng):
+            sample.append({"kind": "acted_on", "repo": point["repo"], "point": point["id"], "pr": point["pr"],
                            "basis": basis, "acted_on": point["acted_on"], "verdict": None})
     return sample
 

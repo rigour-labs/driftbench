@@ -81,6 +81,8 @@ def corpus_counts(corpus: dict, points_file: dict, scorable: list[dict]) -> dict
         "points_kept": len(kept),
         "points_location_scorable": len(scorable),
         "points_acted_on": sum(1 for p in scorable if p["acted_on"] is True),
+        "acted_on_by_basis": dict(sorted(Counter(p.get("acted_basis") for p in scorable
+                                                 if p["acted_on"] is True).items())),
         "acted_on_unknown": sum(1 for p in scorable if p["acted_on"] is None),
         "kept_not_location_scorable": len(kept) - len(scorable),
         "kept_no_round": sum(1 for p in kept if p["round"] is None),
