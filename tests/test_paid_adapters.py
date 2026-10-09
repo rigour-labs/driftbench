@@ -151,9 +151,9 @@ def test_code_review_gets_exactly_rigours_tool_access_and_isolation():
 
 
 def test_rigours_pinned_tool_lists_match_ours():
-    """tests/fixtures/rigour-6.9.0-claude-tools.txt: the two lines from Rigour 6.9.0's reviewer/adapters.js."""
+    """tests/fixtures/rigour-claude-tools.txt: the two lines from the pinned Rigour's reviewer/adapters.js."""
     from bench.adapters import tool_access
-    source = (FIXTURES / "rigour-6.9.0-claude-tools.txt").read_text()
+    source = (FIXTURES / "rigour-claude-tools.txt").read_text()
     assert tool_access.parse_rigour_tools(source) == (tool_access.READ_ONLY_TOOLS, tool_access.DENIED_TOOLS)
     tool_access.check_parity(source)
     widened = source.replace("'Bash(git grep:*)'", "'Bash(git grep:*)', 'Bash'")
@@ -177,3 +177,17 @@ def test_code_review_env_disables_memory_files(monkeypatch, tmp_path):
     diff.write_text("")
     claude_code.ClaudeCodeReview("m").review(ReviewInput(tmp_path, "b", "h", diff, None, 5, {"HOME": "/h", "PATH": "/b"}))
     assert all(seen[k] == v for k, v in tool_access.ISOLATION_ENV.items()) and seen["ANTHROPIC_API_KEY"] == "test-key"
+
+
+def test_the_pinned_rigour_reports_spent_usd_and_it_is_read():
+    """tests/fixtures/rigour-reviewer-json-keys.txt: the reviewer JSON lines from the pinned Rigour's dist.
+    A recorded reviewer report needs a paid run; this checks the key exists and is the one we read first."""
+    keys = (FIXTURES / "rigour-reviewer-json-keys.txt").read_text()
+    assert "spent_usd: result.spentUsd" in keys and "cost_usd: result.costUsd" in keys
+    report = copy.deepcopy(REVIEWER_REPORT)
+    report["reviewer"].update(spent_usd=1.37, cost_usd=0.42)       # all runs vs the verdict's judges only
+    assert rigour_reviewer.to_output(report).cost_usd == 1.37
+    cached = copy.deepcopy(REVIEWER_REPORT)
+    cached["reviewer"].update(cached=True, spent_usd=0, cost_usd=0.42)   # a cached verdict re-reports old cost
+    out = rigour_reviewer.to_output(cached)
+    assert out.cost_usd == 0 and out.model_runs == 0                 # honest $0, nothing ran
