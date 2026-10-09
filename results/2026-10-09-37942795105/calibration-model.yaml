@@ -1,0 +1,183 @@
+model: openai/gpt-6.1-sol
+spent_usd: 0.044929
+unjudged: {}
+verdicts:
+  'acted_on:20836-inline-3861422128-0::':
+    cost_usd: 0.001116
+    reason: The fc.Get call now uses t.Context() exactly as the reviewer suggested.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:20836-inline-3861423511-0::':
+    cost_usd: 0.00141
+    reason: The VIPServices Get call now uses t.Context() exactly as the reviewer
+      suggested.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21405-inline-4063039404-0::':
+    cost_usd: 0.001022
+    reason: The file was removed or unavailable, so there is no observable change
+      addressing whether failures should be logged.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:21405-inline-4063082387-0::':
+    cost_usd: 0.002022
+    reason: Both readFrom and writeTo now order addresses as remote then local, making
+      their interfaces consistent.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21463-inline-4097137595-0::':
+    cost_usd: 0.0049935
+    reason: The change adds a current-user-only pipe listener and connection validation,
+      enabling restricted access for per-user operation instead of granting access
+      to all users.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21479-inline-4106552835-0::':
+    cost_usd: 0.00058
+    reason: No code changed near the anchor to address whether the mutex was already
+      unlocked before the return.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:21595-inline-4147516282-0::':
+    cost_usd: 0.001982
+    reason: ensureGokrazy now delegates to the shared prepareImageOnce helper and
+      returns its error instead of capturing a caller-local error inside once.Do.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21615-inline-4161388459-0::':
+    cost_usd: 0.00189
+    reason: The hooks were renamed to distinct, purpose-specific names, eliminating
+      the misleading locked/unlocked naming relationship.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21633-inline-4166288486-0::':
+    cost_usd: 0.002504
+    reason: The shown change removes Logout and inlines register logic, but neither
+      exposes raw register requests nor adds an Expiry option to RegisterOpts.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:21672-inline-4199463472-0::':
+    cost_usd: 0.000644
+    reason: No code changed near the anchor to adopt the suggested DHCPClientDHCPd
+      naming.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:30179-inline-3845396274-0::':
+    cost_usd: 0.000908
+    reason: The change only updates version metadata and does not add or simplify
+      the top-level schema check requested by the reviewer.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:30909-inline-3833034674-0::':
+    cost_usd: 0.002156
+    reason: The change removes the redundant uploaded/skipped completion expression
+      and explicitly reports whether failed uploads require a retry.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:30909-inline-3833057070-0::':
+    cost_usd: 0.002186
+    reason: The async zone callback now returns a boolean directly, eliminating the
+      mutable didComplete variable.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:39691-inline-3942917902-0::':
+    cost_usd: 0.001232
+    reason: The redundant explanatory comment near the anchor was removed.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:39891-inline-3793678778-0::':
+    cost_usd: 0.000604
+    reason: No code changed near the anchor to correct the count or make the reviewed
+      commit pass the tests.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:39891-inline-4081937819-0::':
+    cost_usd: 0.001692
+    reason: "The race-condition comment was converted into a function docstring using\
+      \ the reviewer\u2019s requested text."
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:39973-inline-3840477069-0::':
+    cost_usd: 0.002092
+    reason: The change only replaces the existing form-closed boolean result with
+      a status object; it does not add cancellation handling or disable the Back to
+      settings button.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:39973-inline-4023329971-0::':
+    cost_usd: 0.002178
+    reason: The change prevents a completed fetch from a closed form from re-enabling
+      buttons in a newly opened form, addressing the reported race.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:39973-inline-4044716778-0::':
+    cost_usd: 0.000964
+    reason: The success handler now re-enables the form with set_create_form_disabled(false)
+      in case the closing event is delayed or never arrives.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:40132-inline-4077463903-0::':
+    cost_usd: 0.00083
+    reason: The change only adds a comment and does not move the configuration to
+      BaseEvent or replace BaseEventModel inheritance.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:40139-inline-4120582687-0::':
+    cost_usd: 0.000992
+    reason: The change sets the default in initial_counts.get(id, 1) to 1, as the
+      reviewer requested.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:40141-inline-4041148641-0::':
+    cost_usd: 0.000696
+    reason: No change was made near the anchor to explain how building a presence
+      on CZO can improve contribution and review.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:40141-inline-4041631463-0::':
+    cost_usd: 0.001556
+    reason: The comma after the Zulip quote block link was removed as requested.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:40154-inline-4070909648-0::':
+    cost_usd: 0.000636
+    reason: No code changed near the anchor to set pre_edit_raw_content unconditionally
+      when the error is received.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:40165-inline-4059430768-0::':
+    cost_usd: 0.001114
+    reason: No code changed near the anchor to address truncation behavior on narrow
+      screens.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:40165-inline-4104158327-0::':
+    cost_usd: 0.001866
+    reason: The change removes white-space declarations but does not remove the overflow-wrap
+      rule requested by the reviewer.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:40165-inline-4131652973-0::':
+    cost_usd: 0.00108
+    reason: "The change sets row-gap to 0 for wrapped option content and adds padding\
+      \ between suggestions, making each option\u2019s lines read as a single group."
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  location:21405-inline-4063062368-0:rigour:0:
+    cost_usd: 0.001378
+    reason: The review requests sharing IP_PKTINFO code and updating a reuse TODO,
+      while the finding concerns inconsistent error handling.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:21444-inline-4085780786-0:rigour:0:
+    cost_usd: 0.001342
+    reason: The review requests a comment explaining that killWithParent populated
+      ExtraFiles, while the finding flags missing process exit or cleanup handling.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:39691-inline-4066102164-0:rigour:1:
+    cost_usd: 0.001264
+    reason: The review requests renaming the exported function to use channel terminology,
+      while the finding flags the export as unused.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'

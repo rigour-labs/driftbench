@@ -1,0 +1,250 @@
+seed: 37942795105
+short:
+- 'short: 3 of 50 location matches'
+- 'short: 2 of 5 acted-on (direct no)'
+entries:
+- kind: location
+  tool: rigour
+  repo: zulip/zulip
+  point: 39691-inline-4066102164-0
+  pr: 39691
+  head_sha: 6d3bcfbf4bdc552367c1478db7448f9312e4e0b3
+  finding: 1
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour
+  repo: tailscale/tailscale
+  point: 21444-inline-4085780786-0
+  pr: 21444
+  head_sha: cfeecf2c36672182352076d44d9031caf497b4a5
+  finding: 0
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour
+  repo: tailscale/tailscale
+  point: 21405-inline-4063062368-0
+  pr: 21405
+  head_sha: d6607ec0819a90aea33c9ce4872c400727b8d6aa
+  finding: 0
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21463-inline-4097137595-0
+  pr: 21463
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 39891-inline-4081937819-0
+  pr: 39891
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21405-inline-4063082387-0
+  pr: 21405
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 20836-inline-3861422128-0
+  pr: 20836
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 40139-inline-4120582687-0
+  pr: 40139
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21615-inline-4161388459-0
+  pr: 21615
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 40132-inline-4077463903-0
+  pr: 40132
+  basis: direct
+  acted_on: true
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21405-inline-4063039404-0
+  pr: 21405
+  basis: direct
+  acted_on: true
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21633-inline-4166288486-0
+  pr: 21633
+  basis: direct
+  acted_on: true
+  verdict: null
+  verdict_by: null
+  disputed: true
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 20836-inline-3861423511-0
+  pr: 20836
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21672-inline-4199463472-0
+  pr: 21672
+  basis: direct
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21595-inline-4147516282-0
+  pr: 21595
+  basis: direct
+  acted_on: false
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: immich-app/immich
+  point: 30909-inline-3833057070-0
+  pr: 30909
+  basis: ancestor
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 40154-inline-4070909648-0
+  pr: 40154
+  basis: ancestor
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: immich-app/immich
+  point: 30909-inline-3833034674-0
+  pr: 30909
+  basis: ancestor
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: immich-app/immich
+  point: 30179-inline-3845396274-0
+  pr: 30179
+  basis: ancestor
+  acted_on: true
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21479-inline-4106552835-0
+  pr: 21479
+  basis: ancestor
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 39691-inline-3942917902-0
+  pr: 39691
+  basis: range
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 39973-inline-4023329971-0
+  pr: 39973
+  basis: range
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 40165-inline-4104158327-0
+  pr: 40165
+  basis: range
+  acted_on: true
+  verdict: null
+  verdict_by: null
+  disputed: true
+- kind: acted_on
+  repo: zulip/zulip
+  point: 39973-inline-3840477069-0
+  pr: 39973
+  basis: range
+  acted_on: true
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 39973-inline-4044716778-0
+  pr: 39973
+  basis: range
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 39891-inline-3793678778-0
+  pr: 39891
+  basis: range
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 40165-inline-4059430768-0
+  pr: 40165
+  basis: range
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 40165-inline-4131652973-0
+  pr: 40165
+  basis: range
+  acted_on: false
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 40141-inline-4041631463-0
+  pr: 40141
+  basis: range
+  acted_on: false
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: zulip/zulip
+  point: 40141-inline-4041148641-0
+  pr: 40141
+  basis: range
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
