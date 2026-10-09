@@ -41,7 +41,15 @@ def tools_in(run_dir: Path) -> list[str]:
     return sorted(p.name for p in run_dir.iterdir() if p.is_dir() and not p.name.startswith("_"))
 
 
+def is_smoke(run_dir: Path) -> bool:
+    path = run_dir / "run.json"
+    return path.exists() and "smoke" in json.loads(path.read_text(encoding="utf-8"))
+
+
 def cmd_score(args: argparse.Namespace) -> int:
+    if is_smoke(args.run):
+        print(f"{args.run} is a smoke run (run.json has `smoke`); smoke runs are never scored", file=sys.stderr)
+        return 1
     out = args.out or Path("results") / args.run.name
     client = GitHubClient(args.cache)
     try:

@@ -14,7 +14,7 @@ from bench.adapters.tool_access import ToolAccessError, check_parity, pinned_rig
 from bench.harness.budget import Budget, BudgetError
 from bench.collect.corpus import CorpusError, read_corpus
 from bench.harness.gitrepo import GitError, RepoCheckout
-from bench.harness.runner import RunConfig, run_corpus
+from bench.harness.runner import SMOKE_MIN_CHANGED_LINES, RunConfig, run_corpus
 from bench.labels.fingerprint import label_fingerprint
 from bench.labels.openrouter import key_usage
 from bench.repos import slug_of
@@ -49,6 +49,9 @@ def add_paid_args(parser: argparse.ArgumentParser) -> None:
                         help="paid entrants: per-head upper bound from the run estimate (repeatable)")
     parser.add_argument("--provider", choices=PROVIDERS, default="anthropic",
                         help="paid entrants: one provider for all (openrouter reads OPENROUTER_API_KEY)")
+    parser.add_argument("--max-heads", type=int, default=0,
+                        help=f"smoke run: only the first N heads per entrant per repo with at least "
+                             f"{SMOKE_MIN_CHANGED_LINES} changed lines; never scored")
 
 
 def paid_settings(args: argparse.Namespace) -> tuple[PaidSettings | None, Budget | None]:
@@ -83,13 +86,14 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(f"no matching corpus in {args.corpus}; run `bench collect` first", file=sys.stderr)
         return 1
     try:
-        started = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters))["run_started_at"]
+        started = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters),
+                               smoke_record(args))["run_started_at"]
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 1
     config = RunConfig(out_dir=args.out, scratch_dir=args.out / "_scratch",
                        npm_cache=args.repos_dir.parent / "npm-cache", timeout_s=args.timeout, run_started_at=started,
-                       budget=budget)
+                       budget=budget, max_heads=args.max_heads)
     usage_start = gateway_usage(args, adapters)
     for corpus in corpora:
         checkout = RepoCheckout(f"https://github.com/{corpus['repo']}.git", args.repos_dir / slug_of(corpus["repo"]))
@@ -129,7 +133,16 @@ def paid_record(args: argparse.Namespace, adapters: list) -> dict | None:
             "tools": tool_record()}
 
 
-def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None = None) -> dict:
+def smoke_record(args: argparse.Namespace) -> dict | None:
+    """A smoke run's cut, fixed in run.json so it can never be taken for a full run."""
+    if not args.max_heads:
+        return None
+    return {"max_heads": args.max_heads, "min_changed_lines": SMOKE_MIN_CHANGED_LINES,
+            "rule": "the first heads in corpus order whose diff has at least min_changed_lines changed lines"}
+
+
+def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None = None,
+                 smoke: dict | None = None) -> dict:
     """`<out>/run.json`, written once at the first start; a resumed run keeps the first record.
 
     It fixes the labels by content (bench/labels/fingerprint.py): the HEAD
@@ -145,6 +158,7 @@ def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None 
         "entrants": {adapter.name: adapter.version for adapter in adapters},
         "labels": label_fingerprint(labels_dir),
         **({"paid": paid} if paid else {}),
+        **({"smoke": smoke} if smoke else {}),
     }
     out.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n", encoding="utf-8")
@@ -155,7 +169,7 @@ def cmd_manifest(args: argparse.Namespace) -> int:
     try:
         paid, _ = paid_settings(args)
         adapters = select_adapters(args.entrants, paid)
-        manifest = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters))
+        manifest = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters), smoke_record(args))
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 1

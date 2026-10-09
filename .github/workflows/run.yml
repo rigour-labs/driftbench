@@ -34,6 +34,12 @@ on:
       provider:
         description: Paid entrants only. anthropic or openrouter, the same for all of them
         default: anthropic
+      max_heads:
+        description: Smoke run only. Review this many heads per entrant per repo (first with >= 20 changed lines); 0 = a full run. Never scored
+        default: "0"
+      repos:
+        description: Only these repos (space separated, e.g. "tailscale/tailscale"); empty = every repo in the corpus
+        default: ""
 
 permissions:
   contents: read
@@ -83,8 +89,9 @@ jobs:
           HEAD_BOUNDS: ${{ inputs.head_bounds }}
           PROVIDER: ${{ inputs.provider }}
           PAID: ${{ steps.paid.outputs.paid }}
+          MAX_HEADS: ${{ inputs.max_heads }}
         run: |
-          paid_args=()
+          paid_args=(--max-heads "$MAX_HEADS")
           if [ "$PAID" = "true" ]; then
             paid_args=(--model "$MODEL" --max-usd "$MAX_USD" --provider "$PROVIDER")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
@@ -106,8 +113,18 @@ jobs:
           mkdir -p work/corpus
           for f in release/corpus-*.json; do mv "$f" "work/corpus/${f#release/corpus-}"; done
       - id: repos
+        env:
+          ONLY: ${{ inputs.repos }}
         run: |
-          python3 -c "import json,pathlib; print('repos=' + json.dumps(sorted(json.loads(p.read_text())['repo'] for p in pathlib.Path('work/corpus').glob('*.json'))))" >> "$GITHUB_OUTPUT"
+          python3 - >> "$GITHUB_OUTPUT" <<'PY'
+          import json, os, pathlib, sys
+          known = sorted(json.loads(p.read_text())["repo"] for p in pathlib.Path("work/corpus").glob("*.json"))
+          only = os.environ["ONLY"].split()
+          unknown = [r for r in only if r not in known]
+          if unknown:
+              sys.exit(f"repos not in the corpus: {unknown}")
+          print("repos=" + json.dumps(only or known))
+          PY
 
   review:
     needs: start
@@ -162,8 +179,9 @@ jobs:
           # the provider's key exists in this step only, and only for a paid run; the harness passes it to paid tools alone
           ANTHROPIC_API_KEY: ${{ needs.start.outputs.paid == 'true' && inputs.provider == 'anthropic' && secrets.ANTHROPIC_API_KEY || '' }}
           OPENROUTER_API_KEY: ${{ needs.start.outputs.paid == 'true' && inputs.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || '' }}
+          MAX_HEADS: ${{ inputs.max_heads }}
         run: |
-          paid_args=()
+          paid_args=(--max-heads "$MAX_HEADS")
           if [ "$PAID" = "true" ]; then
             # this job's share of the run's cap: the cap split evenly across the repo jobs
             share=$(python3 -c "import json, os; print(round(float(os.environ['MAX_USD']) / len(json.loads(os.environ['REPOS'])), 4))")
@@ -254,10 +272,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PROVIDER: ${{ inputs.provider }}
+          MAX_HEADS: ${{ inputs.max_heads }}
         run: |
-          python -m bench score --run "work/runs/$NAME" --out "results/$NAME"
-          python -m bench calibrate draw --run "work/runs/$NAME" --results "results/$NAME" --seed "$GITHUB_RUN_ID"
-          python -m bench report --run "work/runs/$NAME" --results "results/$NAME"
+          mkdir -p "results/$NAME"
+          if [ "$MAX_HEADS" = "0" ]; then
+            python -m bench score --run "work/runs/$NAME" --out "results/$NAME"
+            python -m bench calibrate draw --run "work/runs/$NAME" --results "results/$NAME" --seed "$GITHUB_RUN_ID"
+            python -m bench report --run "work/runs/$NAME" --results "results/$NAME"
+          fi
           spend_args=()
           if [ "$PROVIDER" = "openrouter" ]; then spend_args=(--openrouter); fi
           python -m bench spend --run "work/runs/$NAME" "${spend_args[@]}" > "results/$NAME/spend.md"
@@ -289,10 +311,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           CORPUS_TAG: ${{ inputs.corpus_tag }}
+          ENTRANTS: ${{ inputs.entrants }}
+          MAX_HEADS: ${{ inputs.max_heads }}
         run: |
           tar -czf "runs-$NAME.tar.gz" -C "out/work/runs" "$NAME"
           {
-            echo "Run of the free entrants (draft; not published until checked with \`bench guard\`)."
+            if [ "$MAX_HEADS" != "0" ]; then
+              echo "**SMOKE run, never scored:** at most $MAX_HEADS head(s) per entrant per repo (the first with at least 20 changed lines). It checks that the paid entrants work and what a head costs; it is not a result."
+              echo
+            fi
+            echo "Run of: $ENTRANTS (draft; not published until checked with \`bench guard\`)."
             echo
             echo "- run record (start time, entrant versions, label commit and blob hashes):"
             echo
@@ -310,7 +338,12 @@ jobs:
             echo "- this run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo "- commit: ${GITHUB_SHA}"
           } > notes.md
-          gh release create "run-$NAME" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
-            --title "run-$NAME" --notes-file notes.md \
-            "runs-$NAME.tar.gz" "out/work/runs/$NAME/ledger.jsonl" \
-            "out/results/$NAME/summary.md" "out/results/$NAME/calibration.yaml"
+          if [ "$MAX_HEADS" != "0" ]; then
+            gh release create "smoke-$NAME" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
+              --title "smoke-$NAME" --notes-file notes.md "runs-$NAME.tar.gz" "out/results/$NAME/spend.md"
+          else
+            gh release create "run-$NAME" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
+              --title "run-$NAME" --notes-file notes.md \
+              "runs-$NAME.tar.gz" "out/work/runs/$NAME/ledger.jsonl" \
+              "out/results/$NAME/summary.md" "out/results/$NAME/calibration.yaml"
+          fi

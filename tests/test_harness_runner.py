@@ -180,3 +180,27 @@ def test_manifest_command_writes_once_for_split_jobs(tmp_path, capsys):
     assert main(["manifest", "--entrants", "no-tool", "--out", str(out), "--labels", str(tmp_path / "none")]) == 0
     assert (out / "run.json").read_text() == written          # the first record is kept
     assert '"rigour": "6.10.0"' in written and '"files": {}' in written
+
+
+def test_a_smoke_run_reviews_only_the_first_large_enough_heads(setup):
+    corpus, checkout, config, origin = setup
+    smoke = dataclasses.replace(config, max_heads=1, min_changed_lines=5)
+    assert run_corpus(EveryHunk(), checkout, corpus, smoke) == {"written": 1, "skipped": 0, "pass": 1}
+    assert read(smoke, EveryHunk(), origin["head1"])["changed_lines"] == 6
+    assert not record_path(smoke, EveryHunk(), "o/r", 5, origin["head2"]).exists()   # beyond the cut: no record
+    tiny = dataclasses.replace(config, out_dir=config.out_dir.parent / "tiny", max_heads=1, min_changed_lines=1000)
+    assert run_corpus(EveryHunk(), checkout, corpus, tiny) == {"written": 0, "skipped": 0}
+
+
+def test_smoke_runs_are_recorded_and_never_scored(tmp_path, capsys):
+    from bench.__main__ import main
+    from bench.harness.cli import read_manifest
+    out = tmp_path / "run"
+    assert main(["manifest", "--entrants", "free", "--out", str(out), "--labels", str(tmp_path), "--max-heads", "1"]) == 0
+    smoke = read_manifest(out / "run.json")["smoke"]
+    assert smoke["max_heads"] == 1 and smoke["min_changed_lines"] == 20 and "corpus order" in smoke["rule"]
+    assert main(["score", "--run", str(out), "--out", str(tmp_path / "results")]) == 1
+    assert "smoke runs are never scored" in capsys.readouterr().err
+    full = tmp_path / "full"
+    assert main(["manifest", "--entrants", "free", "--out", str(full), "--labels", str(tmp_path)]) == 0
+    assert "smoke" not in read_manifest(full / "run.json")
