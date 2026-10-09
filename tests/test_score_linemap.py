@@ -14,6 +14,26 @@ def test_map_line_through_edits():
     assert map_line(OLD, OLD, 0) is None and map_line(OLD, OLD, 99) is None
 
 
+def test_an_insert_never_takes_the_line_that_follows_it():
+    assert map_line("a\nb", "a\nINSERT\nb", 2) == 3                  # mid-file
+    assert map_line("a\nb", "a\nINSERT\nb", 1) == 1
+    assert map_line("a\nb", "TOP\na\nb", 1) == 2                     # at the start
+    assert map_line("a\nb\nc", "a\nb\nINSERT\nc", 3) == 4           # right before the last line
+    assert map_line("a\nb\nc", "a\nc", 3) == 2                       # after a delete
+    assert map_line("a\nb\nc", "a\nB\nc", 2) == 2                   # inside a replace
+    assert map_line("a\nb\nc", "a\nB\nc", 3) == 3
+
+
+def test_a_line_of_an_empty_file_does_not_exist():
+    assert map_line("", "a\nb", 1) is None
+
+
+def test_a_region_at_the_end_never_maps_past_the_new_file():
+    assert map_line("a\nb\nc", "a\nb", 3) == 2                        # deleted last line
+    assert map_line("a\nb\nc", "a\nX", 3) == 2                        # replaced tail, shorter
+    assert map_line("a", "", 1) is None                                 # nothing left to point at
+
+
 def test_carry_fetches_once_and_handles_unreadable():
     def contents(text):
         return {"encoding": "base64", "content": base64.b64encode(text.encode()).decode()}
