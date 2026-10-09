@@ -105,7 +105,7 @@ def range_note(summary: dict, calibration: dict) -> str:
     agreement = (f"agree {counts.get('agree', 0)}, disagree {counts.get('disagree', 0)}" if counts
                  else "not yet hand-checked")
     return (f"Acted-on points here rest mostly on the `range` basis ({on_range} of {acted}); "
-            f"its calibration agreement: {agreement}.")
+            f"range calibration agreement (all repos): {agreement}.")
 
 
 def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", calibration: dict | None = None) -> list[str]:
@@ -126,7 +126,8 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", 
     if class_note:
         lines += [f"Results by class withheld: {class_note}.", ""]
     elif classes:
-        lines += ["By class (N=3), from the labelled random sample only; points outside it are unclassified:",
+        lines += ["By class (N=3), from the labelled random sample only; points outside it are unclassified. "
+                  "Each class has few points, so these intervals are wide: read them as rough, not as rankings.",
                   "", *class_table(classes), ""]
     return lines
 

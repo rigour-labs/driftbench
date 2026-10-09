@@ -10,7 +10,7 @@ from bench.harness.types import AdapterError, ReviewInput
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
-# Synthetic shapes, written from the CLIs' sources (rigour 6.8.1 review --json `reviewer` section;
+# Synthetic shapes, written from the CLIs' sources (rigour 6.8.1/6.9.0 review --json `reviewer` section;
 # Claude Code stream-json events). No real tool output and no repository data.
 REVIEWER_REPORT = {
     "status": "PASS", "failures": [],
