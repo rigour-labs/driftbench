@@ -29,6 +29,20 @@ full ID), one timeout and one pinned Claude Code CLI, all recorded in
   reporting none, or $0, is charged the per-head bound and recorded as an
   error. A review where no model ran (nothing to review, a
   cached verdict) honestly costs $0.
+- **Tool access, identical and read-only.** A paid review has a real key in
+  its environment while it reads untrusted public pull request content, so
+  nothing in it may run arbitrary shell, write files, or reach the network.
+  Both families run Claude Code with the same explicit allow-list
+  (`Read`, `Grep`, `Glob`, `git diff/show/log/grep`), the same denials
+  (`Edit`, `Write`, `NotebookEdit`, `git push/commit`), and the same
+  isolation (no MCP servers, no hooks or user settings, no memory files, at
+  most 80 turns). Claude Code's `/code-review` also has web and GitHub tools
+  denied. The list is recorded in `run.json`; before a paid run, Rigour's
+  list is read from the pinned CLI and the run stops if it differs. If
+  `/code-review` needs more tools to work, that is decided from a smoke run,
+  not by widening the list in advance.
+- **The key.** A dedicated Anthropic workspace key with a spend limit on
+  that workspace, used only for these runs and rotated after every paid run.
 - **Leakage.** Tools with a reviewer mode may look up the pull request and
   its human reviews, the very answers being scored. The sandbox blocks that
   (no token, no login, no remote, and the tools' web and GitHub access

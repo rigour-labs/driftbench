@@ -1,8 +1,9 @@
 """Claude Code's `/code-review` at its default level (paid).
 
 `claude -p "/code-review"` in the sandbox repository, with the run's model,
-the pinned CLI, no MCP servers, no session saved, and web and GitHub tools
-blocked. The transcript (stream-json) gives the cost, the tokens, the number
+the pinned CLI, and exactly the read-only tool access and isolation Rigour's
+reviewer uses (bench/adapters/tool_access.py), plus web and GitHub tools
+denied and no session saved. The transcript (stream-json) gives the cost, the tokens, the number
 of model turns, and every tool call.
 
 /code-review reports findings in prose; each `path:line` (or `path:L-L`) it
@@ -21,10 +22,10 @@ import re
 import subprocess
 
 from bench.adapters.claude_cli import CLAUDE_CODE_VERSION, KEY_NAME, paid_env, require_claude_cli
+from bench.adapters.tool_access import DENIED_TOOLS, ISOLATION_ARGS, ISOLATION_ENV, NETWORK_DENIED, READ_ONLY_TOOLS
 from bench.harness.diffstat import parse_hunks
 from bench.harness.types import AdapterError, Finding, ReviewInput, ReviewOutput
 
-BLOCKED_TOOLS = ("WebFetch", "WebSearch", "Bash(gh:*)", "Bash(curl:*)", "Bash(wget:*)")
 LEAKY_TOOLS = {"WebFetch", "WebSearch"}
 LEAKY_COMMAND_RE = re.compile(r"(?<![\w-])(?:gh|curl|wget)(?![\w-])|api\.github\.com|github\.com/.+/pull")
 CITATION_RE = re.compile(r"`?([\w./-]+\.[\w]+):L?(\d+)(?:-L?(\d+))?`?")
@@ -101,11 +102,12 @@ class ClaudeCodeReview:
 
     def command(self) -> list[str]:
         budget = ["--max-budget-usd", f"{self.max_usd_per_review:.2f}"] if self.max_usd_per_review else []
-        return ["claude", "-p", "/code-review", "--output-format", "stream-json", "--verbose", "--model", self.model,
-                "--no-session-persistence", "--strict-mcp-config", "--disallowedTools", *BLOCKED_TOOLS, *budget]
+        return ["claude", "-p", "/code-review", "--model", self.model, "--output-format", "stream-json", "--verbose",
+                *ISOLATION_ARGS, "--no-session-persistence", "--allowedTools", *READ_ONLY_TOOLS,
+                "--disallowedTools", *DENIED_TOOLS, *NETWORK_DENIED, *budget]
 
     def review(self, request: ReviewInput) -> ReviewOutput:
-        env = paid_env(request)
+        env = {**paid_env(request), **ISOLATION_ENV}
         require_claude_cli(env)
         try:
             result = subprocess.run(self.command(), cwd=request.workdir, env=env, capture_output=True, text=True,

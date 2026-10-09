@@ -80,3 +80,15 @@ def test_a_paid_review_with_a_reported_cost_records_it(setup):
     budget = Budget(max_usd=5, estimate_per_head={"paid-fake": 0.4})
     run_corpus(PaidFake(), checkout, corpus, dataclasses.replace(config, budget=budget))
     assert read(config, PaidFake(), origin["head1"])["charged"] == "reported"
+
+
+def test_run_json_records_the_paid_settings_and_tool_access(tmp_path):
+    from bench.__main__ import main
+    from bench.adapters.tool_access import tool_record
+    from bench.harness.cli import read_manifest
+    out = tmp_path / "run"
+    assert main(["manifest", "--entrants", "claude-code-review", "--out", str(out), "--labels", str(tmp_path),
+                 "--model", "model-x", "--max-usd", "5", "--head-bound", "claude-code-review=0.8"]) == 0
+    paid = read_manifest(out / "run.json")["paid"]
+    assert paid["model"] == "model-x" and paid["max_usd"] == 5.0 and paid["tools"] == tool_record()
+    assert paid["claude_code"] == "2.1.285"
