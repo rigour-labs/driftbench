@@ -3,7 +3,7 @@
 Two samples, drawn with a fixed seed so anyone can redraw the same one:
 - location matches (distance <= 3) per real entrant, judged "same issue":
   yes / partly / no; this gives each entrant's location-to-issue rate;
-- acted-on decisions (10 direct-true, 5 direct-false, 5 ancestor), judged
+- acted-on decisions (10 direct-true, 5 direct-false, 5 ancestor, 5 range), judged
   "did the change near the anchor respond to the point": yes / no; this
   gives agreement per ACTED-1 basis.
 A human fills `verdict`; until every entry has one, the headline is unvalidated.
@@ -19,7 +19,7 @@ import yaml
 
 BASELINES = ("no-tool", "every-hunk")
 LOCATION_TARGET = 50
-ACTED_ON_QUOTAS = ((True, "direct", 10), (False, "direct", 5), (None, "ancestor", 5))
+ACTED_ON_QUOTAS = ((True, "direct", 10), (False, "direct", 5), (None, "ancestor", 5), (None, "range", 5))
 LOCATION_VERDICTS = ("yes", "partly", "no")
 ACTED_VERDICTS = ("yes", "no")
 

@@ -31,6 +31,7 @@ def test_draw_is_reproducible_stratified_and_skips_baselines():
     acted = [(e["basis"], e["acted_on"]) for e in first["entries"] if e["kind"] == "acted_on"]
     assert acted.count(("direct", True)) == 10 and acted.count(("direct", False)) == 5
     assert sum(1 for basis, _ in acted if basis == "ancestor") == 5
+    assert "short: 0 of 5 acted-on (range)" in first["short"]      # no range points in this pool
 
 
 def test_round_trip_validation_and_summary(tmp_path):
