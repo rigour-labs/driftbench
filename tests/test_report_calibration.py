@@ -43,7 +43,7 @@ def test_round_trip_validation_and_summary(tmp_path):
     write_calibration(calibration, path)
     summary = summarise_calibration(read_calibration(path))
     assert summary["validated"] is True and summary["location"]["alpha"] == {"yes": 25}
-    assert summary["acted_on"]["direct"] == {"disagree": 15}
+    assert summary["acted_on"]["direct"] == {"agree": 5, "disagree": 10}   # "no" agrees where the scorer said no
     path.write_text(path.read_text().replace("verdict: 'yes'", "verdict: maybe", 1).replace(
         "verdict: yes", "verdict: maybe", 1), encoding="utf-8")
     with pytest.raises(CalibrationError, match="maybe"):

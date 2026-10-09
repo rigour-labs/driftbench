@@ -166,9 +166,15 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", 
 
 
 def calibration_status(calibration: dict) -> str:
-    status = "complete" if calibration["validated"] else "incomplete, so the headline is **unvalidated**"
     short = f" ({'; '.join(calibration['short'])})" if calibration.get("short") else ""
-    return f"Hand-checked sample: {status}{short}."
+    judges = calibration.get("judges", {})
+    if not calibration["validated"]:
+        return f"Spot-check sample: incomplete, so the headline is **unvalidated**{short}."
+    if set(judges) <= {"human"}:
+        return f"Hand-checked sample: complete{short}."
+    who = "; ".join(f"{judge}: {n}" for judge, n in judges.items())
+    return (f"Spot-check sample: complete, with AI verdicts, not a human check ({who}; "
+            f"{calibration.get('disputed', 0)} acted-on entries disputed by the two AI judges and left out){short}.")
 
 
 def calibration_section(calibration: dict) -> list[str]:
