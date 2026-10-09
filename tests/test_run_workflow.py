@@ -41,6 +41,16 @@ def test_records_are_uploaded_even_when_the_check_fails():
     assert "if python -m bench.release_check" in review[check]["run"] and "else" in review[check]["run"]
 
 
+def test_records_that_failed_the_check_are_kept_three_days_and_passing_ones_ninety():
+    review = steps("review")
+    check = next(s for s in review if "bench.release_check" in s.get("run", ""))
+    upload = next(s for s in review if "upload-artifact" in s.get("uses", ""))
+    assert check["id"] == "check" and "passed=true" in check["run"] and "passed=false" in check["run"]
+    assert upload["with"]["retention-days"] == "${{ steps.check.outputs.passed == 'true' && 90 || 3 }}"
+    notes = next(s for s in steps("draft-release") if "notes.md" in s.get("run", ""))
+    assert "3-day retention" in notes["run"]
+
+
 def test_a_failed_check_marks_the_draft_and_never_fails_the_score_job():
     check = next(s for s in steps("score") if "bench.release_check" in s.get("run", ""))
     assert "if ! python -m bench.release_check" in check["run"] and "check-failed.txt" in check["run"]

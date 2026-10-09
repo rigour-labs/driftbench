@@ -210,6 +210,7 @@ jobs:
           mkdir -p "work/runs/$NAME/_status"
           echo "$OUTCOME" > "work/runs/$NAME/_status/$SLUG.txt"
       - name: Check the records (never gates the upload; a failure marks the draft instead)
+        id: check
         if: always()
         env:
           NAME: ${{ needs.start.outputs.name }}
@@ -218,8 +219,10 @@ jobs:
           mkdir -p "work/runs/$NAME/_status"
           if python -m bench.release_check "work/runs/$NAME" 2> check.log; then
             echo ok > "work/runs/$NAME/_status/$SLUG-check.txt"
+            echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             { echo "check failed:"; tail -n 5 check.log; } > "work/runs/$NAME/_status/$SLUG-check.txt"
+            echo "passed=false" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
@@ -229,7 +232,8 @@ jobs:
             work/runs/${{ needs.start.outputs.name }}
             !work/runs/${{ needs.start.outputs.name }}/_scratch
           if-no-files-found: error
-          retention-days: 90
+          # records that failed the check stay only long enough to inspect and fix (public repo artifacts)
+          retention-days: ${{ steps.check.outputs.passed == 'true' && 90 || 3 }}
 
   score:
     needs: [start, review]
@@ -338,7 +342,7 @@ jobs:
           tar -czf "runs-$NAME.tar.gz" -C "out/work/runs" "$NAME"
           {
             if [ -s "out/results/$NAME/check-failed.txt" ]; then
-              echo "**CHECK FAILED: do not publish.** The records are kept for inspection:"
+              echo "**CHECK FAILED: do not publish.** The records are kept for inspection; a repo job whose records failed the check uploads them with a 3-day retention (90 when they pass):"
               echo
               sed 's/^/    /' "out/results/$NAME/check-failed.txt"
               echo
