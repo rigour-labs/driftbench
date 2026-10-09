@@ -1,7 +1,7 @@
 {
  "status": "FAIL",
  "checked": {
-  "rigour_version": "6.10.0",
+  "rigour_version": "6.11.2",
   "base": "HEAD~1",
   "base_sha": "1c3cb91502afe7779a3faff57926387e3cf25429",
   "head_sha": "dcbaab95263f99aabe415ae843abb04813cac168",
@@ -35,6 +35,7 @@
    "migration-order": "SKIP",
    "unused-exports": "PASS",
    "orphan-files": "PASS",
+   "compiled-lessons": "PASS",
    "query-patterns": "PASS",
    "optional-params": "PASS",
    "duplicate-functions": "PASS",
@@ -144,5 +145,15 @@
  "preexisting": 1,
  "control_files_changed": [],
  "hints": [],
- "gate_errors": []
+ "gate_errors": [],
+ "receipt": {
+  "functions": 0,
+  "reviewed": 0,
+  "changed_since_review": 0,
+  "low_risk": 0,
+  "not_covered": [],
+  "reviewers": {},
+  "other_files": 1,
+  "set_aside": 0
+ }
 }
