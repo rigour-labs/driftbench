@@ -57,17 +57,57 @@ def test_run_json_records_the_provider(tmp_path):
     assert read_manifest(out / "run.json")["paid"]["provider"] == "openrouter"
 
 
-def test_key_usage_reads_openrouter_and_fails_soft(monkeypatch):
-    monkeypatch.setenv(openrouter.KEY_NAME, "sk-or-test")
+KEY_REPLY = {"data": {"label": "sk-or-v1-abc...xyz", "usage": 12.5, "limit": 50, "is_free_tier": False}}
+
+
+def stub_urlopen(monkeypatch, reply=None, raises=None):
+    """Replaces urllib.request.urlopen with its real signature, so a body passed by position is caught."""
     seen = []
 
-    def opener(request, timeout):
-        seen.append(request.get_header("Authorization"))
-        return io.BytesIO(json.dumps({"data": {"usage": 12.5, "limit": 50}}).encode())
-    assert openrouter.key_usage(opener) == 12.5 and seen == ["Bearer sk-or-test"]
-    assert openrouter.key_usage(lambda request, timeout: io.BytesIO(b"not json")) is None
-    monkeypatch.delenv(openrouter.KEY_NAME)
-    assert openrouter.key_usage(opener) is None
+    def urlopen(url, data=None, timeout=None, *, context=None):
+        seen.append({"method": url.get_method(), "data": data, "body": url.data, "timeout": timeout,
+                     "auth": url.get_header("Authorization"), "url": url.full_url})
+        if raises:
+            raise raises
+        return io.BytesIO(reply if isinstance(reply, bytes) else json.dumps(reply).encode())
+    monkeypatch.setattr(openrouter.urllib.request, "urlopen", urlopen)
+    return seen
+
+
+def test_key_usage_is_a_get_with_no_body_and_reads_data_usage(monkeypatch):
+    monkeypatch.setenv(openrouter.KEY_NAME, "sk-or-test")
+    seen = stub_urlopen(monkeypatch, KEY_REPLY)
+    assert openrouter.key_usage() == 12.5
+    assert seen == [{"method": "GET", "data": None, "body": None, "timeout": openrouter.TIMEOUT_S,
+                     "auth": "Bearer sk-or-test", "url": "https://openrouter.ai/api/v1/key"}]
+
+
+@pytest.mark.parametrize("reply, raises, reason", [
+    (b"not json", None, "JSONDecodeError"),
+    ({"data": {}}, None, "no numeric data.usage"),
+    (None, openrouter.urllib.error.URLError("down"), "URLError"),
+    (None, TimeoutError(), "TimeoutError"),
+])
+def test_any_failure_to_read_usage_is_an_openrouter_error(monkeypatch, reply, raises, reason):
+    monkeypatch.setenv(openrouter.KEY_NAME, "sk-or-test")
+    stub_urlopen(monkeypatch, reply, raises)
+    with pytest.raises(openrouter.OpenRouterError, match=reason) as caught:
+        openrouter.key_usage()
+    assert "sk-or-test" not in str(caught.value)
+
+
+def test_an_unreadable_usage_is_recorded_unavailable_and_the_run_goes_on(monkeypatch, capsys):
+    import argparse
+    from bench.harness.cli import gateway_usage
+    monkeypatch.setenv(openrouter.KEY_NAME, "sk-or-test")
+    stub_urlopen(monkeypatch, raises=TimeoutError())
+    adapters = select_adapters(["claude-code-review"], PaidSettings(model=MODEL, max_usd=5, provider="openrouter"))
+    reading = gateway_usage(argparse.Namespace(provider="openrouter"), adapters)
+    assert reading["usage_usd"] is None and "TimeoutError" in reading["error"]
+    assert "OpenRouter usage unavailable" in capsys.readouterr().err
+    billed = openrouter_billed([{"start": reading, "end": reading}])
+    assert billed["billed_usd"] is None and "TimeoutError" in billed["reason"]
+    assert "billed by OpenRouter: unavailable (reading the key's usage failed: TimeoutError)" in spend_notes({}, billed)
 
 
 def test_billed_is_the_window_across_every_job_and_fills_the_notes(tmp_path, capsys):

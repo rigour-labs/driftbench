@@ -16,7 +16,7 @@ from bench.collect.corpus import CorpusError, read_corpus
 from bench.harness.gitrepo import GitError, RepoCheckout
 from bench.harness.runner import SMOKE_MIN_CHANGED_LINES, RunConfig, run_corpus
 from bench.labels.fingerprint import label_fingerprint
-from bench.labels.openrouter import key_usage
+from bench.labels.openrouter import OpenRouterError, key_usage
 from bench.repos import slug_of
 
 
@@ -114,10 +114,18 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 
 def gateway_usage(args: argparse.Namespace, adapters: list) -> dict | None:
-    """The OpenRouter key's cumulative usage now, when paid entrants run through it; None otherwise."""
+    """The OpenRouter key's cumulative usage now, when paid entrants run through it; None otherwise.
+
+    An unreadable usage never stops the run: it is recorded as unavailable, with the reason."""
     if args.provider != "openrouter" or not any(a.paid for a in adapters):
         return None
-    return {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "usage_usd": key_usage()}
+    reading = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "usage_usd": None}
+    try:
+        reading["usage_usd"] = key_usage()
+    except OpenRouterError as exc:  # the billed figure becomes "unavailable"; the run goes on
+        print(f"warning: OpenRouter usage unavailable: {exc}", file=sys.stderr)
+        reading["error"] = str(exc)
+    return reading
 
 
 def write_usage(path: Path, start: dict, end: dict | None) -> None:
