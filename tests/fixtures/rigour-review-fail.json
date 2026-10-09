@@ -1,0 +1,141 @@
+{
+ "status": "FAIL",
+ "checked": {
+  "rigour_version": "6.8.1",
+  "base": "HEAD~1",
+  "base_sha": "1c3cb91502afe7779a3faff57926387e3cf25429",
+  "head_sha": "dcbaab95263f99aabe415ae843abb04813cac168",
+  "uncommitted": false,
+  "config": "defaults",
+  "checks": {
+   "environment-alignment": "PASS",
+   "retry_loop_breaker": "PASS",
+   "file-size": "PASS",
+   "content-check": "PASS",
+   "structure-check": "FAIL",
+   "ast-analysis": "PASS",
+   "dependency-guardian": "PASS",
+   "file-guard": "PASS",
+   "coverage-guard": "PASS",
+   "context-drift": "PASS",
+   "semantic-bugs": "PASS",
+   "security-patterns": "FAIL",
+   "frontend-secret-exposure": "PASS",
+   "duplication-drift": "PASS",
+   "hallucinated-imports": "PASS",
+   "inconsistent-error-handling": "PASS",
+   "context-window-artifacts": "PASS",
+   "promise-safety": "FAIL",
+   "phantom-apis": "PASS",
+   "deprecated-apis": "FAIL",
+   "test-quality": "PASS",
+   "side-effect-analysis": "FAIL",
+   "style-drift": "PASS",
+   "logic-drift": "PASS",
+   "migration-order": "SKIP",
+   "unused-exports": "PASS",
+   "orphan-files": "PASS",
+   "query-patterns": "PASS",
+   "optional-params": "PASS",
+   "duplicate-functions": "PASS",
+   "change-sweep": "PASS",
+   "redundancy": "PASS"
+  }
+ },
+ "score": 51,
+ "ai_health_score": 69,
+ "structural_score": 98,
+ "total_failures": 4,
+ "filtered_failures": 2,
+ "unlocated_failures": 0,
+ "ci_summary": {
+  "schema_version": 1,
+  "scope": "changed_lines",
+  "changed_files": 1,
+  "changed_lines": 13,
+  "findings_count": 2,
+  "excluded_outside_changed_lines": 2,
+  "unlocated_omitted": 0,
+  "severity": {
+   "critical": 2,
+   "high": 0,
+   "medium": 0,
+   "low": 0
+  },
+  "findings": [
+   {
+    "rule": "deprecated-apis",
+    "severity": "critical",
+    "file": "calc.py",
+    "line": 9,
+    "reason": "A quality gate matched a changed line.",
+    "next_step": "Inspect the full JSON report and run rigour explain for evidence."
+   },
+   {
+    "rule": "security-patterns",
+    "severity": "critical",
+    "file": "calc.py",
+    "line": 9,
+    "reason": "A security rule matched code on a changed line.",
+    "next_step": "Trace the input and sink; verify the risk before merging."
+   }
+  ],
+  "truncated": 0
+ },
+ "failures": [
+  {
+   "id": "security-patterns",
+   "gate": "Security: COMMAND INJECTION",
+   "severity": "critical",
+   "provenance": "security",
+   "message": "[CWE-78] Python subprocess with shell=True \u2014 potential command injection",
+   "key": "4bf92cb0550f7288",
+   "file": "calc.py",
+   "line": 9,
+   "suggestion": "Found: \"subprocess.call(cmd, shell=True...\" - Use parameterized queries/sanitization."
+  },
+  {
+   "id": "deprecated-apis",
+   "gate": "Security-Deprecated APIs",
+   "severity": "critical",
+   "provenance": "ai-drift",
+   "message": "Security-deprecated APIs in calc.py:\n  L9: subprocess with shell=True \u2014 Shell injection vulnerability when args contain user input \u2192 Use subprocess.run() with shell=False and list args",
+   "key": "824bda56a312360d",
+   "file": "calc.py",
+   "line": 9,
+   "suggestion": "These APIs were deprecated for security reasons. Using them introduces known vulnerabilities. Replace with the suggested alternatives immediately."
+  }
+ ],
+ "file_findings": [],
+ "context_findings": [],
+ "advisory": [
+  {
+   "id": "promise-safety",
+   "gate": "Async & Error Safety Violation",
+   "severity": "high",
+   "provenance": "ai-drift",
+   "message": "Unsafe async/error patterns in calc.py:\n  L14: [bare-except] Bare except with pass \u2014 silently swallows errors",
+   "key": "5bbbcbcb2f58a267",
+   "file": "calc.py",
+   "line": 14,
+   "suggestion": "Review and fix async/error handling patterns."
+  },
+  {
+   "id": "side-effect-analysis",
+   "gate": "Side-Effect: Resource Leak",
+   "severity": "medium",
+   "provenance": "ai-drift",
+   "message": "Resource opened via open() but result not stored. The handle leaks immediately.",
+   "key": "a13b96c95897772c",
+   "file": "calc.py",
+   "line": 13,
+   "suggestion": "Use `with open(...)` context manager."
+  }
+ ],
+ "muted": 0,
+ "dismissed": 0,
+ "preexisting": 1,
+ "control_files_changed": [],
+ "hints": [],
+ "gate_errors": []
+}

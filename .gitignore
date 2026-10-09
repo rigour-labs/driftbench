@@ -31,8 +31,6 @@ env/
 .env.local
 .env.*.local
 
-# Benchmark results (regenerated on each run)
-results/
 benchmark_output.log
 *.log
 

@@ -5,13 +5,15 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from bench.collect.commits import CommitDates, known_dates, resolve_review
 from bench.collect.github import GitHubClient
-from bench.collect.record import pr_record
+from bench.collect.record import PrFetch, pr_record
 from bench.collect.rounds import build_rounds
-from bench.collect.select import candidate_prs, parse_time, substantive_reviews
+from bench.collect.select import (candidate_prs, human_reviews, parse_time, substantive_conversation,
+                                  substantive_ids)
 from bench.repos import PinnedRepo, slug_of
 
-CORPUS_SCHEMA = 1
+CORPUS_SCHEMA = 2
 
 
 def collect_repo(client: GitHubClient, repo: PinnedRepo, max_prs: int, max_listed: int) -> dict:
@@ -36,15 +38,23 @@ def collect_repo(client: GitHubClient, repo: PinnedRepo, max_prs: int, max_liste
 
 
 def collect_pr(client: GitHubClient, repo: str, pr: dict) -> dict | None:
-    """The PR's record, or None if no human gave it a substantive review."""
+    """The PR's record, or None if no human reviewed it substantively (review or conversation)."""
     base = f"repos/{repo}/pulls/{pr['number']}"
     author = (pr.get("user") or {}).get("login", "")
+    merged_at = parse_time(pr["merged_at"])
     comments = client.get_all(f"{base}/comments")
-    reviews = substantive_reviews(client.get_all(f"{base}/reviews"), comments, author, parse_time(pr["merged_at"]))
-    if not reviews:
+    reviews = human_reviews(client.get_all(f"{base}/reviews"), author, merged_at)
+    conversation = client.get_all(f"repos/{repo}/issues/{pr['number']}/comments")
+    substantive = substantive_ids(reviews, comments)
+    if not substantive and not substantive_conversation(conversation, author, merged_at):
         return None
     commits = client.get_all(f"{base}/commits")
-    return pr_record(pr, reviews, comments, commits, build_rounds(reviews))
+    timeline = client.get_all(f"repos/{repo}/issues/{pr['number']}/timeline")
+    dates = CommitDates(client, repo, known_dates(commits, timeline))
+    resolved = [resolve_review(review, comments, dates) for review in reviews]
+    fetch = PrFetch(pr, resolved, comments, conversation, commits, timeline)
+    rounds = build_rounds([r for r in resolved if r["id"] in substantive and r["commit_id"]])
+    return pr_record(fetch, substantive, rounds)
 
 
 class CorpusError(ValueError):

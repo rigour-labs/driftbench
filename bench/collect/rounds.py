@@ -36,3 +36,8 @@ def build_rounds(reviews: list[dict]) -> list[ReviewRound]:
 
 def round_of_review(rounds: list[ReviewRound]) -> dict[int, int]:
     return {review_id: rnd.index for rnd in rounds for review_id in rnd.review_ids}
+
+
+def round_for_head(rounds: list[ReviewRound], head_sha: str | None) -> int | None:
+    """The round reviewed on `head_sha`, or None if no human reviewed that head."""
+    return next((r.index for r in rounds if r.head_sha == head_sha), None)

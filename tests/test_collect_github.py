@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from bench.collect.github import GitHubClient, GitHubError
+from bench.collect.github import GitHubClient, GitHubError, require_gh
 
 
 class ScriptedRunner:
@@ -48,7 +48,7 @@ def test_cache_serves_repeat_calls(tmp_path):
 
 
 def test_rate_limit_is_retried_with_growing_waits():
-    runner = ScriptedRunner((1, "", "API rate limit exceeded"), (1, "", "HTTP 429"), (0, "[]", ""))
+    runner = ScriptedRunner((1, "", "You have exceeded a secondary rate limit"), (1, "", "HTTP 429"), (0, "[]", ""))
     client, sleeps = make_client(runner)
     assert client.get("x") == []
     assert [s for s in sleeps if s >= 60] == [60, 120]
@@ -66,3 +66,47 @@ def test_invalid_json_raises_github_error():
     client, _ = make_client(ScriptedRunner((0, "<html>", "")))
     with pytest.raises(GitHubError, match="not valid JSON"):
         client.get("x")
+
+
+@pytest.mark.parametrize("result, message", [
+    ((1, "", "command not found"), "is required"),
+    ((0, "gh version 2.40.1 (2023-12-13)", ""), "too old"),
+])
+def test_require_gh_rejects_missing_or_old(result, message):
+    with pytest.raises(GitHubError, match=message):
+        require_gh(ScriptedRunner(result))
+
+
+def test_require_gh_accepts_current():
+    runner = ScriptedRunner((0, "gh version 2.102.0 (2026-09-30)", ""))
+    assert require_gh(runner) is None
+    assert runner.calls == [["gh", "--version"]]
+
+
+def test_get_optional_returns_none_on_404_and_raises_on_others():
+    client, _ = make_client(ScriptedRunner((1, "", "HTTP 404: Not Found"), (1, "", "HTTP 500")))
+    assert client.get_optional("repos/o/r/commits/gone") is None
+    with pytest.raises(GitHubError, match="500"):
+        client.get_optional("repos/o/r/commits/x")
+
+
+def test_hourly_limit_waits_until_the_reset():
+    runner = ScriptedRunner((1, "", "API rate limit exceeded for installation"),
+                            (0, json.dumps({"resources": {"core": {"reset": 1_000_600}}}), ""),
+                            (0, "[1]", ""))
+    sleeps: list[float] = []
+    client = GitHubClient(None, runner=runner, sleep=sleeps.append, clock=lambda: 1_000_000)
+    assert client.get("x") == [1]
+    assert 605 in sleeps and runner.calls[1] == ["gh", "api", "rate_limit"]
+
+
+def test_reset_wait_is_capped_and_survives_a_bad_answer():
+    runner = ScriptedRunner((1, "", "API rate limit exceeded"), (0, "not json", ""), (0, "[]", ""))
+    sleeps: list[float] = []
+    GitHubClient(None, runner=runner, sleep=sleeps.append, clock=lambda: 50.0).get("x")
+    assert 65.0 in sleeps
+    runner = ScriptedRunner((1, "", "API rate limit exceeded"),
+                            (0, json.dumps({"resources": {"core": {"reset": 10**9}}}), ""), (0, "[]", ""))
+    sleeps = []
+    GitHubClient(None, runner=runner, sleep=sleeps.append, clock=lambda: 0.0).get("x")
+    assert 3700 in sleeps

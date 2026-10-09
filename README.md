@@ -49,7 +49,7 @@ In short:
 **Disclosure:** this repository is maintained by Rigour Labs, which makes one
 of the entrants. Rigour gets no special handling: it is one adapter behind the
 same interface as the others, and the scoring code doesn't know which tool
-produced a finding. Every raw output is published so anyone can check this.
+produced a finding. Every run record is published so anyone can check this.
 
 ## Repositories
 
@@ -67,6 +67,12 @@ Actions, because some repositories are over 1 GB.
 python -m venv .venv && .venv/bin/pip install -e '.[test]'
 .venv/bin/python -m bench repos          # validate and list the pinned repos
 .venv/bin/python -m bench collect        # freeze the corpus of reviewed PRs (GitHub API, free)
+.venv/bin/python -m bench points         # split reviews into points; check which were acted on
+.venv/bin/python -m bench label suggest  # suggest classes; a human confirms (docs/LABELLING.md)
+.venv/bin/python -m bench run --entrants free   # every free entrant on every reviewed head
+.venv/bin/python -m bench score --run work/runs/<date>   # catches, false blocks, noise
+.venv/bin/python -m bench calibrate draw --run work/runs/<date>   # hand-check sample (seeded)
+.venv/bin/python -m bench report --run work/runs/<date>  # results/<date>/summary.md
 .venv/bin/python -m pytest               # harness and scoring tests
 ```
 

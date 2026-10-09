@@ -24,20 +24,22 @@ class Adapter(Protocol):
 
 | Field | Meaning |
 |---|---|
-| `workdir` | Checkout of the repository at the round's head, read-only by convention |
+| `workdir` | A fresh repository at the round's head with no refs (no branches, no tags), deleted after the run |
 | `base_sha`, `head_sha` | Merge base and the reviewed head |
 | `diff_path` | Unified diff `base_sha...head_sha` |
 | `history` | Only if `reads_history`: PR title, body, and comments posted before this round |
 | `timeout_s` | Hard limit; the harness kills the process after it |
+| `env` | The only environment your tool's processes may get: pass it as `env=` to every subprocess. It has a fresh `HOME` and no tokens |
 
 `ReviewOutput` returns:
 
 | Field | Meaning |
 |---|---|
-| `findings` | List of `{path, line, blocking, message, rule}`. `line` is on the head side, or `None` if the finding has no line |
+| `findings` | List of `{path, line, blocking, message, rule, end_line}`. `line` is on the head side, or `None` if the finding has no line; `end_line` only when one finding covers a range |
+| `verdict` | `"fail"` if the tool would block the change, `"pass"` if not, `"error"` if it couldn't review |
+| `error` | Why, when `verdict` is `"error"` |
 | `cost_usd` | Dollars if the tool reports them, else `None` |
 | `input_tokens`, `output_tokens` | If reported, else `None` |
-| `raw` | The tool's own output, stored as a release asset |
 
 **`blocking`** must follow the tool's own semantics: the finding fails the
 check, or the tool marks it as must-fix. Don't map severities to "blocking"
@@ -49,6 +51,8 @@ just to look stricter or quieter. The mapping is reviewed in the pull request.
 - Never read anything outside `request`: no network lookups of the pull
   request, its reviews or later commits. The harness already gives you the
   history you are allowed to see.
+- Run every tool process with `env=request.env`, never the inherited
+  environment. A paid adapter adds only its own key to a copy of it.
 - Keep keys in environment variables. Never commit them, never log them.
 - Paid adapters must report usage, or document why the tool can't.
 - Add a test with a recorded tool output under `tests/fixtures/` that checks
@@ -58,8 +62,9 @@ just to look stricter or quieter. The mapping is reviewed in the pull request.
 
 Open a pull request with the adapter and its test. A maintainer runs the
 free entrants on the next scheduled run. Paid entrants run when someone funds
-the run. Either way the run's raw outputs are published, so you can check how
-your tool was invoked.
+the run. Either way the run records are published, so you can check how your
+tool was invoked. Each finding is kept as rule, location and a short message:
+the harness strips quoted code and doesn't keep raw output.
 
 ## Other contributions
 

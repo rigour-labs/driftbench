@@ -1,0 +1,98 @@
+name: collect
+
+# Freeze the corpus and points for every enabled repo (docs/ARCH.md).
+# Uploads only work/corpus and work/points: IDs, SHAs, anchors and text hashes,
+# never review text. The API cache (work/cache) holds text: it is never an
+# artifact or a release asset (both are public on a public repo). It is kept
+# in the Actions cache, readable only by this repo's workflows, so a dispatch
+# that hits the hourly API limit resumes where the last one stopped.
+# The release job makes a DRAFT; a maintainer checks it with `bench guard` and publishes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_prs:
+        description: Substantively reviewed PRs to keep per repo
+        default: "60"
+      max_listed:
+        description: Closed PRs to list per repo
+        default: "600"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340  # GITHUB_TOKEN allows 1,000 API requests an hour; the client waits for resets
+    outputs:
+      tag: ${{ steps.stamp.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: work/cache
+          key: api-cache-${{ github.run_id }}
+          restore-keys: api-cache-
+      - id: stamp
+        run: echo "tag=corpus-$(date -u +%Y-%m-%d)-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+      - name: Collect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAX_PRS: ${{ inputs.max_prs }}
+          MAX_LISTED: ${{ inputs.max_listed }}
+        run: python -m bench collect --max-prs "$MAX_PRS" --max-listed "$MAX_LISTED"
+      - name: Points
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m bench points
+      - name: Check the upload holds no review text
+        run: python -m bench.release_check work/corpus work/points
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: corpus
+          path: |
+            work/corpus/*.json
+            work/points/*.json
+          if-no-files-found: error
+          retention-days: 90
+
+  draft-release:
+    needs: collect
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: corpus
+          path: corpus
+      - name: Name assets uniquely
+        run: |
+          mkdir assets
+          for f in corpus/corpus/*.json; do cp "$f" "assets/corpus-$(basename "$f")"; done
+          for f in corpus/points/*.json; do cp "$f" "assets/points-$(basename "$f")"; done
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.collect.outputs.tag }}
+        run: |
+          {
+            echo "Frozen corpus and points (draft; not published until checked)."
+            echo
+            echo "- collect run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- commit: ${GITHUB_SHA}"
+          } > notes.md
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
+            --title "$TAG" --notes-file notes.md assets/*.json
