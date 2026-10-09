@@ -57,3 +57,12 @@ def test_settle_leaks_usage_and_honest_zero():
     free_ran = settle_review(Paid(), ReviewOutput([finding], "pass", cost_usd=None, model_runs=0), budget)
     assert free_ran.verdict == "pass" and free_ran.findings == [finding]               # nothing to review: $0
     assert settle_review(Free(), ReviewOutput([], "pass"), None).verdict == "pass"
+
+
+def test_a_model_run_without_a_reported_cost_is_charged_the_bound_and_errors():
+    budget = Budget(max_usd=5, estimate_per_head={"p": 0.7})
+    out = settle_review(Paid(), ReviewOutput([Finding("a.py", 1, True, "m")], "fail", cost_usd=None, model_runs=2),
+                        budget)
+    assert (out.verdict, out.charged, budget.spent) == ("error", "bound", 0.7)
+    honest = settle_review(Paid(), ReviewOutput([], "pass", cost_usd=None, model_runs=0), budget)
+    assert (honest.verdict, honest.charged, budget.spent) == ("pass", "", 0.7)     # nothing ran: no charge

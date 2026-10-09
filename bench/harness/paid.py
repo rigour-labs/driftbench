@@ -38,15 +38,17 @@ def charge_review(adapter: Adapter, output: ReviewOutput, budget: Budget | None)
     """Charge a paid review to the budget, failures included.
 
     What the tool reported, when it reported anything; otherwise, for a review
-    that failed (a timeout burns its whole limit), the entrant's per-head bound,
-    so a failure can never slip past the cap. The head records which.
+    that failed (a timeout burns its whole limit) or whose model ran without
+    reporting a cost, the entrant's per-head bound, so neither can slip past
+    the cap. The head records which.
     """
     if not adapter.paid or budget is None:
         return output
     if output.cost_usd is not None:
         budget.add_cost(adapter.name, output.cost_usd)
         return dataclasses.replace(output, charged="reported")
-    if output.verdict == "error":
+    ran_unreported = (output.model_runs or 0) > 0  # the model ran but no cost came back: assume the worst
+    if output.verdict == "error" or ran_unreported:
         budget.add_cost(adapter.name, budget.per_head_bound(adapter.name))
         return dataclasses.replace(output, charged="bound")
     return output
