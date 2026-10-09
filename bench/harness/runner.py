@@ -23,6 +23,7 @@ from bench.harness.types import Adapter, ReviewInput, ReviewOutput
 from bench.repos import slug_of
 
 RECORD_SCHEMA = 1
+SMOKE_MIN_CHANGED_LINES = 20
 
 
 @dataclasses.dataclass(frozen=True)
@@ -33,6 +34,8 @@ class RunConfig:
     timeout_s: int = 900
     run_started_at: str = ""  # harness clock at the start of `bench run`; proves labels came first
     budget: Budget | None = None  # the hard dollar stop shared by every paid entrant
+    max_heads: int = 0  # smoke runs only: review this many heads per entrant per repo (0 = every head)
+    min_changed_lines: int = SMOKE_MIN_CHANGED_LINES  # smoke runs only: skip heads smaller than this
 
 
 def record_path_for(run_dir: Path, tool: str, repo: str, pr: int, head: str) -> Path:
@@ -119,17 +122,34 @@ def read_record(path: Path) -> dict:
     return record
 
 
+def smoke_eligible(checkout: RepoCheckout, pr: dict, head: str, config: RunConfig) -> bool:
+    """A smoke head is a realistic one: its diff has at least `min_changed_lines` changed lines."""
+    try:
+        _, diff_path = prepare(checkout, pr, head, config)
+    except GitError as exc:  # an unavailable head can't be a smoke head; try the next
+        print(f"warning: PR {pr['number']} head {head[:12]} unavailable for the smoke cut: {exc}", file=sys.stderr)
+        return False
+    return changed_lines(parse_hunks(diff_path.read_text(encoding="utf-8"))) >= config.min_changed_lines
+
+
 def run_corpus(adapter: Adapter, checkout: RepoCheckout, corpus: dict, config: RunConfig) -> dict:
-    """Run every case of every PR; returns counts of records written, skipped and by verdict."""
+    """Run every case of every PR; returns counts of records written, skipped and by verdict.
+
+    A smoke run (`max_heads`) reviews only the first `max_heads` heads, in corpus order, whose diff has at
+    least `min_changed_lines` changed lines; other heads get no record, so a smoke run is never scorable."""
     if adapter.reads_history:
         raise ValueError(f"{adapter.name} reads history, which this harness version doesn't provide yet")
     checkout.ensure_clone()
     counts = {"written": 0, "skipped": 0}
     for pr in corpus["prs"]:
         for head, cases in heads_to_run(cases_for_pr(pr)).items():
+            if config.max_heads and counts["written"] + counts["skipped"] >= config.max_heads:
+                return counts
             path = record_path(config, adapter, corpus["repo"], pr["number"], head)
             if path.exists():
                 counts["skipped"] += 1
+                continue
+            if config.max_heads and not smoke_eligible(checkout, pr, head, config):
                 continue
             result = paid_gate(adapter, config.budget) or run_head(adapter, checkout, pr, head, config)
             header = record_header(adapter, corpus["repo"], pr["number"], head, cases)

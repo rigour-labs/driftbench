@@ -24,6 +24,12 @@ one timeout, one provider and one pinned Claude Code CLI, all recorded in
   head records which (`charged: reported | bound`). Tools that can stop
   themselves also get the per-head bound (Claude Code's `--max-budget-usd`)
   as a second line of defence.
+- **Smoke runs.** Before a paid run, `--max-heads N` (run.yml `max_heads`,
+  with `repos` to pick one repo) reviews only the first N heads per entrant
+  per repo, in corpus order, whose diff has at least 20 changed lines, so
+  the cost per head is realistic. The cut is fixed in `run.json` (`smoke`),
+  other heads get no record, `bench score` refuses the run, and its draft
+  release is tagged `smoke-…` with notes saying it is not a result.
 - **What the dollars are.** For both tool families the cost is Claude
   Code's own figure: a list-price estimate from token counts, not a bill.
   The page labels it so. The run notes record estimate and billed side by
