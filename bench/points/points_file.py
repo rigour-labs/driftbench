@@ -23,7 +23,7 @@ def build_points(corpus: dict, client: GitHubClient) -> dict:
     texts = TextSource(client, corpus["repo"])
     points = []
     for pr in corpus["prs"]:
-        acted = partial(acted_on, client, corpus["repo"], merged_head=pr["head_sha"], pr_commits=len(pr["commits"]))
+        acted = partial(acted_on, client, corpus["repo"], pr=pr)
         points += points_for_pr(pr, texts, acted)
     return {
         "schema": POINTS_SCHEMA,

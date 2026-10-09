@@ -171,10 +171,20 @@ the merged head, or the file was removed. The basis is recorded:
   diffed instead);
 - `direct`: the branch was amended or force-pushed in place (it gained no
   upstream commits), so the file at the two commits is diffed directly;
-- `rebased`: the merged head gained upstream commits, by a rebase onto a
-  newer base or by merging the base branch in; a direct diff would mix in
-  upstream changes, so acted-on is unknown. The test is the compare's
-  `ahead_by` against the pull request's own commit count.
+- `range`: the merged head gained upstream commits (a rebase onto a newer
+  base, or the base merged in). The pull request's **own** patch to the file
+  is compared at the anchor commit (from its fork point) and at the merged
+  head (from its fork point), so upstream changes are in neither and cancel
+  out. If the anchored lines include lines the pull request added, it is
+  acted on when any of them is no longer added as is; if they are context,
+  when the pull request newly adds or removes lines near where they sit at
+  the merged head. Upstream edits alone never count;
+- `rebased`: as for `range`, but even that can't decide (a patch or file
+  can't be read, the file was renamed and rewritten, or the fork point of a
+  squash-merged head can't be resolved), so acted-on is unknown.
+
+The draft corpus release notes list the counts per basis for each
+repository.
 
 In a 10-PR tailscale sample, 26 of 35 kept inline points got an answer (24
 yes); 8 were `rebased` and 1 was on the old side.
@@ -260,7 +270,7 @@ guards keep it honest:
    per entrant is published alongside the headline. The same sample checks
    acted-on decisions (10 `direct` yes, 5 `direct` no, 5 `ancestor`): *did
    the change near the anchor respond to the point: yes / no*, with
-   agreement reported per basis. If `direct` agrees clearly less often than
+   agreement reported per basis (5 `range` cases are added to the sample). If `direct` agrees clearly less often than
    `ancestor`, acted-on numbers are reported per basis. The sample is drawn
    with a recorded seed (`bench calibrate draw`), never redrawn silently,
    and committed with its verdicts. It draws only from reportable

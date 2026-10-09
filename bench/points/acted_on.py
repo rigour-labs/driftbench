@@ -9,8 +9,11 @@ removed. How the change is found (`basis`):
   at the two commits is diffed instead, which is exact here too.
 - "direct": the branch was amended or force-pushed in place (no upstream
   commits gained); the file at the two commits is diffed directly.
-- "rebased": the merged head was rebased onto newer upstream commits; a
-  direct diff would mix in upstream changes, so the answer is unknown.
+- "range": the merged head gained upstream commits (a rebase, or the base
+  merged in); the pull request's own patch to the file at A and at H are
+  compared, so upstream changes cancel out (bench/points/range_basis.py).
+- "rebased": as for "range", but even that can't decide (a patch or file
+  can't be read, or the pull request never touched the file at A).
 Unknown also for left-side or lineless comments, a commit GitHub no longer
 has, or a file GitHub returns no content for. A rename that a truncated file
 list hides reads as a removal, so it counts as acted on.
@@ -21,6 +24,7 @@ import re
 
 from bench.collect.github import GitHubClient
 from bench.points.file_at import changed_lines_between, file_at
+from bench.points.range_basis import from_range
 
 ACTED_WINDOW = 3
 HUNK_RE = re.compile(r"^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@")
@@ -89,10 +93,11 @@ def from_contents(client: GitHubClient, repo: str, anchor: dict, compare: dict, 
     return bool(changed_lines_between(old.text, new.text) & window(anchor))
 
 
-def acted_on(client: GitHubClient, repo: str, anchor: dict | None, merged_head: str, pr_commits: int) -> Verdict:
-    """(acted on, basis) for one inline anchor."""
+def acted_on(client: GitHubClient, repo: str, anchor: dict | None, pr: dict) -> Verdict:
+    """(acted on, basis) for one inline anchor; `pr` is the PR's record (head_sha, base_sha, commits)."""
     if not anchor or not anchor.get("line") or anchor.get("side") == "LEFT":
         return None, None
+    merged_head, pr_commits = pr["head_sha"], len(pr["commits"])
     if anchor["commit_sha"] == merged_head:
         return False, "ancestor"
     compare = client.get_optional(f"repos/{repo}/compare/{anchor['commit_sha']}...{merged_head}")
@@ -105,4 +110,5 @@ def acted_on(client: GitHubClient, repo: str, anchor: dict | None, merged_head: 
         return verdict, "ancestor"
     if compare.get("ahead_by", pr_commits + 1) <= pr_commits:
         return from_contents(client, repo, anchor, compare, merged_head), "direct"
-    return None, "rebased"
+    verdict = from_range(client, repo, anchor, pr["base_sha"], merged_head, window(anchor))
+    return (verdict, "range") if verdict is not None else (None, "rebased")

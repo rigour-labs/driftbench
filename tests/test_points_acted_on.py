@@ -49,7 +49,8 @@ def test_ancestor_falls_back_to_contents_when_the_patch_cant_tell():
 
 def run(objects: dict, anchor: dict = ANCHOR, pr_commits: int = 1):
     client = FakeClient({}, {}, objects)
-    return acted_on(client, "o/r", anchor, "H", pr_commits), client
+    pr = {"head_sha": "H", "base_sha": "B", "commits": [{}] * pr_commits}
+    return acted_on(client, "o/r", anchor, pr), client
 
 
 def test_ancestor_uses_the_compare_patch():
@@ -71,10 +72,10 @@ def test_direct_file_removed_or_unreadable():
     assert run(too_big)[0] == (None, "direct")
 
 
-def test_rebased_onto_newer_upstream_is_unknown():
+def test_rebased_without_readable_own_patches_is_unknown():
     verdict, client = run({"repos/o/r/compare/A...H": compare(status="diverged", ahead_by=40)}, pr_commits=2)
     assert verdict == (None, "rebased")
-    assert not any("contents" in call for call in client.calls)
+    assert "repos/o/r/compare/B...A" in client.calls       # the range basis was tried first
 
 
 def test_skips_left_side_lineless_missing_commit_and_final_head():

@@ -93,6 +93,12 @@ jobs:
             echo
             echo "- collect run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo "- commit: ${GITHUB_SHA}"
+            echo
+            echo "Inline points acted on, per repo, as acted_on/basis (ancestor, direct, range; rebased = unknown):"
+            echo
+            for f in assets/points-*.json; do
+              echo "- $(jq -r '.repo' "$f"): $(jq -c '.summary.acted_on' "$f")"
+            done
           } > notes.md
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
             --title "$TAG" --notes-file notes.md assets/*.json
