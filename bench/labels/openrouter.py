@@ -14,6 +14,7 @@ import urllib.request
 from collections.abc import Callable
 
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+KEY_ENDPOINT = "https://openrouter.ai/api/v1/key"
 KEY_NAME = "OPENROUTER_API_KEY"
 TIMEOUT_S = 120
 
@@ -38,6 +39,20 @@ def post(body: dict) -> dict:
         raise OpenRouterError(f"OpenRouter answered HTTP {exc.code}") from None
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         raise OpenRouterError(f"OpenRouter call failed: {type(exc).__name__}") from None
+
+
+def key_usage(opener: Callable[[urllib.request.Request, int], object] = urllib.request.urlopen) -> float | None:
+    """The key's cumulative billed usage in USD, as OpenRouter reports it, or None if it can't be read."""
+    key = os.environ.get(KEY_NAME)
+    if not key:
+        return None
+    request = urllib.request.Request(KEY_ENDPOINT, headers={"Authorization": f"Bearer {key}"})
+    try:
+        with opener(request, TIMEOUT_S) as response:
+            usage = (json.loads(response.read().decode("utf-8")).get("data") or {}).get("usage")
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, AttributeError):
+        return None
+    return float(usage) if isinstance(usage, (int, float)) else None
 
 
 def chat(model: str, messages: list[dict], max_tokens: int, transport: Transport = post) -> dict:

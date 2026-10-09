@@ -8,8 +8,9 @@ name: run
 # `bench report` withholds per-class results otherwise. Paid entrants run only
 # with `model`, a `max_usd` cap above 0 and a per-head bound for each
 # (`head_bounds`); the harness refuses them otherwise. The cap is split evenly
-# across the per-repo jobs. The ANTHROPIC_API_KEY secret reaches only the paid
-# review step. The diffs handed to tools (work/runs/*/_scratch) contain the
+# across the per-repo jobs. The provider's secret (ANTHROPIC_API_KEY, or
+# OPENROUTER_API_KEY for `provider: openrouter`) reaches only the paid review
+# step. The diffs handed to tools (work/runs/*/_scratch) contain the
 # projects' code and are never uploaded.
 
 on:
@@ -30,6 +31,9 @@ on:
       head_bounds:
         description: Paid entrants only. Per-head bounds from the run estimate, e.g. "claude-code-review=0.8"
         default: ""
+      provider:
+        description: Paid entrants only. anthropic or openrouter, the same for all of them
+        default: anthropic
 
 permissions:
   contents: read
@@ -77,11 +81,12 @@ jobs:
           MODEL: ${{ inputs.model }}
           MAX_USD: ${{ inputs.max_usd }}
           HEAD_BOUNDS: ${{ inputs.head_bounds }}
+          PROVIDER: ${{ inputs.provider }}
           PAID: ${{ steps.paid.outputs.paid }}
         run: |
           paid_args=()
           if [ "$PAID" = "true" ]; then
-            paid_args=(--model "$MODEL" --max-usd "$MAX_USD")
+            paid_args=(--model "$MODEL" --max-usd "$MAX_USD" --provider "$PROVIDER")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
           fi
           # word splitting of ENTRANTS is intended: one argument per entrant name
@@ -153,14 +158,16 @@ jobs:
           MODEL: ${{ inputs.model }}
           MAX_USD: ${{ inputs.max_usd }}
           HEAD_BOUNDS: ${{ inputs.head_bounds }}
-          # the key exists in this step only, and only for a paid run; the harness passes it to paid tools alone
-          ANTHROPIC_API_KEY: ${{ needs.start.outputs.paid == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
+          PROVIDER: ${{ inputs.provider }}
+          # the provider's key exists in this step only, and only for a paid run; the harness passes it to paid tools alone
+          ANTHROPIC_API_KEY: ${{ needs.start.outputs.paid == 'true' && inputs.provider == 'anthropic' && secrets.ANTHROPIC_API_KEY || '' }}
+          OPENROUTER_API_KEY: ${{ needs.start.outputs.paid == 'true' && inputs.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || '' }}
         run: |
           paid_args=()
           if [ "$PAID" = "true" ]; then
             # this job's share of the run's cap: the cap split evenly across the repo jobs
             share=$(python3 -c "import json, os; print(round(float(os.environ['MAX_USD']) / len(json.loads(os.environ['REPOS'])), 4))")
-            paid_args=(--model "$MODEL" --max-usd "$share")
+            paid_args=(--model "$MODEL" --max-usd "$share" --provider "$PROVIDER")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
           fi
           # word splitting of ENTRANTS is intended: one argument per entrant name
@@ -246,11 +253,14 @@ jobs:
       - name: Score, draw the calibration sample, report
         env:
           GH_TOKEN: ${{ github.token }}
+          PROVIDER: ${{ inputs.provider }}
         run: |
           python -m bench score --run "work/runs/$NAME" --out "results/$NAME"
           python -m bench calibrate draw --run "work/runs/$NAME" --results "results/$NAME" --seed "$GITHUB_RUN_ID"
           python -m bench report --run "work/runs/$NAME" --results "results/$NAME"
-          python -m bench spend --run "work/runs/$NAME" > "results/$NAME/spend.md"
+          spend_args=()
+          if [ "$PROVIDER" = "openrouter" ]; then spend_args=(--openrouter); fi
+          python -m bench spend --run "work/runs/$NAME" "${spend_args[@]}" > "results/$NAME/spend.md"
       - run: python -m bench.release_check "results/$NAME" "work/runs/$NAME"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

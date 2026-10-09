@@ -18,7 +18,7 @@ from bench.points.points_file import PointsError, read_points
 from bench.repos import slug_of
 from bench.score.linemap import FileVersions
 from bench.score.repo import published_summary, score_repo
-from bench.score.spend import spend_by_tool, spend_notes
+from bench.score.spend import openrouter_billed, spend_by_tool, spend_notes
 
 
 def add_score_parser(commands: argparse._SubParsersAction, root: Path) -> None:
@@ -32,6 +32,8 @@ def add_score_parser(commands: argparse._SubParsersAction, root: Path) -> None:
 
     spend = commands.add_parser("spend", help="a run's estimated spend per entrant, for the release notes")
     spend.add_argument("--run", type=Path, required=True)
+    spend.add_argument("--openrouter", action="store_true",
+                       help="fill the billed amount from the OpenRouter key's usage readings in the run")
     spend.set_defaults(handler=cmd_spend)
 
 
@@ -64,7 +66,9 @@ def cmd_score(args: argparse.Namespace) -> int:
 def cmd_spend(args: argparse.Namespace) -> int:
     try:
         budgets = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(args.run.glob("budget-*.json"))]
-        print(spend_notes(spend_by_tool(args.run, budgets)), end="")
+        usages = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(args.run.glob("openrouter-usage-*.json"))]
+        billed = openrouter_billed(usages) if args.openrouter else None
+        print(spend_notes(spend_by_tool(args.run, budgets), billed), end="")
     except (OSError, json.JSONDecodeError, RecordError) as exc:
         print(exc, file=sys.stderr)
         return 1

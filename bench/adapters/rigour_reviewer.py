@@ -25,7 +25,7 @@ from pathlib import Path
 
 import yaml
 
-from bench.adapters.claude_cli import KEY_NAME, paid_env, require_claude_cli
+from bench.adapters.claude_cli import paid_env, provider_env_names, require_claude_cli
 from bench.adapters.rigour import VERSION, load_report, parse_report
 from bench.harness.types import AdapterError, Finding, ReviewInput, ReviewOutput
 
@@ -88,11 +88,11 @@ class RigourReviewer:
     version = VERSION
     paid = True
     reads_history = False
-    env_extra: tuple[str, ...] = (KEY_NAME,)
-
-    def __init__(self, model: str, orchestrated: bool = False):
+    def __init__(self, model: str, orchestrated: bool = False, provider: str = "anthropic"):
         self.model = model
         self.orchestrated = orchestrated
+        self.provider = provider
+        self.env_extra = provider_env_names(provider)
         self.name = "rigour-reviewer-orchestrated" if orchestrated else "rigour-reviewer"
 
     def command(self, request: ReviewInput, config: Path) -> list[str]:
@@ -100,7 +100,7 @@ class RigourReviewer:
                 "--reviewer", "--single", "-c", str(config), *(["--orchestrator"] if self.orchestrated else [])]
 
     def review(self, request: ReviewInput) -> ReviewOutput:
-        env = paid_env(request)
+        env = paid_env(request, self.provider)
         require_claude_cli(env)
         config = Path(env["HOME"]) / "rigour-bench.yml"
         config.write_text(yaml.safe_dump(reviewer_config(self.model, request.timeout_s)), encoding="utf-8")
