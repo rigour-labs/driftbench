@@ -11,6 +11,8 @@ from bench.harness.cli import read_manifest
 from bench.labels.fingerprint import labels_unchanged
 from bench.labels.sample import SampleError, points_sha256, read_sample, sample_path
 from bench.labels.workspace import current_texts
+from bench.labels.model_agreement import model_agreement
+from bench.labels.model_file import model_path, read_model_file
 from bench.labels.store import LabelError, effective_labels, labels_path, read_labels
 from bench.points.points_file import PointsError, read_points
 from bench.points.texts import TextSource, point_text
@@ -71,18 +73,22 @@ def withheld_reason(args: argparse.Namespace, repo: str, manifest: dict | None, 
     return "" if ok else reason
 
 
-def class_results(args: argparse.Namespace, repo: str, ledger: list[dict], manifest: dict | None) -> tuple[dict, str]:
-    """Rates by class from the labelled sample, or ({}, the reason they are withheld)."""
+def class_results(args: argparse.Namespace, repo: str, ledger: list[dict],
+                  manifest: dict | None) -> tuple[dict, str, dict | None]:
+    """Rates by class from the labelled sample and the model-human agreement on it, or ({}, the reason they
+    are withheld, None)."""
     points_file = repo_points(args, repo)
     reason = withheld_reason(args, repo, manifest, points_file)
     if reason:
-        return {}, reason
+        return {}, reason, None
     sample = read_sample(sample_path(args.labels, repo))
     labels = read_labels(labels_path(args.labels, repo), repo)
     texts = current_texts(TextSource(GitHubClient(args.cache), repo), points_file, labels)
     in_sample = set(sample["point_ids"])
     usable = {pid: label for pid, label in effective_labels(labels, texts).items() if pid in in_sample}
-    return per_class([row for row in ledger if row["repo"] == repo], usable), ""
+    model_data = read_model_file(model_path(args.labels, repo), repo)
+    agreement = model_agreement(labels["points"], usable, model_data) if model_data else None
+    return per_class([row for row in ledger if row["repo"] == repo], usable), "", agreement
 
 
 def load_manifest(run_dir: Path) -> dict | None:
@@ -98,11 +104,12 @@ def cmd_report(args: argparse.Namespace) -> int:
         return 1
     ledger = read_ledger(args.run / "ledger.jsonl")
     manifest = load_manifest(args.run)
-    classes, notes = {}, {}
+    classes, notes, models = {}, {}, {}
     for summary in (s for s in summaries if s["reportable"]):
-        classes[summary["repo"]], notes[summary["repo"]] = class_results(args, summary["repo"], ledger, manifest)
+        repo = summary["repo"]
+        classes[repo], notes[repo], models[repo] = class_results(args, repo, ledger, manifest)
     calibration = summarise_calibration(read_calibration(out / "calibration.yaml"))
-    page = render(args.run.name, summaries, classes, calibration, notes)
+    page = render(args.run.name, summaries, classes, calibration, notes, models)
     (out / "summary.md").write_text(page, encoding="utf-8")
     print(f"wrote {out / 'summary.md'}")
     return 0

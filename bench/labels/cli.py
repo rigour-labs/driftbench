@@ -12,6 +12,9 @@ from bench.labels.store import (LabelError, confirm, effective_labels, label_sta
 from bench.labels.suggestions import (confirm_time_suggestions, merge_suggestions, read_suggestions,
                                       suggestions_path, write_suggestions)
 from bench.labels.sample import SampleError, read_sample, sample_path
+from bench.labels.model_agreement import model_agreement
+from bench.labels.model_file import model_path, read_model_file
+from bench.labels.prelabel_cli import add_prelabel_action
 from bench.labels.sample_cli import add_sample_actions, sample_status
 from bench.labels.workspace import current_texts, kept_points, load_points, points_for_repo
 from bench.points.points_file import PointsError
@@ -42,6 +45,7 @@ def add_label_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     setter.set_defaults(label_handler=cmd_set)
     actions.add_parser("status", help="confirmed counts per repo").set_defaults(label_handler=cmd_status)
     add_sample_actions(actions)
+    add_prelabel_action(actions, root)
 
 
 def cmd_suggest(args: argparse.Namespace) -> int:
@@ -101,6 +105,9 @@ def cmd_status(args: argparse.Namespace) -> int:
         sample = read_sample(sample_path(args.labels, repo))
         if sample:
             print(f"  sample (seed {sample['seed']}): {sample_status(labels, effective_labels(labels, texts), sample['point_ids'])}")
+        model_data = read_model_file(model_path(args.labels, repo), repo)
+        if model_data:
+            print(f"  model suggestions: {model_agreement(labels['points'], effective_labels(labels, texts), model_data)}")
     return 0
 
 

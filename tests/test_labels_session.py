@@ -45,3 +45,33 @@ def test_links_point_at_the_anchor_commit_and_the_pr():
                                           "PR: https://github.com/o/r/pull/7"]
     assert links("o/r", POINTS["p2"]) == ["PR: https://github.com/o/r/pull/7#pullrequestreview-55"]
     assert links("o/r", POINTS["p3"]) == ["PR: https://github.com/o/r/pull/7#issuecomment-66"]
+
+
+def model_session(replies, labels=None):
+    saved, shown = [], []
+    answers = iter(replies)
+    model = {"blind_ids": ["p2"], "points": {"p1": {"suggested": "performance", "reason": "extra query"},
+                                              "p2": {"suggested": "mechanical", "reason": "rename"}}}
+    context = {"repo": "o/r", "points": POINTS, "sample_ids": ["p1", "p2"], "text": lambda p: TEXTS[p["id"]],
+               "labeller": "ash", "save": saved.append, "model": model}
+    result = run_session(context, labels or empty_labels("o/r"), lambda prompt: next(answers), shown.append)
+    return result, shown
+
+
+def test_the_blind_subset_comes_first_and_shows_no_suggestion():
+    labels, shown = model_session(["1", ""])              # p2 (blind) first, then Enter accepts p1's suggestion
+    assert "p2" in shown[0] and "model suggests" not in shown[0]
+    assert "p1" in shown[1] and "model suggests: performance (extra query)" in shown[1]
+    assert labels["points"]["p2"]["blind"] is True and "suggestion" not in labels["points"]["p2"]
+    p1 = labels["points"]["p1"]
+    assert (p1["label"], p1["blind"], p1["suggestion"]) == ("performance", False, "accepted")
+
+
+def test_overriding_a_shown_suggestion_is_recorded():
+    labels, _ = model_session(["1", "3"])
+    assert labels["points"]["p1"]["label"] == "claim/contract" and labels["points"]["p1"]["suggestion"] == "overridden"
+
+
+def test_enter_does_nothing_without_a_suggestion():
+    labels, _ = model_session(["", "5", "q"])             # Enter on blind p2 is asked again
+    assert labels["points"]["p2"]["label"] == "judgment" and "p1" not in labels["points"]

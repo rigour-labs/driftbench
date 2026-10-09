@@ -7,6 +7,7 @@ from pathlib import Path
 
 from bench.collect.github import GitHubClient
 from bench.labels.agreement import cohens_kappa
+from bench.labels.model_file import model_path, read_model_file
 from bench.labels.sample import draw_sample, read_sample, sample_path, write_sample
 from bench.labels.rules import suggest
 from bench.labels.session import run_session
@@ -56,7 +57,7 @@ def cmd_next(args: argparse.Namespace) -> int:
         "repo": args.repo, "points": {p["id"]: p for p in points_file["points"]},
         "sample_ids": sample["point_ids"], "text": lambda point: point_text(texts, point),
         "labeller": args.labeller, "save": lambda labels: write_labels(labels, path),
-        "include_skipped": args.include_skipped,
+        "include_skipped": args.include_skipped, "model": read_model_file(model_path(args.labels, args.repo), args.repo),
     }
     labels = read_labels(path, args.repo)
     store_suggestions(args, sample["point_ids"], context, labels)

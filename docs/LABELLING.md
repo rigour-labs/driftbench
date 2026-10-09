@@ -144,17 +144,59 @@ Rules for the labeller:
   the repository's maintainer, who also maintains one entrant (Rigour); that
   is a disclosed limit (docs/SPEC.md, "Labels").
 
+## Model suggestions
+
+To spare the labeller, a model can suggest a class for each sampled point
+first (`bench label prelabel`). The suggestion is never a label: the human
+confirms or overrides it, and the label records which.
+
+- **The model** is outside the Claude family, since both paid entrants run
+  on Claude. It is reached through OpenRouter, which reports the real cost of
+  every call. Its full ID is pinned in the run and written to the
+  suggestions file, with the SHA-256 of the prompt.
+- **What it reads:** the review comment and the diff hunk it is anchored to,
+  plus this guide's classes table, decision order and boundaries. It answers
+  one class from the fixed list and a one-line reason; any other answer is
+  no suggestion.
+- **Honest agreement:** a seeded random 20% of each sample (`blind_ids`,
+  redrawn by anyone from the sample's seed) is labelled first, with no
+  suggestion shown. Model-human agreement is computed on that blind subset
+  only, as a rate from 10 points up. Where a suggestion was on screen, the
+  report counts accepted and overridden labels separately and calls them
+  anchored, never agreement.
+- **Hard cap:** the run needs `--max-usd` and the maintainer's go. Before each
+  call it checks that the money spent so far (OpenRouter's reported cost)
+  plus a per-call bound still fits; a failed call, or one that reports no
+  cost, is charged at the bound. A point that can't be afforded stays
+  unsuggested and is listed with the reason, never skipped silently.
+- **Calibration stays human:** the calibration sample (location and acted-on
+  checks) is never sent to the model and never shown a suggestion.
+
+```bash
+OPENROUTER_API_KEY=... python -m bench label prelabel --repo immich-app/immich --repo tailscale/tailscale \
+    --repo zulip/zulip --model <full OpenRouter model ID> --max-usd 2
+python -m bench label next --repo immich-app/immich --labeller <name>   # blind subset first, then Enter accepts
+```
+
+`bench label next` shows the blind subset first. On the other points it shows
+the model's class and reason; Enter accepts it, a number overrides it.
+
 ## What the label files contain
 
 - `labels/<owner>__<repo>.yaml`: for each labelled point, the class, the
-  labeller, `blind`, and the SHA-256 of the text that was read; skipped points
-  are marked `skipped`. No review text and no rule suggestions, so opening the
-  file can't anchor a labeller.
+  labeller, `blind`, `suggestion` (accepted or overridden, when a model
+  suggestion was shown) and the SHA-256 of the text that was read; skipped
+  points are marked `skipped`. No review text and no suggested classes, so
+  opening the file can't anchor a labeller.
 - `labels/<owner>__<repo>.sample.yaml`: the seed, size, points-file hash and
   sampled IDs.
 - `labels/<owner>__<repo>.suggest.yaml`: rule suggestions, kept apart. A
   labelled point keeps the suggestion it had when it was labelled; a later
   rules change only adds `suggested_now`.
+- `labels/<owner>__<repo>.model.yaml`: model suggestions, kept apart: the
+  model ID, prompt hash, blind subset, reported spend, each point's class,
+  reason and cost, and every unsuggested point with why. It is fixed at run
+  start with the labels.
 
 Anyone can relabel a point in a pull request by changing its entry and naming
 the rule above they followed.

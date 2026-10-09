@@ -33,3 +33,13 @@ def test_dirty_missing_or_unrecorded_labels_are_refused(tmp_path):
     assert labels_unchanged(labels, recorded, "o/r") == (False, "o__r.yaml has uncommitted changes")
     assert labels_unchanged(labels, None, "o/r")[0] is False
     assert labels_unchanged(labels, recorded, "x/y") == (False, "x__y.yaml is missing")
+
+
+def test_model_suggestions_are_fixed_with_the_labels_once_they_exist(tmp_path):
+    repo, labels = setup_repo(tmp_path)
+    commit_file(repo, "labels/o__r.model.yaml", "points: {a: {suggested: judgment}}\n", "model suggestions")
+    recorded = label_fingerprint(labels)
+    assert labels_unchanged(labels, recorded, "o/r") == (True, "")
+    commit_file(repo, "labels/o__r.model.yaml", "points: {a: {suggested: mechanical}}\n", "re-suggest")
+    ok, reason = labels_unchanged(labels, recorded, "o/r")
+    assert not ok and reason.startswith("o__r.model.yaml differs")

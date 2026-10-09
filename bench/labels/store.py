@@ -6,14 +6,18 @@ guideline: 1
 points:
   "7-inline-100-0": {label: claim/contract, labeller: maintainer, blind: true, text_sha256: 9f86d0...}
   "7-inline-104-0": {skipped: true}
+  "7-inline-108-0": {label: judgment, labeller: maintainer, blind: false, suggestion: overridden, text_sha256: ...}
 ```
 
 A point is confirmed when `label` is set; `labeller` says who set it,
-`blind` whether they labelled without seeing a rule suggestion, and
+`blind` whether they labelled without seeing any suggestion, `suggestion`
+(only when a model suggestion was on screen) whether they `accepted` or
+`overridden` it, and
 `text_sha256` which exact text they read. A label is used only while the
 point's text still has that hash (otherwise it is stale). Rule suggestions
-never appear here: they live in a separate file (bench/labels/suggestions.py)
-so opening the label file can't anchor a labeller.
+and model suggestions never appear here: they live in separate files
+(bench/labels/suggestions.py, bench/labels/model_file.py) so opening the
+label file can't anchor a labeller.
 """
 from __future__ import annotations
 
@@ -62,10 +66,13 @@ def write_labels(labels: dict, path: Path) -> None:
 
 
 def confirm(labels: dict, point_id: str, label: str, labeller: str, evidence: dict) -> dict:
-    """Confirm a class. `evidence` holds `text_sha256` (the point's own text) and `blind`."""
+    """Confirm a class. `evidence` holds `text_sha256` (the point's own text), `blind`, and optionally
+    `suggestion` (accepted or overridden) when a model suggestion was shown."""
     if label not in CLASSES:
         raise LabelError(f"unknown class {label!r}; expected one of {', '.join(CLASSES)}")
     entry = {"label": label, "labeller": labeller, "text_sha256": evidence["text_sha256"], "blind": evidence["blind"]}
+    if evidence.get("suggestion"):
+        entry["suggestion"] = evidence["suggestion"]
     return {**labels, "points": {**labels["points"], point_id: entry}}
 
 

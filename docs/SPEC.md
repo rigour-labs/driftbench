@@ -255,6 +255,9 @@ only while the point's text still has that hash; otherwise it is stale and
 the point counts as unclassified. The share of blind labels that match the
 suggestion is reported.
 
+Labels may be assisted by a non-Claude model's suggestions (docs/LABELLING.md, "Model suggestions"); agreement
+is reported on a seeded blind 20% only, and the calibration sample is never shown one.
+
 **Disclosed limit:** the labeller for the first releases is the maintainer of
 this repository, who also maintains one entrant (Rigour). Labels are confirmed
 without looking at any tool's output, and the label files are published so
