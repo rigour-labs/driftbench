@@ -45,6 +45,7 @@ class RigourDeterministic:
     version = VERSION
     paid = False
     reads_history = False
+    env_extra: tuple[str, ...] = ()
 
     def review(self, request: ReviewInput) -> ReviewOutput:
         try:

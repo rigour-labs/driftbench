@@ -39,6 +39,8 @@ class ReviewOutput:
     input_tokens: int | None = None
     output_tokens: int | None = None
     error: str = ""
+    model_runs: int | None = None  # model calls the tool made; 0 = honestly free (nothing to review, cached)
+    leak_signals: int = 0          # signs the tool saw the PR's human reviews or fetched PR data
 
 
 class AdapterError(RuntimeError):
@@ -50,5 +52,6 @@ class Adapter(Protocol):
     version: str
     paid: bool
     reads_history: bool
+    env_extra: tuple[str, ...]  # names of variables the adapter adds to the sandbox env (its own key only)
 
     def review(self, request: ReviewInput) -> ReviewOutput: ...

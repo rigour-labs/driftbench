@@ -14,7 +14,9 @@ from pathlib import Path
 
 from bench.harness.cases import ReviewCase, cases_for_pr, heads_to_run
 from bench.harness.diffstat import changed_lines, parse_hunks
+from bench.harness.budget import Budget
 from bench.harness.gitrepo import GitError, RepoCheckout
+from bench.harness.paid import gate, settle
 from bench.harness.publish import published_finding
 from bench.harness.sandbox import env_keys, sandbox
 from bench.harness.types import Adapter, ReviewInput, ReviewOutput
@@ -30,6 +32,7 @@ class RunConfig:
     npm_cache: Path    # shared by every sandbox so npx stays fast
     timeout_s: int = 900
     run_started_at: str = ""  # harness clock at the start of `bench run`; proves labels came first
+    budget: Budget | None = None  # the hard dollar stop shared by every paid entrant
 
 
 def record_path_for(run_dir: Path, tool: str, repo: str, pr: int, head: str) -> Path:
@@ -77,6 +80,7 @@ def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, conf
             checkout.isolated_copy(head, box.repo)
             request = ReviewInput(box.repo, base, head, diff_path, None, config.timeout_s, box.env)
             output, wall_s = safe_review(adapter, request)
+            output = settle(adapter, output, config.budget)
     except GitError as exc:
         print(f"warning: PR {pr['number']} head {head[:12]} unavailable: {exc}", file=sys.stderr)
         return unavailable(exc)
@@ -125,7 +129,7 @@ def run_corpus(adapter: Adapter, checkout: RepoCheckout, corpus: dict, config: R
             if path.exists():
                 counts["skipped"] += 1
                 continue
-            result = run_head(adapter, checkout, pr, head, config)
+            result = gate(adapter, config.budget) or run_head(adapter, checkout, pr, head, config)
             header = record_header(adapter, corpus["repo"], pr["number"], head, cases)
             write_record(path, {**header, "run_started_at": config.run_started_at}, result)
             counts["written"] += 1
@@ -142,5 +146,5 @@ def record_header(adapter: Adapter, repo: str, pr: int, head: str, cases: list[R
         "pr": pr,
         "head_sha": head,
         "cases": [dataclasses.asdict(c) for c in cases],
-        "env_keys": env_keys(),
+        "env_keys": sorted({*env_keys(), *getattr(adapter, "env_extra", ())}),
     }

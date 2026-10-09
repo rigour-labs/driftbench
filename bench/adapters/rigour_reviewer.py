@@ -1,0 +1,100 @@
+"""Rigour with its reviewer: `rigour review --base <mb> --json --reviewer --single -c <config>` (paid).
+
+Runs the deterministic gates and then the reviewer, which drives the pinned
+Claude Code CLI with the run's model (set through a config file written into
+the sandbox HOME, so the reviewed repository is untouched; Rigour otherwise
+runs with its defaults and no tuning on this corpus). `--orchestrator` makes
+the orchestrated variant.
+
+Blocking follows Rigour: gate failures and reviewer `items` block;
+`advisory` and `notes` don't. A reviewer that reports `unavailable` is an
+error, not a block.
+
+Time-correctness: the reviewer looks up the pull request and its human
+reviews through `gh`. In the sandbox that lookup fails (no token, no login, no
+remote). Every head checks the reviewer's own record: any human review seen,
+or a pull request found, is a leak signal and the head is not scored.
+"""
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+import yaml
+
+from bench.adapters.claude_cli import KEY_NAME, paid_env, require_claude_cli
+from bench.adapters.rigour import VERSION, load_report, parse_report
+from bench.harness.types import AdapterError, Finding, ReviewInput, ReviewOutput
+
+TIMEOUT_MARGIN_S = 120
+
+
+def reviewer_config(model: str, timeout_s: int) -> dict:
+    return {"review": {"reviewer": {"enabled": True, "reviewers": ["claude"], "mode": "single",
+                                    "models": {"claude": model}, "timeout_ms": timeout_s * 1000}}}
+
+
+def reviewer_findings(reviewer: dict) -> list[Finding]:
+    def item(entry: dict, blocking: bool) -> Finding:
+        return Finding(entry.get("file"), entry.get("line"), blocking, str(entry.get("issue") or ""),
+                       f"reviewer:{entry.get('class') or ''}")
+    return ([item(e, True) for e in reviewer.get("items") or [] if isinstance(e, dict)]
+            + [item(e, False) for e in (reviewer.get("advisory") or []) + (reviewer.get("notes") or [])
+               if isinstance(e, dict)])
+
+
+def leak_signals(reviewer: dict) -> int:
+    record = reviewer.get("record") or {}
+    seen = int(((record.get("reported") or {}).get("human_reviews")) or 0)
+    return seen + (1 if reviewer.get("pr") else 0)
+
+
+def model_runs(reviewer: dict) -> int | None:
+    if reviewer.get("cached"):
+        return 0
+    judges = (reviewer.get("record") or {}).get("judges")
+    return len(judges) if isinstance(judges, list) else None
+
+
+def to_output(report: dict) -> ReviewOutput:
+    reviewer = report.get("reviewer")
+    if not isinstance(reviewer, dict):
+        raise AdapterError("the report has no reviewer section")
+    if reviewer.get("outcome") == "unavailable":
+        raise AdapterError(f"reviewer unavailable: {reviewer.get('reason') or 'no reason given'}")
+    gates = parse_report(report)
+    blocks = report.get("status") == "FAIL" or bool(reviewer.get("items"))
+    tokens = reviewer.get("tokens") or {}
+    return ReviewOutput(findings=gates + reviewer_findings(reviewer), verdict="fail" if blocks else "pass",
+                        cost_usd=reviewer.get("cost_usd"), input_tokens=tokens.get("input"),
+                        output_tokens=tokens.get("output"), model_runs=model_runs(reviewer),
+                        leak_signals=leak_signals(reviewer))
+
+
+class RigourReviewer:
+    version = VERSION
+    paid = True
+    reads_history = False
+    env_extra: tuple[str, ...] = (KEY_NAME,)
+
+    def __init__(self, model: str, orchestrated: bool = False):
+        self.model = model
+        self.orchestrated = orchestrated
+        self.name = "rigour-reviewer-orchestrated" if orchestrated else "rigour-reviewer"
+
+    def command(self, request: ReviewInput, config: Path) -> list[str]:
+        return ["npx", "--yes", f"@rigour-labs/cli@{VERSION}", "review", "--base", request.base_sha, "--json",
+                "--reviewer", "--single", "-c", str(config), *(["--orchestrator"] if self.orchestrated else [])]
+
+    def review(self, request: ReviewInput) -> ReviewOutput:
+        env = paid_env(request)
+        require_claude_cli(env)
+        config = Path(env["HOME"]) / "rigour-bench.yml"
+        config.write_text(yaml.safe_dump(reviewer_config(self.model, request.timeout_s)), encoding="utf-8")
+        try:
+            result = subprocess.run(self.command(request, config), cwd=request.workdir, env=env, capture_output=True,
+                                    text=True, timeout=request.timeout_s + TIMEOUT_MARGIN_S, check=False)
+        except subprocess.TimeoutExpired as exc:
+            raise AdapterError(f"timed out after {request.timeout_s + TIMEOUT_MARGIN_S}s") from exc
+        return to_output(load_report(result.stdout, result.returncode))
+

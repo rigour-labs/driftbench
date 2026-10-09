@@ -16,6 +16,7 @@ class Adapter(Protocol):
     version: str         # exact tool version, pinned (no "latest")
     paid: bool           # True if a run can cost money; excluded from free runs
     reads_history: bool  # True to receive the PR title/body and earlier comments
+    env_extra: tuple[str, ...]  # names of variables you add to request.env (a paid tool's own key only)
 
     def review(self, request: ReviewInput) -> ReviewOutput: ...
 ```
@@ -40,6 +41,8 @@ class Adapter(Protocol):
 | `error` | Why, when `verdict` is `"error"` |
 | `cost_usd` | Dollars if the tool reports them, else `None` |
 | `input_tokens`, `output_tokens` | If reported, else `None` |
+| `model_runs` | Paid tools: model calls made (0 when nothing needed reviewing, so $0 is honest) |
+| `leak_signals` | Count of signs your tool saw the PR's human reviews or fetched PR data; any makes the head `leaked` |
 
 **`blocking`** must follow the tool's own semantics: the finding fails the
 check, or the tool marks it as must-fix. Don't map severities to "blocking"
@@ -54,7 +57,9 @@ just to look stricter or quieter. The mapping is reviewed in the pull request.
 - Run every tool process with `env=request.env`, never the inherited
   environment. A paid adapter adds only its own key to a copy of it.
 - Keep keys in environment variables. Never commit them, never log them.
-- Paid adapters must report usage, or document why the tool can't.
+- Paid adapters must report usage: a review whose model ran without a cost
+  is recorded as an error. They must also count leak signals (see
+  docs/SPEC.md, "Paid entrants").
 - Add a test with a recorded tool output under `tests/fixtures/` that checks
   the parsing, so CI never runs a paid tool.
 

@@ -42,8 +42,8 @@ In short:
 | No tool | Free | Baseline: zero findings |
 | Every hunk | Free | Baseline: flags every changed hunk, the ceiling for spraying |
 | Rigour `review` (deterministic) | Free | `@rigour-labs/cli`, pinned version |
-| Rigour `review --reviewer` | Paid | Runs only with an approved dollar cap |
-| Claude Code `/code-review` | Paid | Runs only with an approved dollar cap |
+| Rigour `review --reviewer` (single, and with `--orchestrator`) | Paid | Runs only with an approved dollar cap |
+| Claude Code `/code-review` (default level) | Paid | Runs only with an approved dollar cap |
 | CodeRabbit | n/a | **Not run**: its CLI needs an account sign-in. A vendor-run adapter is welcome |
 
 **Disclosure:** this repository is maintained by Rigour Labs, which makes one

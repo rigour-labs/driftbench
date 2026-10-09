@@ -1,0 +1,31 @@
+# Paid entrants
+
+Paid entrants run under the same sandbox, with exactly one variable added:
+the model provider's key. For a fair comparison they share one model (by
+full ID), one timeout and one pinned Claude Code CLI, all recorded in
+`run.json`. Rigour runs with its defaults and no tuning on this corpus.
+
+- **Hard dollar stop.** One cap for the invocation. Before each paid review
+  the harness checks that the money spent plus that entrant's per-head bound
+  still fits. The bound is the larger of the run estimate's upper bound and
+  the most the entrant has cost on one head so far. Once a review doesn't
+  fit, it and every later paid review is recorded `not_scored`, counted on
+  the page, never left out silently.
+- **Usage.** A review whose model ran must report its cost; one that
+  doesn't is an `error`. A review where no model ran (nothing to review, a
+  cached verdict) honestly costs $0.
+- **Leakage.** Tools with a reviewer mode may look up the pull request and
+  its human reviews, the very answers being scored. The sandbox blocks that
+  (no token, no login, no remote, and the tools' web and GitHub access
+  turned off). Each head is also checked: Rigour's own record of human
+  reviews seen, and any web or GitHub call in Claude Code's transcript.
+  Any sign makes the head `leaked`; it is not scored.
+- **Cold start.** Every entrant runs cold: no learned lessons, team memory
+  or past reviews. Rigour's reviewer learns from a team's history, and this
+  benchmark doesn't measure that; a later run with time-ordered learning
+  (lessons only from pull requests merged before each head) would.
+- **Claude Code `/code-review`** reports findings in prose; each `path:line`
+  it cites in a changed file becomes a finding. It has no blocking findings,
+  so its false-block rate is 0 by construction.
+
+The method these rules belong to is in [docs/SPEC.md](SPEC.md).

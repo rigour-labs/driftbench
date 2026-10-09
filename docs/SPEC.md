@@ -134,6 +134,13 @@ serves is recorded as `unavailable` and reported, not dropped. The two
 baselines: `no-tool` (no findings) and `every-hunk` (one non-blocking
 finding on the first added line of every changed hunk).
 
+### Paid entrants
+
+Paid entrants share one model, one timeout and one pinned CLI, run under a
+hard dollar stop, must report their usage, and are checked for leakage of the
+pull request's reviews; every entrant runs cold. The full rules are in
+[docs/ENTRANTS.md](ENTRANTS.md).
+
 ### Review points
 
 `bench points` turns each frozen record into points. A point holds IDs, a
