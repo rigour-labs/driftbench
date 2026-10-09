@@ -5,9 +5,12 @@ name: run
 # (docs/ARCH.md). The corpus is a published `corpus-*` release (made by
 # collect.yml, checked with `bench guard`, then published), so the run's notes
 # name exactly which corpus it used. Labels must already be committed on the branch this runs on:
-# `bench report` withholds per-class results otherwise. Paid entrants are
-# refused by the harness. The diffs handed to tools (work/runs/*/_scratch)
-# contain the projects' code and are never uploaded.
+# `bench report` withholds per-class results otherwise. Paid entrants run only
+# with `model`, a `max_usd` cap above 0 and a per-head bound for each
+# (`head_bounds`); the harness refuses them otherwise. The cap is split evenly
+# across the per-repo jobs. The ANTHROPIC_API_KEY secret reaches only the paid
+# review step. The diffs handed to tools (work/runs/*/_scratch) contain the
+# projects' code and are never uploaded.
 
 on:
   workflow_dispatch:
@@ -18,6 +21,15 @@ on:
       entrants:
         description: Entrants (space separated; `free` = every free entrant)
         default: free
+      model:
+        description: Paid entrants only. One model for all of them, by full ID
+        default: ""
+      max_usd:
+        description: Paid entrants only. Hard dollar cap for the whole run (0 = free run)
+        default: "0"
+      head_bounds:
+        description: Paid entrants only. Per-head bounds from the run estimate, e.g. "claude-code-review=0.8"
+        default: ""
 
 permissions:
   contents: read
@@ -33,6 +45,8 @@ jobs:
     outputs:
       name: ${{ steps.stamp.outputs.name }}
       repos: ${{ steps.repos.outputs.repos }}
+      paid: ${{ steps.paid.outputs.paid }}
+      claude_code: ${{ steps.paid.outputs.claude_code }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -43,13 +57,35 @@ jobs:
       - run: pip install -e .
       - id: stamp
         run: echo "name=$(date -u +%Y-%m-%d)-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
-      - name: Fix the run record once (start time, entrant versions, label blob hashes)
+      - id: paid
+        name: Is this a paid run
+        env:
+          ENTRANTS: ${{ inputs.entrants }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          from bench.adapters import PAID, expand
+          from bench.adapters.claude_cli import CLAUDE_CODE_VERSION
+          paid = any(name in PAID for name in expand(os.environ["ENTRANTS"].split()))
+          print(f"paid={'true' if paid else 'false'}")
+          print(f"claude_code={CLAUDE_CODE_VERSION}")
+          PY
+      - name: Fix the run record once (start time, entrant versions, label blob hashes, paid settings)
         env:
           ENTRANTS: ${{ inputs.entrants }}
           NAME: ${{ steps.stamp.outputs.name }}
+          MODEL: ${{ inputs.model }}
+          MAX_USD: ${{ inputs.max_usd }}
+          HEAD_BOUNDS: ${{ inputs.head_bounds }}
+          PAID: ${{ steps.paid.outputs.paid }}
         run: |
+          paid_args=()
+          if [ "$PAID" = "true" ]; then
+            paid_args=(--model "$MODEL" --max-usd "$MAX_USD")
+            for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
+          fi
           # word splitting of ENTRANTS is intended: one argument per entrant name
-          python -m bench manifest --entrants $ENTRANTS --out "manifest/$NAME"
+          python -m bench manifest --entrants $ENTRANTS --out "manifest/$NAME" "${paid_args[@]}"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: manifest
@@ -100,6 +136,11 @@ jobs:
         with:
           name: manifest
           path: work/runs/${{ needs.start.outputs.name }}
+      - name: Install the pinned Claude Code CLI (paid runs only)
+        if: needs.start.outputs.paid == 'true'
+        env:
+          CLAUDE_CODE: ${{ needs.start.outputs.claude_code }}
+        run: npm install --global "@anthropic-ai/claude-code@${CLAUDE_CODE}"
       - name: Review every head (run.json from the start job is kept, never recomputed)
         # shorter than the job's 350 so the always() steps below still record and upload partial records
         timeout-minutes: 320
@@ -107,9 +148,23 @@ jobs:
           ENTRANTS: ${{ inputs.entrants }}
           REPO: ${{ matrix.repo }}
           NAME: ${{ needs.start.outputs.name }}
+          PAID: ${{ needs.start.outputs.paid }}
+          REPOS: ${{ needs.start.outputs.repos }}
+          MODEL: ${{ inputs.model }}
+          MAX_USD: ${{ inputs.max_usd }}
+          HEAD_BOUNDS: ${{ inputs.head_bounds }}
+          # the key exists in this step only, and only for a paid run; the harness passes it to paid tools alone
+          ANTHROPIC_API_KEY: ${{ needs.start.outputs.paid == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
+          paid_args=()
+          if [ "$PAID" = "true" ]; then
+            # this job's share of the run's cap: the cap split evenly across the repo jobs
+            share=$(python3 -c "import json, os; print(round(float(os.environ['MAX_USD']) / len(json.loads(os.environ['REPOS'])), 4))")
+            paid_args=(--model "$MODEL" --max-usd "$share")
+            for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
+          fi
           # word splitting of ENTRANTS is intended: one argument per entrant name
-          python -m bench run --entrants $ENTRANTS --repo "$REPO" --out "work/runs/$NAME"
+          python -m bench run --entrants $ENTRANTS --repo "$REPO" --out "work/runs/$NAME" "${paid_args[@]}"
       - name: Slug
         id: slug
         if: always()
@@ -195,6 +250,7 @@ jobs:
           python -m bench score --run "work/runs/$NAME" --out "results/$NAME"
           python -m bench calibrate draw --run "work/runs/$NAME" --results "results/$NAME" --seed "$GITHUB_RUN_ID"
           python -m bench report --run "work/runs/$NAME" --results "results/$NAME"
+          python -m bench spend --run "work/runs/$NAME" > "results/$NAME/spend.md"
       - run: python -m bench.release_check "results/$NAME" "work/runs/$NAME"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -234,6 +290,10 @@ jobs:
             cat "out/work/runs/$NAME/run.json"
             echo '```' 
             echo "- corpus: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/$CORPUS_TAG"
+            if grep -q "estimated" "out/results/$NAME/spend.md" 2>/dev/null; then
+              echo
+              cat "out/results/$NAME/spend.md"
+            fi
             if [ -s "out/results/$NAME/missing-repos.txt" ]; then
               echo "- repos whose review job did not succeed (missing heads are scored as unavailable): $(paste -sd, "out/results/$NAME/missing-repos.txt")"
             fi

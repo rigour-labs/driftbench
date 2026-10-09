@@ -18,6 +18,7 @@ from bench.points.points_file import PointsError, read_points
 from bench.repos import slug_of
 from bench.score.linemap import FileVersions
 from bench.score.repo import published_summary, score_repo
+from bench.score.spend import spend_by_tool, spend_notes
 
 
 def add_score_parser(commands: argparse._SubParsersAction, root: Path) -> None:
@@ -28,6 +29,10 @@ def add_score_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     score.add_argument("--cache", type=Path, default=root / "work" / "cache", help="raw API responses (never published)")
     score.add_argument("--out", type=Path, help="summary directory (default: results/<run name>)")
     score.set_defaults(handler=cmd_score)
+
+    spend = commands.add_parser("spend", help="a run's estimated spend per entrant, for the release notes")
+    spend.add_argument("--run", type=Path, required=True)
+    spend.set_defaults(handler=cmd_spend)
 
 
 def tools_in(run_dir: Path) -> list[str]:
@@ -51,6 +56,16 @@ def cmd_score(args: argparse.Namespace) -> int:
                 handle.writelines(json.dumps(row, sort_keys=True) + "\n" for row in ledger)
             print(f"{corpus['repo']}: reportable={summary['reportable']} tools={', '.join(summary['tools'])}")
     except (OSError, CorpusError, PointsError, RecordError, GitHubError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    return 0
+
+
+def cmd_spend(args: argparse.Namespace) -> int:
+    try:
+        budgets = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(args.run.glob("budget-*.json"))]
+        print(spend_notes(spend_by_tool(args.run, budgets)), end="")
+    except (OSError, json.JSONDecodeError, RecordError) as exc:
         print(exc, file=sys.stderr)
         return 1
     return 0

@@ -66,3 +66,11 @@ def test_a_model_run_without_a_reported_cost_is_charged_the_bound_and_errors():
     assert (out.verdict, out.charged, budget.spent) == ("error", "bound", 0.7)
     honest = settle_review(Paid(), ReviewOutput([], "pass", cost_usd=None, model_runs=0), budget)
     assert (honest.verdict, honest.charged, budget.spent) == ("pass", "", 0.7)     # nothing ran: no charge
+
+
+def test_a_model_run_reporting_zero_dollars_is_no_usage():
+    budget = Budget(max_usd=5, estimate_per_head={"p": 0.6})
+    out = settle_review(Paid(), ReviewOutput([], "pass", cost_usd=0.0, model_runs=4), budget)
+    assert (out.verdict, out.charged, budget.spent) == ("error", "bound", 0.6)
+    cached = settle_review(Paid(), ReviewOutput([], "pass", cost_usd=0.0, model_runs=0), budget)
+    assert (cached.verdict, budget.spent) == ("pass", 0.6)           # nothing ran: $0 is honest

@@ -7,7 +7,7 @@ from bench.score.metrics import wilson
 MAIN_HEADER = ("| Entrant | Version | Same spot, N=3 (all) | Same spot, N=3 (acted on) | Same spot, N=3, "
                "blocking only (all) | False blocks (approved heads) | Blocks per approved head | "
                "Findings per 100 changed lines | Heads: error / unavailable / not scored / leaked | Median s | "
-               "Cost (USD) | Label |")
+               "Cost (USD, list-price estimate from token counts, Claude Code's figure) | Label |")
 MAIN_COLUMNS = 12
 BLOCK_HEADER = ("| Entrant | Approved heads blocked | Merged-head fallback: blocked / heads | "
                 "Overridden approvals (left out) | Must-not-block heads not scored |")
