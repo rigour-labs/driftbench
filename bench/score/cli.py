@@ -13,6 +13,7 @@ from pathlib import Path
 
 from bench.collect.corpus import CorpusError, read_corpus
 from bench.collect.github import GitHubClient, GitHubError
+from bench.harness.cli import read_manifest
 from bench.harness.runner import RecordError
 from bench.points.points_file import PointsError, read_points
 from bench.repos import slug_of
@@ -42,12 +43,18 @@ def tools_in(run_dir: Path) -> list[str]:
 
 
 def is_smoke(run_dir: Path) -> bool:
+    """Whether the run's record marks it a smoke run; ValueError if run.json exists but can't be read."""
     path = run_dir / "run.json"
-    return path.exists() and "smoke" in json.loads(path.read_text(encoding="utf-8"))
+    return path.exists() and "smoke" in read_manifest(path)
 
 
 def cmd_score(args: argparse.Namespace) -> int:
-    if is_smoke(args.run):
+    try:
+        smoke = is_smoke(args.run)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    if smoke:
         print(f"{args.run} is a smoke run (run.json has `smoke`); smoke runs are never scored", file=sys.stderr)
         return 1
     out = args.out or Path("results") / args.run.name

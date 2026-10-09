@@ -126,7 +126,8 @@ def smoke_eligible(checkout: RepoCheckout, pr: dict, head: str, config: RunConfi
     """A smoke head is a realistic one: its diff has at least `min_changed_lines` changed lines."""
     try:
         _, diff_path = prepare(checkout, pr, head, config)
-    except GitError:
+    except GitError as exc:  # an unavailable head can't be a smoke head; try the next
+        print(f"warning: PR {pr['number']} head {head[:12]} unavailable for the smoke cut: {exc}", file=sys.stderr)
         return False
     return changed_lines(parse_hunks(diff_path.read_text(encoding="utf-8"))) >= config.min_changed_lines
 
