@@ -1,12 +1,13 @@
-"""`bench report` (the results page) and `bench calibrate draw | show` (the hand-checked sample)."""
+"""`bench report` (the results page) and `bench calibrate draw | show | ai | merge` (the spot-check sample)."""
 from __future__ import annotations
 
 import argparse
+import functools
 import sys
 from pathlib import Path
 
 from bench.collect.github import GitHubClient, GitHubError
-from bench.harness.runner import RecordError, read_record, record_path_for
+from bench.harness.runner import RecordError
 from bench.harness.cli import read_manifest
 from bench.labels.fingerprint import labels_unchanged
 from bench.labels.sample import SampleError, points_sha256, read_sample, sample_path
@@ -15,9 +16,10 @@ from bench.labels.model_agreement import model_agreement
 from bench.labels.model_file import model_path, read_model_file
 from bench.labels.store import LabelError, effective_labels, labels_path, read_labels
 from bench.points.points_file import PointsError, read_points
-from bench.points.texts import TextSource, point_text
+from bench.points.texts import TextSource
 from bench.repos import slug_of
 from bench.report.calibration import CalibrationError, draw, read_calibration, summarise_calibration, write_calibration
+from bench.report.calibration_cli import cmd_ai, cmd_merge, cmd_show
 from bench.report.classes import per_class
 from bench.report.markdown import render
 from bench.score.cli import ScoreFileError, read_ledger, read_summary
@@ -28,7 +30,7 @@ HANDLED = (OSError, ValueError, CalibrationError, GitHubError, LabelError, Point
 
 def add_report_parsers(commands: argparse._SubParsersAction, root: Path) -> None:
     for name, help_text in (("report", "write results/<run>/summary.md from the score summaries"),
-                            ("calibrate", "draw or show the hand-checked calibration sample")):
+                            ("calibrate", "draw, show, AI-judge or merge the calibration sample")):
         parser = commands.add_parser(name, help=help_text)
         parser.add_argument("--run", type=Path, required=True, help="a run directory, e.g. work/runs/2026-10-08")
         parser.add_argument("--results", type=Path, help="default: results/<run name>")
@@ -36,7 +38,11 @@ def add_report_parsers(commands: argparse._SubParsersAction, root: Path) -> None
         parser.add_argument("--labels", type=Path, default=root / "labels")
         parser.add_argument("--cache", type=Path, default=root / "work" / "cache")
         if name == "calibrate":
-            parser.add_argument("action", choices=("draw", "show"))
+            parser.add_argument("action", choices=("draw", "show", "ai", "merge"))
+            parser.add_argument("--corpus", type=Path, default=root / "work" / "corpus")
+            parser.add_argument("--model", help="ai: full OpenRouter model ID, outside the Claude family")
+            parser.add_argument("--max-usd", type=float, help="ai: the approved hard cap")
+            parser.add_argument("--call-bound", type=float, default=0.05, help="ai: bound on one call before any is seen")
             parser.add_argument("--seed", type=int, default=2026)
             parser.add_argument("--replace", action="store_true", help="redraw over an existing sample")
         parser.set_defaults(handler=guarded(cmd_report if name == "report" else cmd_calibrate))
@@ -120,8 +126,13 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 def cmd_calibrate(args: argparse.Namespace) -> int:
     path = results_dir(args) / "calibration.yaml"
+    points_of = functools.partial(repo_points, args)
     if args.action == "show":
-        return show_calibration(args, path)
+        return cmd_show(args, path, points_of)
+    if args.action == "ai":
+        return cmd_ai(args, path, points_of)
+    if args.action == "merge":
+        return cmd_merge(args, path)
     if path.exists() and not args.replace:
         print(f"{path} exists; pass --replace to redraw (the old draw stays in git history)", file=sys.stderr)
         return 1
@@ -132,24 +143,4 @@ def cmd_calibrate(args: argparse.Namespace) -> int:
     calibration = draw(ledger, points, args.seed)
     write_calibration(calibration, path)
     print(f"wrote {path} from {len(reportable)} reportable repo(s); {'; '.join(calibration['short']) or 'full'}")
-    return 0
-
-
-def show_calibration(args: argparse.Namespace, path: Path) -> int:
-    calibration = read_calibration(path)
-    if calibration is None:
-        print(f"no sample at {path}; run `bench calibrate draw` first", file=sys.stderr)
-        return 1
-    client = GitHubClient(args.cache)
-    for entry in (e for e in calibration["entries"] if e["verdict"] is None):
-        point = next(p for p in repo_points(args, entry["repo"])["points"] if p["id"] == entry["point"])
-        print(f"## {entry['kind']} {entry['point']} ({entry['repo']} #{entry['pr']})")
-        print(point_text(TextSource(client, entry["repo"]), point))
-        if entry["kind"] == "location":
-            record = read_record(record_path_for(args.run, entry["tool"], entry["repo"], entry["pr"], entry["head_sha"]))
-            finding = record["findings"][entry["finding"]]
-            print(f"-> {entry['tool']} at {finding['path']}:{finding['line']}: {finding['message'][:300]}")
-        else:
-            print(f"-> acted on: {entry['acted_on']} ({entry['basis']}) at {point['anchor']['path']}:{point['anchor']['line']}")
-        print()
     return 0

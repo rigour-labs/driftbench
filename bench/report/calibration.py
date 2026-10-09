@@ -8,7 +8,10 @@ Two samples, drawn with a fixed seed so anyone can redraw the same one:
   most), judged
   "did the change near the anchor respond to the point": yes / no; this
   gives agreement per ACTED-1 basis.
-A human fills `verdict`; until every entry has one, the headline is unvalidated.
+A human fills `verdict`, or AI verdicts are merged in (bench/report/calibration_ai.py)
+and each records `verdict_by`; an acted-on entry the two AI judges disagree on
+is `disputed` and left out. Until every entry has a verdict or is disputed,
+the headline is unvalidated.
 """
 from __future__ import annotations
 
@@ -123,7 +126,7 @@ def read_calibration(path: Path) -> dict | None:
 def summarise_calibration(calibration: dict | None) -> dict:
     """Per-entrant location verdicts, per-basis acted-on agreement, and whether the sample is complete."""
     if not calibration or not calibration.get("entries"):
-        return {"validated": False, "short": [], "location": {}, "acted_on": {}}
+        return {"validated": False, "short": [], "location": {}, "acted_on": {}, "judges": {}, "disputed": 0}
     entries = calibration["entries"]
     location: dict[str, Counter] = {}
     acted: dict[str, Counter] = {}
@@ -133,9 +136,15 @@ def summarise_calibration(calibration: dict | None) -> dict:
         if entry["kind"] == "location":
             location.setdefault(entry["tool"], Counter())[entry["verdict"]] += 1
         else:
-            acted.setdefault(entry["basis"], Counter())["agree" if entry["verdict"] == "yes" else "disagree"] += 1
+            # The judge answers whether the change responded; that agrees with the scorer when it matches the
+            # scorer's own acted-on decision, whichever way that went.
+            agrees = (entry["verdict"] == "yes") == bool(entry["acted_on"])
+            acted.setdefault(entry["basis"], Counter())["agree" if agrees else "disagree"] += 1
+    judges = Counter(entry.get("verdict_by") or "human" for entry in entries if entry["verdict"] is not None)
     return {
-        "validated": all(entry["verdict"] is not None for entry in entries),
+        "validated": all(entry["verdict"] is not None or entry.get("disputed") for entry in entries),
+        "judges": dict(sorted(judges.items())),
+        "disputed": sum(1 for entry in entries if entry.get("disputed")),
         "short": list(calibration.get("short", [])),
         "location": {tool: dict(sorted(c.items())) for tool, c in sorted(location.items())},
         "acted_on": {basis: dict(sorted(c.items())) for basis, c in sorted(acted.items())},

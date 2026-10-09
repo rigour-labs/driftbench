@@ -279,8 +279,8 @@ guards keep it honest:
    and finding volume come close to that ceiling is labelled **noise** in the
    tables, whatever its catch rate.
 3. **Calibration.** A random sample of location matches (target: 50 per
-   release, split evenly across entrants, baselines excluded) is checked by
-   hand: *same issue: yes / partly / no*. The resulting location→issue rate
+   release, split evenly across entrants, baselines excluded) is checked:
+   *same issue: yes / partly / no*. The resulting location→issue rate
    per entrant is published alongside the headline. The same sample checks
    acted-on decisions (10 `direct` yes, 5 `direct` no, 5 `ancestor`, 5
    `range` yes, 5 `range` no; at least half of the `range` cases come from
@@ -295,7 +295,10 @@ guards keep it honest:
    repositories. When a pool is smaller than its target, the shortfall
    ("short: 31 of 50") is recorded and printed with the status. Until every
    entry has a verdict, the page opens with the headline marked
-   **unvalidated**.
+   **unvalidated**. A human may judge, or AI (`bench calibrate ai`, `merge`):
+   acted-on entries check DriftBench's own scorer, so they need two model families to agree (a disagreement is
+   `disputed`, left out and counted); location entries judge an entrant, and Rigour's reviewer runs on Claude, so
+   one non-Claude model judges them alone. Each verdict records who gave it, the page says so, and a human wins.
 
 **N = 3** is the headline. A sensitivity table repeats the headline at N = 0
 and N = 10.
