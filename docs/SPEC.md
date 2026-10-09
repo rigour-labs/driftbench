@@ -225,8 +225,9 @@ because the human approved that head anyway.
 
 Each point carries a class: **mechanical** (style, naming, lint-like),
 **performance**, **claim/contract** (code doesn't do what its name, docs,
-types or callers promise), **user journey** (behaviour a user sees),
-**judgment** (design or taste), or **unclassified**.
+types or callers promise), **security/privacy** (data or secrets exposed,
+input trusted), **user journey** (behaviour a user sees), **judgment**
+(design or taste), or **unclassified**.
 
 Labels cover a seeded random sample of 50 location-scorable points per
 repository (docs/LABELLING.md); per-class results come from that sample

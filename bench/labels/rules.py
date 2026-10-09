@@ -9,31 +9,38 @@ identifier or import path can't decide the class.
 
 Order (first match wins), following the guideline's decision order:
 1. a point that starts with "nit" is mechanical (the reviewer said so);
-2. claim/contract, user journey, performance, mechanical, judgment, by keyword;
+2. claim/contract, security/privacy, user journey, performance, mechanical,
+   judgment, by keyword;
 3. no keyword: no suggestion.
 """
 from __future__ import annotations
 
 import re
 
-RULES_VERSION = 1
-CLASSES = ("mechanical", "performance", "claim/contract", "user journey", "judgment")
+RULES_VERSION = 2
+# Menu order in `label next`; new classes go last so existing keys keep their meaning.
+CLASSES = ("mechanical", "performance", "claim/contract", "user journey", "judgment", "security/privacy")
 
 NIT_RE = re.compile(r"^\W*nit\b", re.IGNORECASE)
 CODE_RE = re.compile(r"```.*?(?:```|\Z)|~~~.*?(?:~~~|\Z)|`[^`\n]*`", re.DOTALL)
 KEYWORDS = (
     ("claim/contract", r"docs?|docstring|returns?|contract|signature|types?|nil|null|edge case|invariant"
-                       r"|race|deadlock|bug|wrong|incorrect|panic|crash\w*|leak\w*|breaks?|regression|backward\w*"),
+                       r"|race|deadlock|bug|wrong|incorrect|panic|crash\w*|leak\w*|breaks?|regression|backward\w*"
+                       r"|stale"),
+    ("security/privacy", r"security|privacy|pii|personal data|sensitive|secrets?|tokens?|passwords?|credentials?"
+                         r"|api keys?|email address\w*|redact\w*|authz|authori[sz]\w*|permissions?|injection"
+                         r"|xss|csrf|ssrf|untrusted|unsanitized|sanitiz\w*"),
     ("user journey", r"users?|ui|ux|screen|button|click\w*|page|dialog|modal|toast|tooltip|shown|displayed"
                      r"|error message|onboarding|accessib\w*"),
     ("performance", r"perf|performance|slow(?:er)?|faster|latency|allocat\w*|o\(n\S*\)|quadratic|hot path"
-                    r"|cache[sd]?|memory|cpu|benchmark\w*|expensive"),
+                    r"|cache[sd]?|memory|cpu|benchmark\w*|expensive|n\+1|scans?|redundant|round trips?"),
     ("mechanical", r"typo|spelling|naming|rename|format\w*|lint\w*|unused|imports?|whitespace|indent\w*"
-                   r"|style|gofmt|prettier|capitali[sz]\w*"),
+                   r"|style|gofmt|prettier|capitali[sz]\w*|dead code"),
     ("judgment", r"why not|consider|prefer|i'd|i would|maybe|perhaps|design|approach|abstraction|simpler"
-                 r"|cleaner|refactor|readab\w*"),
+                 r"|cleaner|refactor|readab\w*|could we|duplicat\w*"),
 )
-KEYWORD_RES = tuple((label, re.compile(rf"\b(?:{pattern})\b", re.IGNORECASE)) for label, pattern in KEYWORDS)
+# Word edges by lookaround, not \b, so a keyword ending in punctuation, like O(n²), still matches.
+KEYWORD_RES = tuple((label, re.compile(rf"(?<!\w)(?:{pattern})(?!\w)", re.IGNORECASE)) for label, pattern in KEYWORDS)
 
 
 def suggest(text: str) -> str | None:
