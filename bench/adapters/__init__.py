@@ -5,6 +5,7 @@ import dataclasses
 from collections.abc import Callable
 
 from bench.adapters.baselines import EveryHunk, NoTool
+from bench.adapters.claude_cli import check_model_id
 from bench.adapters.claude_code import ClaudeCodeReview
 from bench.adapters.rigour import RigourDeterministic
 from bench.adapters.rigour_reviewer import RigourReviewer
@@ -18,13 +19,14 @@ class PaidSettings:
     model: str
     max_usd: float
     head_bounds: dict[str, float] = dataclasses.field(default_factory=dict)
+    provider: str = "anthropic"
 
 
 FREE: dict[str, type] = {cls.name: cls for cls in (NoTool, EveryHunk, RigourDeterministic)}
 PAID: dict[str, Callable[[PaidSettings], Adapter]] = {
-    "rigour-reviewer": lambda s: RigourReviewer(s.model),
-    "rigour-reviewer-orchestrated": lambda s: RigourReviewer(s.model, orchestrated=True),
-    "claude-code-review": lambda s: ClaudeCodeReview(s.model, s.head_bounds.get("claude-code-review")),
+    "rigour-reviewer": lambda s: RigourReviewer(s.model, provider=s.provider),
+    "rigour-reviewer-orchestrated": lambda s: RigourReviewer(s.model, orchestrated=True, provider=s.provider),
+    "claude-code-review": lambda s: ClaudeCodeReview(s.model, s.head_bounds.get("claude-code-review"), s.provider),
 }
 
 
@@ -45,4 +47,6 @@ def select_adapters(names: list[str], paid: PaidSettings | None = None) -> list[
     wanted_paid = [n for n in chosen if n in PAID]
     if wanted_paid and (paid is None or paid.max_usd <= 0 or not paid.model):
         raise ValueError(f"paid entrant(s) {', '.join(wanted_paid)} need --model and an approved --max-usd")
+    if wanted_paid:
+        check_model_id(paid.model, paid.provider)
     return [FREE[n]() if n in FREE else PAID[n](paid) for n in chosen]

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from bench.adapters import PaidSettings, select_adapters
-from bench.adapters.claude_cli import CLAUDE_CODE_VERSION
+from bench.adapters.claude_cli import CLAUDE_CODE_VERSION, PROVIDERS
 from bench.adapters.rigour import VERSION as RIGOUR_VERSION
 from bench.adapters.tool_access import ToolAccessError, check_parity, pinned_rigour_source, tool_record
 from bench.harness.budget import Budget, BudgetError
@@ -16,6 +16,7 @@ from bench.collect.corpus import CorpusError, read_corpus
 from bench.harness.gitrepo import GitError, RepoCheckout
 from bench.harness.runner import RunConfig, run_corpus
 from bench.labels.fingerprint import label_fingerprint
+from bench.labels.openrouter import key_usage
 from bench.repos import slug_of
 
 
@@ -46,6 +47,8 @@ def add_paid_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--max-usd", type=float, help="paid entrants: hard dollar cap for this invocation")
     parser.add_argument("--head-bound", action="append", default=[], metavar="ENTRANT=USD",
                         help="paid entrants: per-head upper bound from the run estimate (repeatable)")
+    parser.add_argument("--provider", choices=PROVIDERS, default="anthropic",
+                        help="paid entrants: one provider for all (openrouter reads OPENROUTER_API_KEY)")
 
 
 def paid_settings(args: argparse.Namespace) -> tuple[PaidSettings | None, Budget | None]:
@@ -59,7 +62,8 @@ def paid_settings(args: argparse.Namespace) -> tuple[PaidSettings | None, Budget
             bounds[name] = float(usd)
         except ValueError as exc:
             raise ValueError(f"--head-bound {item!r}: expected ENTRANT=USD") from exc
-    return PaidSettings(model=args.model or "", max_usd=args.max_usd, head_bounds=bounds), Budget(args.max_usd, bounds)
+    return (PaidSettings(model=args.model or "", max_usd=args.max_usd, head_bounds=bounds, provider=args.provider),
+            Budget(args.max_usd, bounds))
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -86,6 +90,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     config = RunConfig(out_dir=args.out, scratch_dir=args.out / "_scratch",
                        npm_cache=args.repos_dir.parent / "npm-cache", timeout_s=args.timeout, run_started_at=started,
                        budget=budget)
+    usage_start = gateway_usage(args, adapters)
     for corpus in corpora:
         checkout = RepoCheckout(f"https://github.com/{corpus['repo']}.git", args.repos_dir / slug_of(corpus["repo"]))
         for adapter in adapters:
@@ -97,17 +102,31 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(f"{corpus['repo']} {adapter.name}: {counts}")
     if budget is not None:
         name = "+".join(slug_of(c["repo"]) for c in corpora)
+        if usage_start is not None:
+            write_usage(args.out / f"openrouter-usage-{name}.json", usage_start, gateway_usage(args, adapters))
         (args.out / f"budget-{name}.json").write_text(json.dumps(budget.as_record(), indent=1, sort_keys=True) + "\n",
                                                        encoding="utf-8")
     return 0
+
+
+def gateway_usage(args: argparse.Namespace, adapters: list) -> dict | None:
+    """The OpenRouter key's cumulative usage now, when paid entrants run through it; None otherwise."""
+    if args.provider != "openrouter" or not any(a.paid for a in adapters):
+        return None
+    return {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "usage_usd": key_usage()}
+
+
+def write_usage(path: Path, start: dict, end: dict | None) -> None:
+    path.write_text(json.dumps({"start": start, "end": end}, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def paid_record(args: argparse.Namespace, adapters: list) -> dict | None:
     """What makes the paid comparison fair, fixed in run.json: model, timeout, CLI version, cap, bounds."""
     if not any(a.paid for a in adapters):
         return None
-    return {"model": args.model, "timeout_s": args.timeout, "claude_code": CLAUDE_CODE_VERSION,
-            "max_usd": args.max_usd, "head_bounds": args.head_bound, "tools": tool_record()}
+    return {"model": args.model, "provider": args.provider, "timeout_s": args.timeout,
+            "claude_code": CLAUDE_CODE_VERSION, "max_usd": args.max_usd, "head_bounds": args.head_bound,
+            "tools": tool_record()}
 
 
 def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None = None) -> dict:

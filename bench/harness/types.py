@@ -57,6 +57,6 @@ class Adapter(Protocol):
     version: str
     paid: bool
     reads_history: bool
-    env_extra: tuple[str, ...]  # names of variables the adapter adds to the sandbox env (its own key only)
+    env_extra: tuple[str, ...]  # names of variables the adapter adds to the sandbox env (its provider's only)
 
     def review(self, request: ReviewInput) -> ReviewOutput: ...

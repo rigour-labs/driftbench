@@ -1,9 +1,17 @@
 # Paid entrants
 
-Paid entrants run under the same sandbox, with exactly one variable added:
-the model provider's key. For a fair comparison they share one model (by
-full ID), one timeout and one pinned Claude Code CLI, all recorded in
+Paid entrants run under the same sandbox, with only the model provider's
+variables added. For a fair comparison they share one model (by full ID),
+one timeout, one provider and one pinned Claude Code CLI, all recorded in
 `run.json`. Rigour runs with its defaults and no tuning on this corpus.
+
+- **Provider.** `--provider anthropic` (the default) adds `ANTHROPIC_API_KEY`.
+  `--provider openrouter` sends Claude Code through OpenRouter's Anthropic
+  gateway instead: `ANTHROPIC_BASE_URL=https://openrouter.ai/api`,
+  `ANTHROPIC_AUTH_TOKEN` from `OPENROUTER_API_KEY`, and `ANTHROPIC_API_KEY`
+  set empty so no Anthropic key can be used. Both entrants get the same
+  three variables. The model must then be a full versioned `anthropic/` ID,
+  never an alias such as `latest`.
 
 - **Hard dollar stop.** One cap for the invocation. Before each paid review
   the harness checks that the money spent plus that entrant's per-head bound
@@ -18,11 +26,13 @@ full ID), one timeout and one pinned Claude Code CLI, all recorded in
   as a second line of defence.
 - **What the dollars are.** For both tool families the cost is Claude
   Code's own figure: a list-price estimate from token counts, not a bill.
-  The page labels it so. After each paid run the maintainer reads the
-  provider's billed amount for the run window, and the run notes record
-  estimate and billed side by side (`bench spend`). The provider is a direct
-  Anthropic key, so the model ID is native and the estimate tracks the bill;
-  a spend limit on the key's console workspace is the external backstop.
+  The page labels it so. The run notes record estimate and billed side by
+  side (`bench spend`). Through Anthropic, the maintainer reads the billed
+  amount for the run window from the console. Through OpenRouter it comes
+  from data (`bench spend --openrouter`): each run job reads the key's
+  cumulative usage before and after, and billed is the latest end minus the
+  earliest start, exact when the key is used only for the run. Either way a
+  spend limit on the key is the external backstop.
 - **Usage.** Rigour's cost is every dollar the review spent (`spent_usd`
   where the version reports it: all runs, failed passes, retries; else
   `cost_usd`). A review whose model ran must report a cost above $0; one

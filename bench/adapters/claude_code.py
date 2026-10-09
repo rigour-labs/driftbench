@@ -21,7 +21,7 @@ import json
 import re
 import subprocess
 
-from bench.adapters.claude_cli import CLAUDE_CODE_VERSION, KEY_NAME, paid_env, require_claude_cli
+from bench.adapters.claude_cli import CLAUDE_CODE_VERSION, paid_env, provider_env_names, require_claude_cli
 from bench.adapters.tool_access import DENIED_TOOLS, ISOLATION_ARGS, ISOLATION_ENV, NETWORK_DENIED, READ_ONLY_TOOLS
 from bench.harness.diffstat import parse_hunks
 from bench.harness.types import AdapterError, Finding, ReviewInput, ReviewOutput
@@ -94,11 +94,11 @@ class ClaudeCodeReview:
     paid = True
     reads_history = False
     has_blocking = False  # /code-review never blocks: its blocking-only numbers are n/a, not 0
-    env_extra: tuple[str, ...] = (KEY_NAME,)
-
-    def __init__(self, model: str, max_usd_per_review: float | None = None):
+    def __init__(self, model: str, max_usd_per_review: float | None = None, provider: str = "anthropic"):
         self.model = model
         self.max_usd_per_review = max_usd_per_review
+        self.provider = provider
+        self.env_extra = provider_env_names(provider)
 
     def command(self) -> list[str]:
         budget = ["--max-budget-usd", f"{self.max_usd_per_review:.2f}"] if self.max_usd_per_review else []
@@ -107,7 +107,7 @@ class ClaudeCodeReview:
                 "--disallowedTools", *DENIED_TOOLS, *NETWORK_DENIED, *budget]
 
     def review(self, request: ReviewInput) -> ReviewOutput:
-        env = {**paid_env(request), **ISOLATION_ENV}
+        env = {**paid_env(request, self.provider), **ISOLATION_ENV}
         require_claude_cli(env)
         try:
             result = subprocess.run(self.command(), cwd=request.workdir, env=env, capture_output=True, text=True,
