@@ -41,18 +41,23 @@ def post(body: dict) -> dict:
         raise OpenRouterError(f"OpenRouter call failed: {type(exc).__name__}") from None
 
 
-def key_usage(opener: Callable[[urllib.request.Request, int], object] = urllib.request.urlopen) -> float | None:
-    """The key's cumulative billed usage in USD, as OpenRouter reports it, or None if it can't be read."""
+def key_usage() -> float:
+    """The key's cumulative billed usage in USD, as OpenRouter reports it; OpenRouterError if it can't be read.
+
+    A GET with no body: urlopen's second positional parameter is the request body, so the timeout is passed
+    by keyword."""
     key = os.environ.get(KEY_NAME)
     if not key:
-        return None
-    request = urllib.request.Request(KEY_ENDPOINT, headers={"Authorization": f"Bearer {key}"})
+        raise OpenRouterError(f"{KEY_NAME} is not set")
+    request = urllib.request.Request(KEY_ENDPOINT, method="GET", headers={"Authorization": f"Bearer {key}"})
     try:
-        with opener(request, TIMEOUT_S) as response:
+        with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
             usage = (json.loads(response.read().decode("utf-8")).get("data") or {}).get("usage")
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, AttributeError):
-        return None
-    return float(usage) if isinstance(usage, (int, float)) else None
+    except (OSError, ValueError, TypeError, AttributeError) as exc:  # URLError and timeouts are OSErrors
+        raise OpenRouterError(f"reading the key's usage failed: {type(exc).__name__}") from None
+    if not isinstance(usage, (int, float)):
+        raise OpenRouterError("OpenRouter's key response has no numeric data.usage")
+    return float(usage)
 
 
 def chat(model: str, messages: list[dict], max_tokens: int, transport: Transport = post) -> dict:

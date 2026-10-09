@@ -43,7 +43,9 @@ def openrouter_billed(usages: list[dict]) -> dict:
     starts = [u["start"] for u in usages if (u.get("start") or {}).get("usage_usd") is not None]
     ends = [u["end"] for u in usages if (u.get("end") or {}).get("usage_usd") is not None]
     if not starts or not ends:
-        return {"billed_usd": None, "reason": "no readable OpenRouter usage before and after the run"}
+        errors = sorted({r["error"] for u in usages for r in (u.get("start"), u.get("end")) if r and r.get("error")})
+        reason = "; ".join(errors) or "no readable OpenRouter usage before and after the run"
+        return {"billed_usd": None, "reason": reason}
     first, last = min(starts, key=lambda s: s["usage_usd"]), max(ends, key=lambda e: e["usage_usd"])
     return {"billed_usd": round(last["usage_usd"] - first["usage_usd"], 4), "from": min(s["at"] for s in starts),
             "to": max(e["at"] for e in ends)}
