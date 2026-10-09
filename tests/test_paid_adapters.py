@@ -136,3 +136,44 @@ def test_rigour_cost_prefers_spent_usd_over_cost_usd():
     newer["reviewer"]["spent_usd"] = 0.97          # every run, failed passes, retries (6.9.0)
     assert rigour_reviewer.to_output(newer).cost_usd == 0.97
     assert rigour_reviewer.to_output(REVIEWER_REPORT).cost_usd == 0.42   # older versions: cost_usd
+
+
+def test_code_review_gets_exactly_rigours_tool_access_and_isolation():
+    from bench.adapters import tool_access
+    command = claude_code.ClaudeCodeReview("model-x").command()
+    allowed = command[command.index("--allowedTools") + 1:command.index("--disallowedTools")]
+    denied = command[command.index("--disallowedTools") + 1:]
+    assert tuple(allowed) == tool_access.READ_ONLY_TOOLS
+    assert tuple(denied) == tool_access.DENIED_TOOLS + tool_access.NETWORK_DENIED
+    assert not any(t.startswith("Bash") and "git" not in t for t in allowed)      # no general shell
+    for flag in ("--strict-mcp-config", "--setting-sources", "--settings", "--max-turns", "--mcp-config"):
+        assert flag in command
+
+
+def test_rigours_pinned_tool_lists_match_ours():
+    """tests/fixtures/rigour-6.9.0-claude-tools.txt: the two lines from Rigour 6.9.0's reviewer/adapters.js."""
+    from bench.adapters import tool_access
+    source = (FIXTURES / "rigour-6.9.0-claude-tools.txt").read_text()
+    assert tool_access.parse_rigour_tools(source) == (tool_access.READ_ONLY_TOOLS, tool_access.DENIED_TOOLS)
+    tool_access.check_parity(source)
+    widened = source.replace("'Bash(git grep:*)'", "'Bash(git grep:*)', 'Bash'")
+    with pytest.raises(tool_access.ToolAccessError, match="differs"):
+        tool_access.check_parity(widened)
+    with pytest.raises(tool_access.ToolAccessError, match="not found"):
+        tool_access.parse_rigour_tools("nothing here")
+
+
+def test_code_review_env_disables_memory_files(monkeypatch, tmp_path):
+    from bench.adapters import tool_access
+    seen = {}
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setattr(claude_code, "require_claude_cli", lambda env: None)
+
+    def fake_run(args, **kwargs):
+        seen.update(kwargs["env"])
+        return subprocess.CompletedProcess(args, 0, '{"type": "result", "total_cost_usd": 0.1, "num_turns": 1}\n', "")
+    monkeypatch.setattr(claude_code.subprocess, "run", fake_run)
+    diff = tmp_path / "x.diff"
+    diff.write_text("")
+    claude_code.ClaudeCodeReview("m").review(ReviewInput(tmp_path, "b", "h", diff, None, 5, {"HOME": "/h", "PATH": "/b"}))
+    assert all(seen[k] == v for k, v in tool_access.ISOLATION_ENV.items()) and seen["ANTHROPIC_API_KEY"] == "test-key"

@@ -1,0 +1,2 @@
+16:const READ_ONLY_TOOLS = ['Read', 'Grep', 'Glob', 'Bash(git diff:*)', 'Bash(git show:*)', 'Bash(git log:*)', 'Bash(git grep:*)'];
+31:            '--disallowedTools', 'Edit', 'Write', 'NotebookEdit', 'Bash(git push:*)', 'Bash(git commit:*)',

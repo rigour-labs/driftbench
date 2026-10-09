@@ -19,7 +19,7 @@ For each repository, per tool:
 | **Flagged the same spot, before the human** | Share of human review points where the tool flagged the same file and lines (±3) using only code from that review round or earlier |
 | **False blocks on approved code** | Blocking findings on the head the maintainers approved and merged. A usable gate has close to zero |
 | **Noise** | Findings per 100 changed lines, shown next to every catch rate |
-| **Cost and time** | Dollars per review when reported (else tokens), and wall time |
+| **Cost and time** | Dollars per review when reported (else tokens), and wall time. For the paid entrants the dollars are Claude Code's list-price estimate from token counts, for both tool families; each run's notes put the provider's billed amount next to it |
 | **By class** | Mechanical, performance, claim/contract, user journey, judgment, from a 50-point labelled random sample per repository; each class has few points, so its intervals are wide |
 
 The full method, with its known limits, is in [docs/SPEC.md](docs/SPEC.md).

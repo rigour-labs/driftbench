@@ -2,9 +2,10 @@
 
 - Budget: before each paid review, the run's Budget must allow it; otherwise
   the head is recorded `not_scored` with the reason (bench/harness/budget.py).
-- Usage: a paid review whose model ran (`model_runs` > 0) must report its
-  cost; one that reports none is an `error`, never a silent $0. A review where
-  no model ran (nothing to review, a cached verdict) honestly costs $0.
+- Usage: a paid review whose model ran (`model_runs` > 0) must report a
+  cost above $0; one that reports none, or $0, is an `error` charged the
+  per-head bound, never a silent $0. A review where no model ran (nothing to
+  review, a cached verdict) honestly costs $0.
 - Leakage: an adapter counts every sign that its tool saw the pull request's
   human reviews or fetched pull request data (`leak_signals`). Any sign makes
   the head `leaked`: its findings are dropped and it is not scored.
@@ -34,6 +35,11 @@ def paid_gate(adapter: Adapter, budget: Budget | None) -> dict | None:
     return None
 
 
+def unreported(output: ReviewOutput) -> bool:
+    """The model ran but no usable cost came back (none, or $0): assume the worst."""
+    return (output.model_runs or 0) > 0 and not output.cost_usd
+
+
 def charge_review(adapter: Adapter, output: ReviewOutput, budget: Budget | None) -> ReviewOutput:
     """Charge a paid review to the budget, failures included.
 
@@ -44,11 +50,10 @@ def charge_review(adapter: Adapter, output: ReviewOutput, budget: Budget | None)
     """
     if not adapter.paid or budget is None:
         return output
-    if output.cost_usd is not None:
+    if not unreported(output) and output.cost_usd is not None:
         budget.add_cost(adapter.name, output.cost_usd)
         return dataclasses.replace(output, charged="reported")
-    ran_unreported = (output.model_runs or 0) > 0  # the model ran but no cost came back: assume the worst
-    if output.verdict == "error" or ran_unreported:
+    if output.verdict == "error" or unreported(output):
         budget.add_cost(adapter.name, budget.per_head_bound(adapter.name))
         return dataclasses.replace(output, charged="bound")
     return output
@@ -60,6 +65,6 @@ def settle_review(adapter: Adapter, output: ReviewOutput, budget: Budget | None)
     if output.leak_signals:
         return dataclasses.replace(output, findings=[], verdict="leaked",
                                    error=f"{output.leak_signals} sign(s) the tool saw pull request reviews or data")
-    if adapter.paid and output.verdict in ("pass", "fail") and (output.model_runs or 0) > 0 and output.cost_usd is None:
+    if adapter.paid and output.verdict in ("pass", "fail") and unreported(output):
         return dataclasses.replace(output, findings=[], verdict="error", error="the model ran but reported no usage")
     return output

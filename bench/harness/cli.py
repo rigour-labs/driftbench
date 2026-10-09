@@ -9,6 +9,8 @@ from pathlib import Path
 
 from bench.adapters import PaidSettings, select_adapters
 from bench.adapters.claude_cli import CLAUDE_CODE_VERSION
+from bench.adapters.rigour import VERSION as RIGOUR_VERSION
+from bench.adapters.tool_access import ToolAccessError, check_parity, pinned_rigour_source, tool_record
 from bench.harness.budget import Budget, BudgetError
 from bench.collect.corpus import CorpusError, read_corpus
 from bench.harness.gitrepo import GitError, RepoCheckout
@@ -66,8 +68,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         adapters = select_adapters(args.entrants, paid)
         for adapter in (a for a in adapters if a.paid):
             budget.per_head_bound(adapter.name)  # BudgetError now, not mid-run, if a paid entrant has no bound
+        if any(a.paid for a in adapters):
+            check_parity(pinned_rigour_source(RIGOUR_VERSION, args.repos_dir.parent / "npm-cache"))
         corpora = [read_corpus(p) for p in sorted(args.corpus.glob("*.json"))]
-    except (ValueError, CorpusError, BudgetError) as exc:
+    except (ValueError, CorpusError, BudgetError, ToolAccessError) as exc:
         print(exc, file=sys.stderr)
         return 1
     corpora = [c for c in corpora if not args.repo or c["repo"] in args.repo]
@@ -103,7 +107,7 @@ def paid_record(args: argparse.Namespace, adapters: list) -> dict | None:
     if not any(a.paid for a in adapters):
         return None
     return {"model": args.model, "timeout_s": args.timeout, "claude_code": CLAUDE_CODE_VERSION,
-            "max_usd": args.max_usd, "head_bounds": args.head_bound}
+            "max_usd": args.max_usd, "head_bounds": args.head_bound, "tools": tool_record()}
 
 
 def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None = None) -> dict:

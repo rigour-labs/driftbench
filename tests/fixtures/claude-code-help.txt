@@ -1,9 +1,15 @@
 # claude --help, version 2.1.285 (Claude Code), only the lines for the flags DriftBench passes
+  --allowedTools, --allowed-tools <tools...>
   --disallowedTools, --disallowed-tools <tools...>
   --max-budget-usd <amount>             Maximum dollar amount to spend on API
+  --mcp-config <configs...>             Load MCP servers from JSON files or
   --model <model>                       Model for the current session. Provide
   --no-session-persistence              Disable session persistence - sessions
   --output-format <format>              Output format (only works with --print):
   -p, --print                           Print response and exit (useful for
+  --setting-sources <sources>           Comma-separated list of setting sources
+  --settings <file-or-json>             Path to a settings JSON file or a JSON
   --strict-mcp-config                   Only use MCP servers from --mcp-config,
   --verbose                             Override verbose mode setting from
+# hidden from --help but defined in the 2.1.285 binary ("--max-turns <turns>"), and passed by Rigour's reviewer too:
+  --max-turns <turns>
