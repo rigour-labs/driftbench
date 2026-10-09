@@ -3,7 +3,8 @@
 A finding on an earlier round's head is compared with a human anchor on a
 later commit, so its line is moved through the diff between the two
 versions: an unchanged line keeps its place; a line inside a changed region
-maps to where that region starts in the newer version.
+maps to where that region starts in the newer version, or to its last line
+when the region ran to the end of the file.
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from bench.points.file_at import file_at
 
 
 def map_line(old: str, new: str, line: int) -> int | None:
-    """`line` (1-based) in `old`, as a line number in `new`; None if `line` is outside `old`."""
+    """`line` (1-based) in `old`, as a line number in `new`; None if `line` is outside `old` or `new` is empty."""
     old_lines, new_lines = old.splitlines(), new.splitlines()
     index = line - 1
     if not 0 <= index < len(old_lines):
@@ -23,8 +24,14 @@ def map_line(old: str, new: str, line: int) -> int | None:
     # An insert covers no old lines, so it never holds `line`; the block after it does.
     for tag, i1, i2, j1, _ in matcher.get_opcodes():
         if i1 <= index < i2:
-            return j1 + (index - i1) + 1 if tag == "equal" else j1 + 1
+            return j1 + (index - i1) + 1 if tag == "equal" else region_start(j1, len(new_lines))
     return None
+
+
+def region_start(j1: int, new_length: int) -> int | None:
+    """Where a changed region starts in `new`, kept inside it: a region that ran to the end of the file
+    maps to the new last line, and nothing maps into an empty file."""
+    return min(j1 + 1, new_length) if new_length else None
 
 
 class FileVersions:

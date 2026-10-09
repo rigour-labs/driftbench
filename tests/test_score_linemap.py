@@ -28,6 +28,12 @@ def test_a_line_of_an_empty_file_does_not_exist():
     assert map_line("", "a\nb", 1) is None
 
 
+def test_a_region_at_the_end_never_maps_past_the_new_file():
+    assert map_line("a\nb\nc", "a\nb", 3) == 2                        # deleted last line
+    assert map_line("a\nb\nc", "a\nX", 3) == 2                        # replaced tail, shorter
+    assert map_line("a", "", 1) is None                                 # nothing left to point at
+
+
 def test_carry_fetches_once_and_handles_unreadable():
     def contents(text):
         return {"encoding": "base64", "content": base64.b64encode(text.encode()).decode()}
