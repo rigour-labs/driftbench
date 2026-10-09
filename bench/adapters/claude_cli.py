@@ -12,7 +12,7 @@ import subprocess
 
 from bench.harness.types import AdapterError, ReviewInput
 
-CLAUDE_CODE_VERSION = "2.1.286"  # the npm `stable` tag when pinned; a bump is its own pull request
+CLAUDE_CODE_VERSION = "2.1.285"  # its --help is recorded in tests/fixtures; a bump is its own pull request
 KEY_NAME = "ANTHROPIC_API_KEY"
 
 

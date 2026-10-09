@@ -25,18 +25,31 @@ def value(number: float | int | None) -> str:
     return "n/a" if number is None else str(number)
 
 
-def tool_row(name: str, metrics: dict) -> str:
-    headline = metrics["catches"]["3"]
+NO_BLOCKING = "n/a (never blocks)"
+
+
+def blocking_cells(metrics: dict) -> tuple[str, str, str]:
+    """Blocking-only catch rate, false blocks, blocks per approved head; n/a for a tool that never blocks."""
+    if metrics.get("catches_blocking") is None or metrics.get("false_blocks") is None:
+        return NO_BLOCKING, NO_BLOCKING, NO_BLOCKING
     blocking = metrics["catches_blocking"]["3"]["all"]
     blocks = metrics["false_blocks"]
+    return (pct(blocking["caught"], blocking["points"]),
+            pct(blocks["approved_heads_blocked"], blocks["approved_heads"]),
+            f"{value(blocks['blocks_per_approved_head'])} (n={blocks['approved_heads']} heads)")
+
+
+def tool_row(name: str, metrics: dict) -> str:
+    headline = metrics["catches"]["3"]
     heads = metrics["heads"]
+    blocking_rate, false_block_rate, per_head = blocking_cells(metrics)
     cells = (
         name, value(metrics["version"]),
         pct(headline["all"]["caught"], headline["all"]["points"]),
         pct(headline["acted_on"]["caught"], headline["acted_on"]["points"]),
-        pct(blocking["caught"], blocking["points"]),
-        pct(blocks["approved_heads_blocked"], blocks["approved_heads"]),
-        f"{value(blocks['blocks_per_approved_head'])} (n={blocks['approved_heads']} heads)",
+        blocking_rate,
+        false_block_rate,
+        per_head,
         f"{value(metrics['findings_per_100_changed_lines'])} (n={metrics['changed_lines']} lines)",
         f"{heads.get('error', 0)} / {heads.get('unavailable', 0)} / {heads.get('not_scored', 0)} / "
         f"{heads.get('leaked', 0)}",
@@ -47,6 +60,8 @@ def tool_row(name: str, metrics: dict) -> str:
 
 def block_row(name: str, metrics: dict) -> str:
     blocks = metrics["false_blocks"]
+    if blocks is None:
+        return f"| {name} | {NO_BLOCKING} | {NO_BLOCKING} | {NO_BLOCKING} | {NO_BLOCKING} |"
     merged = blocks["merged_fallback"]
     cells = (name, pct(blocks["approved_heads_blocked"], blocks["approved_heads"]),
              f"{merged['blocked']} / {merged['heads']}", str(blocks["overridden_excluded"]), str(blocks["not_scored"]))

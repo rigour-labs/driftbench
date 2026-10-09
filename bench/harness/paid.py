@@ -22,7 +22,7 @@ def not_scored(reason: str) -> dict:
             "cost_usd": None, "input_tokens": None, "output_tokens": None, "error": reason}
 
 
-def gate(adapter: Adapter, budget: Budget | None) -> dict | None:
+def paid_gate(adapter: Adapter, budget: Budget | None) -> dict | None:
     """A `not_scored` record when a paid review may not run, else None."""
     if not adapter.paid:
         return None
@@ -34,10 +34,27 @@ def gate(adapter: Adapter, budget: Budget | None) -> dict | None:
     return None
 
 
-def settle(adapter: Adapter, output: ReviewOutput, budget: Budget | None) -> ReviewOutput:
-    """Apply the leakage and usage rules to a finished review, and charge the budget."""
-    if adapter.paid and budget is not None and output.cost_usd is not None:
+def charge_review(adapter: Adapter, output: ReviewOutput, budget: Budget | None) -> ReviewOutput:
+    """Charge a paid review to the budget, failures included.
+
+    What the tool reported, when it reported anything; otherwise, for a review
+    that failed (a timeout burns its whole limit), the entrant's per-head bound,
+    so a failure can never slip past the cap. The head records which.
+    """
+    if not adapter.paid or budget is None:
+        return output
+    if output.cost_usd is not None:
         budget.add_cost(adapter.name, output.cost_usd)
+        return dataclasses.replace(output, charged="reported")
+    if output.verdict == "error":
+        budget.add_cost(adapter.name, budget.per_head_bound(adapter.name))
+        return dataclasses.replace(output, charged="bound")
+    return output
+
+
+def settle_review(adapter: Adapter, output: ReviewOutput, budget: Budget | None) -> ReviewOutput:
+    """Charge the budget, then apply the leakage and usage rules to a finished review."""
+    output = charge_review(adapter, output, budget)
     if output.leak_signals:
         return dataclasses.replace(output, findings=[], verdict="leaked",
                                    error=f"{output.leak_signals} sign(s) the tool saw pull request reviews or data")

@@ -76,7 +76,8 @@ def to_output(stream: list[dict], changed_paths: set[str]) -> ReviewOutput:
     if result is None:
         raise AdapterError("no result in the transcript")
     if result.get("is_error"):
-        raise AdapterError(f"claude reported an error: {str(result.get('result'))[:200]}")
+        raise AdapterError(f"claude reported an error: {str(result.get('result'))[:200]}",
+                           cost_usd=result.get("total_cost_usd"))
     usage = result.get("usage") or {}
     inputs = sum(int(usage.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens",
                                                    "cache_creation_input_tokens"))
@@ -91,6 +92,7 @@ class ClaudeCodeReview:
     version = CLAUDE_CODE_VERSION
     paid = True
     reads_history = False
+    has_blocking = False  # /code-review never blocks: its blocking-only numbers are n/a, not 0
     env_extra: tuple[str, ...] = (KEY_NAME,)
 
     def __init__(self, model: str, max_usd_per_review: float | None = None):

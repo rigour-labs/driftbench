@@ -57,7 +57,7 @@ def paid_settings(args: argparse.Namespace) -> tuple[PaidSettings | None, Budget
             bounds[name] = float(usd)
         except ValueError as exc:
             raise ValueError(f"--head-bound {item!r}: expected ENTRANT=USD") from exc
-    return PaidSettings(model=args.model or "", max_usd=args.max_usd), Budget(args.max_usd, bounds)
+    return PaidSettings(model=args.model or "", max_usd=args.max_usd, head_bounds=bounds), Budget(args.max_usd, bounds)
 
 
 def cmd_run(args: argparse.Namespace) -> int:

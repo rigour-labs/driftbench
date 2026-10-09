@@ -17,6 +17,7 @@ class Adapter(Protocol):
     paid: bool           # True if a run can cost money; excluded from free runs
     reads_history: bool  # True to receive the PR title/body and earlier comments
     env_extra: tuple[str, ...]  # names of variables you add to request.env (a paid tool's own key only)
+    has_blocking: bool = True   # False if the tool never blocks; its blocking numbers are then n/a
 
     def review(self, request: ReviewInput) -> ReviewOutput: ...
 ```
@@ -58,7 +59,9 @@ just to look stricter or quieter. The mapping is reviewed in the pull request.
   environment. A paid adapter adds only its own key to a copy of it.
 - Keep keys in environment variables. Never commit them, never log them.
 - Paid adapters must report usage: a review whose model ran without a cost
-  is recorded as an error. They must also count leak signals (see
+  is recorded as an error. When a review fails, raise `AdapterError(message,
+  cost_usd=...)` with whatever the tool reported spending; with nothing, the
+  harness charges your per-head bound. They must also count leak signals (see
   docs/SPEC.md, "Paid entrants").
 - Add a test with a recorded tool output under `tests/fixtures/` that checks
   the parsing, so CI never runs a paid tool.

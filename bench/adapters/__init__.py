@@ -13,18 +13,19 @@ from bench.harness.types import Adapter
 
 @dataclasses.dataclass(frozen=True)
 class PaidSettings:
-    """What every paid entrant shares in a run: one model, and a dollar cap (enforced by the harness)."""
+    """What every paid entrant shares in a run: one model, a dollar cap (enforced by the harness), and each
+    entrant's per-head bound, which tools that can stop themselves also get as a second line of defence."""
     model: str
     max_usd: float
+    head_bounds: dict[str, float] = dataclasses.field(default_factory=dict)
 
 
 FREE: dict[str, type] = {cls.name: cls for cls in (NoTool, EveryHunk, RigourDeterministic)}
 PAID: dict[str, Callable[[PaidSettings], Adapter]] = {
     "rigour-reviewer": lambda s: RigourReviewer(s.model),
     "rigour-reviewer-orchestrated": lambda s: RigourReviewer(s.model, orchestrated=True),
-    "claude-code-review": lambda s: ClaudeCodeReview(s.model),
+    "claude-code-review": lambda s: ClaudeCodeReview(s.model, s.head_bounds.get("claude-code-review")),
 }
-ADAPTERS = {**FREE, **{name: None for name in PAID}}
 
 
 def expand(names: list[str]) -> list[str]:

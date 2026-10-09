@@ -6,6 +6,9 @@ the sandbox HOME, so the reviewed repository is untouched; Rigour otherwise
 runs with its defaults and no tuning on this corpus). `--orchestrator` makes
 the orchestrated variant.
 
+Cost is every dollar the review spent: `spent_usd` where the version reports
+it (all runs, failed passes, fallback, retries), else `cost_usd`.
+
 Blocking follows Rigour: gate failures and reviewer `items` block;
 `advisory` and `notes` don't. A reviewer that reports `unavailable` is an
 error, not a block.
@@ -56,17 +59,27 @@ def model_runs(reviewer: dict) -> int | None:
     return len(judges) if isinstance(judges, list) else None
 
 
+def spent_usd(reviewer: dict) -> float | None:
+    """Every dollar the review spent (all runs, failed passes, retries) where the version reports it;
+    otherwise the older `cost_usd`."""
+    for key in ("spent_usd", "spentUsd", "cost_usd"):
+        if isinstance(reviewer.get(key), (int, float)):
+            return float(reviewer[key])
+    return None
+
+
 def to_output(report: dict) -> ReviewOutput:
     reviewer = report.get("reviewer")
     if not isinstance(reviewer, dict):
         raise AdapterError("the report has no reviewer section")
     if reviewer.get("outcome") == "unavailable":
-        raise AdapterError(f"reviewer unavailable: {reviewer.get('reason') or 'no reason given'}")
+        raise AdapterError(f"reviewer unavailable: {reviewer.get('reason') or 'no reason given'}",
+                           cost_usd=spent_usd(reviewer))
     gates = parse_report(report)
     blocks = report.get("status") == "FAIL" or bool(reviewer.get("items"))
     tokens = reviewer.get("tokens") or {}
     return ReviewOutput(findings=gates + reviewer_findings(reviewer), verdict="fail" if blocks else "pass",
-                        cost_usd=reviewer.get("cost_usd"), input_tokens=tokens.get("input"),
+                        cost_usd=spent_usd(reviewer), input_tokens=tokens.get("input"),
                         output_tokens=tokens.get("output"), model_runs=model_runs(reviewer),
                         leak_signals=leak_signals(reviewer))
 

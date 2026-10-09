@@ -10,8 +10,15 @@ full ID), one timeout and one pinned Claude Code CLI, all recorded in
   still fits. The bound is the larger of the run estimate's upper bound and
   the most the entrant has cost on one head so far. Once a review doesn't
   fit, it and every later paid review is recorded `not_scored`, counted on
-  the page, never left out silently.
-- **Usage.** A review whose model ran must report its cost; one that
+  the page, never left out silently. A review that fails (a timeout, the
+  tool unavailable, an unreadable transcript) is charged what it reported
+  spending, or, if it reported nothing, the entrant's per-head bound; each
+  head records which (`charged: reported | bound`). Tools that can stop
+  themselves also get the per-head bound (Claude Code's `--max-budget-usd`)
+  as a second line of defence.
+- **Usage.** Rigour's cost is every dollar the review spent (`spent_usd`
+  where the version reports it: all runs, failed passes, retries; else
+  `cost_usd`). A review whose model ran must report its cost; one that
   doesn't is an `error`. A review where no model ran (nothing to review, a
   cached verdict) honestly costs $0.
 - **Leakage.** Tools with a reviewer mode may look up the pull request and
@@ -26,6 +33,7 @@ full ID), one timeout and one pinned Claude Code CLI, all recorded in
   (lessons only from pull requests merged before each head) would.
 - **Claude Code `/code-review`** reports findings in prose; each `path:line`
   it cites in a changed file becomes a finding. It has no blocking findings,
-  so its false-block rate is 0 by construction.
+  so its blocking-only catch rate and false blocks are shown as "n/a", not
+  as 0.
 
 The method these rules belong to is in [docs/SPEC.md](SPEC.md).

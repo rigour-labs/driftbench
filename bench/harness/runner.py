@@ -16,7 +16,7 @@ from bench.harness.cases import ReviewCase, cases_for_pr, heads_to_run
 from bench.harness.diffstat import changed_lines, parse_hunks
 from bench.harness.budget import Budget
 from bench.harness.gitrepo import GitError, RepoCheckout
-from bench.harness.paid import gate, settle
+from bench.harness.paid import paid_gate, settle_review
 from bench.harness.publish import published_finding
 from bench.harness.sandbox import env_keys, sandbox
 from bench.harness.types import Adapter, ReviewInput, ReviewOutput
@@ -50,7 +50,8 @@ def safe_review(adapter: Adapter, request: ReviewInput) -> tuple[ReviewOutput, f
         output = adapter.review(request)
     except Exception as exc:  # the harness must outlive any adapter failure
         print(f"warning: {adapter.name} failed on {request.head_sha[:12]}: {exc}", file=sys.stderr)
-        output = ReviewOutput(findings=[], verdict="error", error=f"{type(exc).__name__}: {exc}")
+        output = ReviewOutput(findings=[], verdict="error", error=f"{type(exc).__name__}: {exc}",
+                              cost_usd=getattr(exc, "cost_usd", None))
     return output, round(time.monotonic() - started, 3)
 
 
@@ -80,7 +81,7 @@ def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, conf
             checkout.isolated_copy(head, box.repo)
             request = ReviewInput(box.repo, base, head, diff_path, None, config.timeout_s, box.env)
             output, wall_s = safe_review(adapter, request)
-            output = settle(adapter, output, config.budget)
+            output = settle_review(adapter, output, config.budget)
     except GitError as exc:
         print(f"warning: PR {pr['number']} head {head[:12]} unavailable: {exc}", file=sys.stderr)
         return unavailable(exc)
@@ -94,6 +95,7 @@ def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, conf
         "input_tokens": output.input_tokens,
         "output_tokens": output.output_tokens,
         "error": output.error[:300],
+        **({"charged": output.charged} if output.charged else {}),
     }
 
 
@@ -129,7 +131,7 @@ def run_corpus(adapter: Adapter, checkout: RepoCheckout, corpus: dict, config: R
             if path.exists():
                 counts["skipped"] += 1
                 continue
-            result = gate(adapter, config.budget) or run_head(adapter, checkout, pr, head, config)
+            result = paid_gate(adapter, config.budget) or run_head(adapter, checkout, pr, head, config)
             header = record_header(adapter, corpus["repo"], pr["number"], head, cases)
             write_record(path, {**header, "run_started_at": config.run_started_at}, result)
             counts["written"] += 1
@@ -147,4 +149,5 @@ def record_header(adapter: Adapter, repo: str, pr: int, head: str, cases: list[R
         "head_sha": head,
         "cases": [dataclasses.asdict(c) for c in cases],
         "env_keys": sorted({*env_keys(), *getattr(adapter, "env_extra", ())}),
+        "blocking_semantics": getattr(adapter, "has_blocking", True),
     }

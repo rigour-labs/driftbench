@@ -41,10 +41,15 @@ class ReviewOutput:
     error: str = ""
     model_runs: int | None = None  # model calls the tool made; 0 = honestly free (nothing to review, cached)
     leak_signals: int = 0          # signs the tool saw the PR's human reviews or fetched PR data
+    charged: str = ""              # paid reviews: "reported" (the tool's cost) or "bound" (the per-head bound)
 
 
 class AdapterError(RuntimeError):
-    """An adapter couldn't produce a review."""
+    """An adapter couldn't produce a review; `cost_usd` is what the tool reported spending, if it said."""
+
+    def __init__(self, message: str, cost_usd: float | None = None):
+        super().__init__(message)
+        self.cost_usd = cost_usd
 
 
 class Adapter(Protocol):

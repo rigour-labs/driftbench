@@ -53,3 +53,30 @@ def test_bench_run_refuses_paid_entrants_without_cap_model_or_bound(tmp_path, ca
     assert main(base) == 1 and "--max-usd" in capsys.readouterr().err
     assert main([*base, "--max-usd", "5", "--model", "m"]) == 1
     assert "no per-head cost bound" in capsys.readouterr().err
+
+
+class PaidTimeout:
+    name, version, paid, reads_history, env_extra = "paid-timeout", "1", True, False, ("ANTHROPIC_API_KEY",)
+
+    def review(self, request):
+        from bench.harness.types import AdapterError
+        raise AdapterError("timed out after 900s")
+
+
+def test_a_failed_paid_review_is_charged_its_bound_and_the_next_is_refused(setup):
+    from bench.harness.budget import Budget
+    corpus, checkout, config, origin = setup
+    budget = Budget(max_usd=0.5, estimate_per_head={"paid-timeout": 0.4})
+    counts = run_corpus(PaidTimeout(), checkout, corpus, dataclasses.replace(config, budget=budget))
+    assert counts == {"written": 2, "skipped": 0, "error": 1, "not_scored": 1}
+    first = read(config, PaidTimeout(), origin["head1"])
+    assert first["verdict"] == "error" and first["charged"] == "bound" and budget.spent == 0.4
+    assert read(config, PaidTimeout(), origin["head2"])["verdict"] == "not_scored"
+
+
+def test_a_paid_review_with_a_reported_cost_records_it(setup):
+    from bench.harness.budget import Budget
+    corpus, checkout, config, origin = setup
+    budget = Budget(max_usd=5, estimate_per_head={"paid-fake": 0.4})
+    run_corpus(PaidFake(), checkout, corpus, dataclasses.replace(config, budget=budget))
+    assert read(config, PaidFake(), origin["head1"])["charged"] == "reported"

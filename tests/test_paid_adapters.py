@@ -1,10 +1,14 @@
 import copy
+import re
 import subprocess
+from pathlib import Path
 
 import pytest
 
 from bench.adapters import claude_cli, claude_code, rigour_reviewer
 from bench.harness.types import AdapterError, ReviewInput
+
+FIXTURES = Path(__file__).parent / "fixtures"
 
 # Synthetic shapes, written from the CLIs' sources (rigour 6.8.1 review --json `reviewer` section;
 # Claude Code stream-json events). No real tool output and no repository data.
@@ -96,13 +100,39 @@ def test_paid_env_and_cli_version(monkeypatch):
     assert env == {"HOME": "/home", "PATH": "/bin", "ANTHROPIC_API_KEY": "test-key"}
     monkeypatch.setattr(claude_cli.subprocess, "run",
                         lambda *a, **k: subprocess.CompletedProcess(a, 0, "2.1.999 (Claude Code)\n", ""))
-    with pytest.raises(AdapterError, match="expected 2.1.286"):
+    with pytest.raises(AdapterError, match="expected 2.1.285"):
         claude_cli.require_claude_cli(env)
     monkeypatch.setattr(claude_cli.subprocess, "run",
-                        lambda *a, **k: subprocess.CompletedProcess(a, 0, "2.1.286 (Claude Code)\n", ""))
+                        lambda *a, **k: subprocess.CompletedProcess(a, 0, "2.1.285 (Claude Code)\n", ""))
     assert claude_cli.require_claude_cli(env) is None
 
 
 def test_claude_code_rejects_an_unreadable_transcript():
     with pytest.raises(AdapterError, match="unreadable transcript"):
         claude_code.events('{"type": "system"}\nnot json\n')
+
+
+def test_every_flag_passed_to_claude_exists_in_the_pinned_cli():
+    """tests/fixtures/claude-code-help.txt is `claude --help` from the pinned version (flag lines only)."""
+    help_text = (FIXTURES / "claude-code-help.txt").read_text()
+    assert claude_cli.CLAUDE_CODE_VERSION in help_text.splitlines()[0]
+    flags = [part for part in claude_code.ClaudeCodeReview("m", 1.0).command() if part.startswith("-")]
+    missing = [flag for flag in flags if not re.search(rf"(^|[ ,]){re.escape(flag)}([ ,]|$)", help_text, re.M)]
+    assert missing == []
+
+
+def test_failed_reviews_report_what_they_spent():
+    with pytest.raises(AdapterError) as failed:
+        claude_code.to_output(stream({"is_error": True, "result": "boom", "total_cost_usd": 0.9}, []), set())
+    assert failed.value.cost_usd == 0.9
+    down = {"status": "PASS", "reviewer": {"outcome": "unavailable", "reason": "x", "spent_usd": 1.2}}
+    with pytest.raises(AdapterError) as unavailable:
+        rigour_reviewer.to_output(down)
+    assert unavailable.value.cost_usd == 1.2
+
+
+def test_rigour_cost_prefers_spent_usd_over_cost_usd():
+    newer = copy.deepcopy(REVIEWER_REPORT)
+    newer["reviewer"]["spent_usd"] = 0.97          # every run, failed passes, retries (6.9.0)
+    assert rigour_reviewer.to_output(newer).cost_usd == 0.97
+    assert rigour_reviewer.to_output(REVIEWER_REPORT).cost_usd == 0.42   # older versions: cost_usd
