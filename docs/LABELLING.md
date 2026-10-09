@@ -30,11 +30,12 @@ computed from the labelled sample only; every other point is unclassified.
 
 | Class | The reviewer is saying | Examples (made up) |
 |---|---|---|
-| **mechanical** | The code works, but its form should change: naming, formatting, typos, unused code, import order, lint-like style. | "nit: `cfg` → `config`"; "typo in the comment"; "this import is unused" |
-| **performance** | The code works, but costs too much: time, memory, allocations, calls, network. | "this allocates on every packet"; "O(n²) over all peers"; "cache this lookup" |
-| **claim/contract** | The code doesn't do what its name, docs, types, callers or tests promise, or it breaks in a case it should handle. Bugs, races, leaks, error handling, edge cases, compatibility. | "this returns nil on timeout but callers expect an error"; "the doc says inclusive, the loop is exclusive"; "this leaks the file handle" |
+| **mechanical** | The code works, but its form should change: naming, formatting, typos, unused code, import order, lint-like style. | "nit: `cfg` → `config`"; "typo in the comment"; "this import is unused"; "unused outside tests: no production path passes this flag" |
+| **performance** | The code works, but costs too much: time, memory, allocations, calls, network, queries. | "this allocates on every packet"; "O(n²) over all peers"; "cache this lookup"; "this is an N+1: one query per album"; "this scans every row, then filters in Python"; "redundant read: these rows were loaded above" |
+| **claim/contract** | The code doesn't do what its name, docs, types, callers or tests promise, or it breaks in a case it should handle. Bugs, races, leaks, error handling, edge cases, compatibility. | "this returns nil on timeout but callers expect an error"; "the doc says inclusive, the loop is exclusive"; "this leaks the file handle"; "this limit is stale: the batch size it was sized for is now 50" |
+| **security/privacy** | The code exposes or trusts what it shouldn't: personal data or secrets in logs or responses, missing authorization, injection, unsanitized input. | "this logs the email address of every caller"; "the API token ends up in the error response"; "this builds SQL from request input, an injection risk" |
 | **user journey** | What a user sees or does is wrong or worse: UI, messages, flows, defaults, CLI output, accessibility. | "the error toast shows the raw exception"; "this flag now needs a restart, which users won't expect" |
-| **judgment** | A design or taste call with no single right answer: structure, abstraction, where code lives, whether to do this at all. | "I'd keep this in the handler, not a new package"; "could we avoid the extra interface?" |
+| **judgment** | A design or taste call with no single right answer: structure, abstraction, where code lives, whether to do this at all. | "I'd keep this in the handler, not a new package"; "could we avoid the extra interface?"; "this duplicates the helper in the utils module" |
 
 ## Decision order
 
@@ -42,11 +43,22 @@ When a point fits more than one class, the first match wins:
 
 1. **claim/contract** over everything else: if the code is wrong, it's a
    contract problem, even when the reviewer phrases it as style or design.
-2. **user journey** over performance and the rest: what the user sees first.
-3. **performance** over mechanical and judgment.
-4. **mechanical** over judgment: a rename request is mechanical even when it
+2. **security/privacy** over user journey and the rest: exposure of data or
+   trust in input, even when the code otherwise does what it promises.
+3. **user journey** over performance and the rest: what the user sees first.
+4. **performance** over mechanical and judgment.
+5. **mechanical** over judgment: a rename request is mechanical even when it
    is a matter of taste.
-5. **judgment** for what remains.
+6. **judgment** for what remains.
+
+Two boundaries that come up often:
+
+- **Unused code is mechanical**, including a parameter, default or branch
+  that no production path uses and that exists only for tests. It is
+  judgment only when the reviewer opens an explicit API design debate.
+- **Duplication is judgment** ("extract a helper", "this duplicates X"),
+  unless the copies have already diverged into a bug; then it is
+  claim/contract.
 
 Questions count by what they ask for: "why not return an error here?" is
 claim/contract if the missing error is a bug, judgment if both are valid.
