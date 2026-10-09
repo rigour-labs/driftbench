@@ -28,3 +28,8 @@ def test_spend_command(tmp_path, capsys):
     (tmp_path / "budget-o__r.json").write_text('{"estimate_per_head": {}, "largest_per_head": {}}')
     assert main(["spend", "--run", str(tmp_path)]) == 0
     assert "estimated $0.25" in capsys.readouterr().out
+
+
+def test_no_records_means_spend_unknown_not_zero():
+    notes = spend_notes({})
+    assert "estimate unknown" in notes and "not $0" in notes and "$0.00" not in notes

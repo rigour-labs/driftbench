@@ -39,15 +39,24 @@ def problems(value: object, where: str) -> list[str]:
     return found
 
 
+SCRATCH = "_scratch"  # sandboxes and diffs of the reviewed code; never uploaded, so never checked
+
+
+def files_to_check(path: Path) -> list[Path]:
+    if not path.is_dir():
+        return [path]
+    return sorted(f for f in path.rglob("*.json") if SCRATCH not in f.relative_to(path).parts)
+
+
 def check_paths(paths: list[Path]) -> list[str]:
+    """Every problem found; an unreadable or undecodable file is a problem, never a crash."""
     found: list[str] = []
     for path in paths:
-        files = sorted(path.rglob("*.json")) if path.is_dir() else [path]
-        for file in files:
+        for file in files_to_check(path):
             try:
                 data = json.loads(file.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
-                found.append(f"{file}: unreadable ({exc})")
+            except (OSError, ValueError) as exc:  # UnicodeDecodeError and JSONDecodeError are ValueErrors
+                found.append(f"{file}: unreadable ({type(exc).__name__})")
                 continue
             found += problems(data, str(file))
     return found
