@@ -22,6 +22,7 @@ def test_reportable_repo_renders_tables_with_intervals_and_unvalidated_status(tm
     page = render("2026-10-08", [result], {"o/r": classes}, {"validated": False, "location": {}, "acted_on": {}})
     assert "## o/r" in page and "| every-hunk | 1 | 100% (25/25; 95% CI 87 to 100%)" in page
     assert "Sensitivity" in page and "By class" in page and "unclassified" in page
+    assert "these intervals are wide" in page                              # caveat on the class table itself
     assert "**unvalidated**" in page and "—" not in page
 
 
@@ -55,7 +56,7 @@ def test_range_note_when_acted_on_rests_mostly_on_range(tmp_path):
     result, _ = summary(tmp_path, prs=10, points=25)
     result["corpus"]["acted_on_by_basis"] = {"range": 20, "direct": 5}
     assert range_note(result, {}) == ("Acted-on points here rest mostly on the `range` basis (20 of 25); "
-                                      "its calibration agreement: not yet hand-checked.")
+                                      "range calibration agreement (all repos): not yet hand-checked.")
     checked = {"acted_on": {"range": {"agree": 8, "disagree": 2}}}
     assert "agree 8, disagree 2" in range_note(result, checked)
     page = render("r", [result], {}, {"validated": False, "short": [], "location": {}, "acted_on": {}})

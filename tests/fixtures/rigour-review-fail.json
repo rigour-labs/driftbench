@@ -1,7 +1,7 @@
 {
  "status": "FAIL",
  "checked": {
-  "rigour_version": "6.8.1",
+  "rigour_version": "6.9.0",
   "base": "HEAD~1",
   "base_sha": "1c3cb91502afe7779a3faff57926387e3cf25429",
   "head_sha": "dcbaab95263f99aabe415ae843abb04813cac168",
@@ -41,6 +41,13 @@
    "change-sweep": "PASS",
    "redundancy": "PASS"
   }
+ },
+ "goal": {
+  "enabled": false,
+  "source": "team",
+  "required": false,
+  "refused": [],
+  "declared": false
  },
  "score": 51,
  "ai_health_score": 69,
