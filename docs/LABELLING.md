@@ -160,9 +160,13 @@ confirms or overrides it, and the label records which.
   no suggestion.
 - **Honest agreement:** a seeded random 20% of each sample (`blind_ids`,
   redrawn by anyone from the sample's seed) is labelled first, with no
-  suggestion shown. Model-human agreement is computed on that blind subset
-  only, as a rate from 10 points up. Where a suggestion was on screen, the
-  report counts accepted and overridden labels separately and calls them
+  suggestion shown. Model-human agreement is computed on blind labels only,
+  as a rate from 10 points up: that subset, plus a whole sample answered
+  before any suggestion existed (`blind: pre-suggestion`; the sample is
+  itself a seeded random draw). `label next` goes through a sample in
+  point-ID order, so a partly labelled sample is not a random set; its
+  labels are counted as unseen, not rated. Where a suggestion was on screen,
+  the report counts accepted and overridden labels separately and calls them
   anchored, never agreement.
 - **Hard cap:** the run needs `--max-usd` and the maintainer's go. Before each
   call it checks that the money spent so far (OpenRouter's reported cost)

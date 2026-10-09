@@ -104,10 +104,13 @@ def cmd_status(args: argparse.Namespace) -> int:
         print(f"{repo}: {label_status(labels, texts, suggested)}")
         sample = read_sample(sample_path(args.labels, repo))
         if sample:
-            print(f"  sample (seed {sample['seed']}): {sample_status(labels, effective_labels(labels, texts), sample['point_ids'])}")
-        model_data = read_model_file(model_path(args.labels, repo), repo)
-        if model_data:
-            print(f"  model suggestions: {model_agreement(labels['points'], effective_labels(labels, texts), model_data)}")
+            usable = effective_labels(labels, texts)
+            print(f"  sample (seed {sample['seed']}): {sample_status(labels, usable, sample['point_ids'])}")
+            model_data = read_model_file(model_path(args.labels, repo), repo)
+            if model_data:
+                in_sample = {pid: label for pid, label in usable.items() if pid in set(sample["point_ids"])}
+                agreement = model_agreement(labels["points"], in_sample, model_data, sample["point_ids"])
+                print(f"  model suggestions: {agreement}")
     return 0
 
 

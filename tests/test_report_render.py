@@ -78,7 +78,7 @@ def test_a_tool_that_never_blocks_shows_n_a_not_zero(tmp_path):
 def test_model_assisted_labels_report_blind_agreement_and_anchoring(tmp_path):
     result, ledger = summary(tmp_path, prs=10, points=25)
     classes = per_class(ledger, {"p1": "mechanical"})
-    agreement = {"model": "example-org/example-model", "blind": {"agree": 8, "points": 10, "rate": 0.8},
+    agreement = {"model": "example-org/example-model", "blind": {"agree": 8, "points": 10, "pre_suggestion": 0, "rate": 0.8},
                  "anchored": {"accepted": 30, "overridden": 6}, "unseen": 2}
     page = render("r", [result], {"o/r": classes}, {"validated": False, "location": {}, "acted_on": {}},
                   {}, {"o/r": agreement})
@@ -88,3 +88,7 @@ def test_model_assisted_labels_report_blind_agreement_and_anchoring(tmp_path):
     page = render("r", [result], {"o/r": classes}, {"validated": False, "location": {}, "acted_on": {}},
                   {}, {"o/r": few})
     assert "too few for a rate (n<10)" in page
+    pre = {**agreement, "blind": {"agree": 40, "points": 48, "pre_suggestion": 40, "rate": 0.8333}}
+    page = render("r", [result], {"o/r": classes}, {"validated": False, "location": {}, "acted_on": {}},
+                  {}, {"o/r": pre})
+    assert "40 of 48 (40 of them blind: pre-suggestion" in page and ": 83%" in page

@@ -119,16 +119,36 @@ def test_the_blind_subset_is_seeded_and_never_shows_a_suggestion():
 def test_agreement_is_rated_on_blind_labels_only_and_from_ten_up():
     blind = [f"b{i}" for i in range(10)]
     data = {"model": "m", "blind_ids": blind,
-            "points": {**{pid: {"suggested": "mechanical"} for pid in blind}, "a1": {"suggested": "judgment"}}}
+            "points": {**{pid: {"suggested": "mechanical"} for pid in blind}, "a1": {"suggested": "judgment"},
+                       "u1": {"suggested": "judgment"}}}
     entries = {**{pid: {"label": "mechanical" if i < 7 else "judgment", "blind": True} for i, pid in enumerate(blind)},
                "a1": {"label": "judgment", "blind": False, "suggestion": "accepted"},
                "u1": {"label": "judgment", "blind": True}}
     usable = {pid: e["label"] for pid, e in entries.items()}
-    result = model_agreement(entries, usable, data)
-    assert result["blind"] == {"agree": 7, "points": 10, "rate": 0.7}
+    sample = [*blind, "a1", "u1"]
+    result = model_agreement(entries, usable, data, sample)
+    assert result["blind"] == {"agree": 7, "points": 10, "pre_suggestion": 0, "rate": 0.7}
     assert result["anchored"] == {"accepted": 1, "overridden": 0} and result["unseen"] == 1
-    fewer = model_agreement(entries, {k: v for k, v in usable.items() if k != "b9"}, data)
+    fewer = model_agreement(entries, {k: v for k, v in usable.items() if k != "b9"}, data, sample)
     assert fewer["blind"]["rate"] is None and fewer["blind"]["points"] == 9
+
+
+def test_a_sample_answered_in_full_before_suggestions_counts_as_blind():
+    """`label next` goes in point-ID order, so only a complete pass is a random set; a partial one is not."""
+    sample = [f"p{i:02}" for i in range(12)]
+    data = {"model": "m", "blind_ids": ["p00", "p01"], "points": {pid: {"suggested": "mechanical"} for pid in sample}}
+    entries = {pid: {"label": "mechanical", "blind": True} for pid in sample[:11]}
+    entries["p11"] = {"skipped": True}                                     # skipped counts as answered
+    usable = {pid: e["label"] for pid, e in entries.items() if e.get("label")}
+    complete = model_agreement(entries, usable, data, sample)
+    assert complete["blind"] == {"agree": 11, "points": 11, "pre_suggestion": 9, "rate": 1.0}
+    assert complete["unseen"] == 0
+    partial = {k: v for k, v in entries.items() if k not in ("p10", "p11")}
+    result = model_agreement(partial, {k: v for k, v in usable.items() if k in partial}, data, sample)
+    assert result["blind"]["pre_suggestion"] == 0 and result["blind"]["points"] == 2 and result["unseen"] == 8
+    shown = {**entries, "p05": {"label": "judgment", "blind": False, "suggestion": "overridden"}}
+    after = model_agreement(shown, {**usable, "p05": "judgment"}, data, sample)
+    assert after["blind"]["pre_suggestion"] == 0 and after["anchored"]["overridden"] == 1
 
 
 def test_the_prompt_carries_the_guide_classes_and_the_anchored_hunk():

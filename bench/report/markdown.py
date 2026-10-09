@@ -115,9 +115,11 @@ def model_line(agreement: dict | None) -> list[str]:
         return []
     blind = agreement["blind"]
     rate = (f"{blind['rate']:.0%}" if blind["rate"] is not None else f"too few for a rate (n<{MIN_RATE_N})")
+    pre = (f" ({blind['pre_suggestion']} of them blind: pre-suggestion, from a sample answered in full before "
+           "any suggestion existed)" if blind.get("pre_suggestion") else "")
     anchored = agreement["anchored"]
-    return [f"Labels were assisted by model suggestions ({agreement['model']}). On the blind subset, labelled "
-            f"without seeing them, labels agree with the model on {blind['agree']} of {blind['points']}: {rate}. "
+    return [f"Labels were assisted by model suggestions ({agreement['model']}). On blind labels, made without "
+            f"seeing them, labels agree with the model on {blind['agree']} of {blind['points']}{pre}: {rate}. "
             f"Where the suggestion was shown (anchored), the labeller accepted {anchored['accepted']} and "
             f"overrode {anchored['overridden']}; {agreement['unseen']} other labels never saw one.", ""]
 
