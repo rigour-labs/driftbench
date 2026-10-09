@@ -110,5 +110,5 @@ def acted_on(client: GitHubClient, repo: str, anchor: dict | None, pr: dict) -> 
         return verdict, "ancestor"
     if compare.get("ahead_by", pr_commits + 1) <= pr_commits:
         return from_contents(client, repo, anchor, compare, merged_head), "direct"
-    verdict = from_range(client, repo, anchor, pr["base_sha"], merged_head, window(anchor))
+    verdict = from_range(client, repo, anchor, pr, window(anchor))
     return (verdict, "range") if verdict is not None else (None, "rebased")

@@ -179,6 +179,12 @@ the merged head, or the file was removed. The basis is recorded:
   acted on when any of them is no longer added as is; if they are context,
   when the pull request newly adds or removes lines near where they sit at
   the merged head. Upstream edits alone never count;
+  An own-patch comparison is trusted only if it holds no more commits than
+  the pull request has (a stale recorded base would let upstream commits in);
+  blank and punctuation-only lines are ignored when matching. `range` is a
+  little less strict than `direct`: when the anchored lines are the pull
+  request's own, new lines it adds next to them don't count; agreement is
+  reported per basis in the calibration sample;
 - `rebased`: as for `range`, but even that can't decide (a patch or file
   can't be read, the file was renamed and rewritten, or the fork point of a
   squash-merged head can't be resolved), so acted-on is unknown.

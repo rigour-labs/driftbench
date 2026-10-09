@@ -11,8 +11,8 @@ REBASED = {"status": "diverged", "ahead_by": 40, "files": []}
 OWN_A = "@@ -9,2 +9,5 @@\n x = 1\n+def f():\n+    return compute(a, b)\n+\n y = 2\n"
 
 
-def compare_with(patch, path="a.py", **entry):
-    return {"status": "diverged", "files": [{"filename": path, "patch": patch, **entry}]}
+def compare_with(patch, path="a.py", ahead_by=1, **entry):
+    return {"status": "diverged", "ahead_by": ahead_by, "files": [{"filename": path, "patch": patch, **entry}]}
 
 
 def contents(text):
@@ -44,13 +44,14 @@ def test_only_upstream_changed_nearby():
 
 
 def test_renamed_and_rewritten_file_is_unknown():
-    gone = {"status": "diverged", "files": [{"filename": "b.py", "previous_filename": "a.py"}]}  # no patch
+    gone = {"status": "diverged", "ahead_by": 1, "files": [{"filename": "b.py", "previous_filename": "a.py"}]}
     verdict = run({"repos/o/r/compare/B...A": compare_with(OWN_A), "repos/o/r/compare/B...H": gone})
     assert verdict == (None, "rebased")
 
 
 def test_pr_took_its_change_out():
-    untouched = {"status": "diverged", "files": [{"filename": "other.py", "patch": "@@ -1 +1 @@\n-a\n+b\n"}]}
+    untouched = {"status": "diverged", "ahead_by": 1,
+                 "files": [{"filename": "other.py", "patch": "@@ -1 +1 @@\n-a\n+b\n"}]}
     verdict = run({"repos/o/r/compare/B...A": compare_with(OWN_A), "repos/o/r/compare/B...H": untouched})
     assert verdict == (True, "range")
 
@@ -90,8 +91,37 @@ def test_force_pushed_round_fetchable_works_and_unfetchable_is_unknown():
 
 
 def test_own_patch_states():
-    client = FakeClient({}, {}, {"repos/o/r/compare/B...X": {"files": [{"filename": "z.py", "patch": ""}]},
-                                 "repos/o/r/compare/B...T": {"files": [{"filename": f"f{n}"} for n in range(300)]}})
-    assert own_patch(client, "o/r", "B", "X", "a.py") is MISSING
-    assert own_patch(client, "o/r", "B", "T", "a.py") is None      # truncated list: can't tell
-    assert own_patch(client, "o/r", "B", "GONE", "a.py") is None   # compare 404
+    client = FakeClient({}, {}, {
+        "repos/o/r/compare/B...X": {"ahead_by": 1, "files": [{"filename": "z.py", "patch": ""}]},
+        "repos/o/r/compare/B...T": {"ahead_by": 1, "files": [{"filename": f"f{n}"} for n in range(300)]}})
+    assert own_patch(client, "o/r", PR, "X", "a.py") is MISSING
+    assert own_patch(client, "o/r", PR, "T", "a.py") is None      # truncated list: can't tell
+    assert own_patch(client, "o/r", PR, "GONE", "a.py") is None   # compare 404
+
+
+def test_a_stale_base_that_lets_upstream_in_is_unknown():
+    """compare/B...X from a base older than X's fork point carries upstream commits: never trusted."""
+    own_h = "@@ -39,2 +39,5 @@\n x = 1\n+def f():\n+    return compute(a, b)\n+\n y = 2\n"
+    stale_h = run({"repos/o/r/compare/B...A": compare_with(OWN_A),
+                   "repos/o/r/compare/B...H": compare_with(own_h, ahead_by=40)})
+    stale_a = run({"repos/o/r/compare/B...A": compare_with(OWN_A, ahead_by=40),
+                   "repos/o/r/compare/B...H": compare_with(own_h)})
+    assert stale_h == (None, "rebased") and stale_a == (None, "rebased")
+
+
+def test_blank_and_brace_lines_are_ignored_when_matching():
+    # the only PR-added lines in the window are "}" and "": treated as context, decided by fresh changes nearby
+    trivial_a = "@@ -9,2 +9,4 @@\n x = 1\n+}\n+\n y = 2\n"
+    file_a = "".join(f"l{n}\n" for n in range(1, 9)) + "x = 1\n}\n\ny = 2\n"
+    own_h = "@@ -9,2 +9,5 @@\n x = 1\n+}\n+\n+check()\n y = 2\n"
+    file_h = file_a.replace("\ny = 2", "\ncheck()\ny = 2")
+    files = {"repos/o/r/contents/a.py?ref=A": contents(file_a), "repos/o/r/contents/a.py?ref=H": contents(file_h)}
+    verdict = run({"repos/o/r/compare/B...A": compare_with(trivial_a), "repos/o/r/compare/B...H": compare_with(own_h),
+                   **files})
+    assert verdict == (True, "range")      # "}" and "" are still added, but the fresh check() near them counts
+
+
+def test_window_past_the_end_of_the_file_still_maps():
+    from bench.points.range_basis import mapped_window
+    text = "a\nb\nc\n"
+    assert mapped_window(text, text, set(range(0, 8))) == {1, 2, 3}

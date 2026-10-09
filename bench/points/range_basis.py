@@ -9,6 +9,14 @@ request's OWN change to the anchored file at both points:
 
 where <base> is the pull request's recorded base commit, so each compare
 starts at that version's merge base and upstream drift is in neither patch.
+That holds only while <base> is at or after the version's real fork point:
+if <base> is older, the compare carries upstream commits too. So a compare
+is trusted only when it holds no more commits than the pull request has
+(`ahead_by` <= its commit count); otherwise the answer is unknown.
+
+Blank and punctuation-only lines ("", "}", ")") are ignored when matching
+the pull request's own anchored lines: they are "still added" almost
+anywhere and would bias the answer towards "not acted on".
 
 - If the anchored lines include lines the pull request added at A: acted on
   when any of those lines is no longer added, as is, at H.
@@ -30,6 +38,7 @@ from bench.points.file_at import file_at
 from bench.score.linemap import map_line
 
 HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
+TRIVIAL_RE = re.compile(r"[\s\W]*")
 COMPARE_FILE_CAP = 300
 
 
@@ -58,10 +67,14 @@ def parse_own_patch(patch: str) -> OwnPatch:
     return OwnPatch(added, removed)
 
 
-def own_patch(client: GitHubClient, repo: str, base_sha: str, sha: str, path: str) -> OwnPatch | None:
-    """The pull request's own patch to `path` at `sha`; MISSING if it doesn't touch it; None if unreadable."""
-    compare = client.get_optional(f"repos/{repo}/compare/{base_sha}...{sha}")
-    if not compare:
+def own_patch(client: GitHubClient, repo: str, pr: dict, sha: str, path: str) -> OwnPatch | None:
+    """The pull request's own patch to `path` at `sha`; MISSING if it doesn't touch it; None if unreadable.
+
+    None too when the compare from the recorded base holds more commits than
+    the pull request (the base is older than the fork point; upstream leaks in).
+    """
+    compare = client.get_optional(f"repos/{repo}/compare/{pr['base_sha']}...{sha}")
+    if not compare or compare.get("ahead_by", len(pr["commits"]) + 1) > len(pr["commits"]):
         return None
     files = compare.get("files") or []
     entry = next((f for f in files if path in (f.get("filename"), f.get("previous_filename"))), None)
@@ -71,8 +84,14 @@ def own_patch(client: GitHubClient, repo: str, base_sha: str, sha: str, path: st
 
 
 def mapped_window(old: str, new: str, window: set[int]) -> set[int]:
-    """The anchored window's place in the newer text, widened to cover both mapped ends."""
-    ends = [map_line(old, new, line) for line in (min(window), max(window)) if line >= 1]
+    """The anchored window's place in the newer text, widened to cover both mapped ends.
+
+    The window is first clamped to the older text, so a window running past
+    either end of the file still maps (instead of collapsing to one line).
+    """
+    last = max(len(old.splitlines()), 1)
+    first_line, last_line = max(min(window), 1), min(max(window), last)
+    ends = [map_line(old, new, line) for line in (first_line, last_line)]
     ends = [end for end in ends if end is not None]
     return set(range(min(ends), max(ends) + 1)) if ends else set()
 
@@ -93,13 +112,18 @@ def context_only(client: GitHubClient, repo: str, anchor: dict, own: tuple[OwnPa
     return bool(fresh & mapped_window(old, new, window))
 
 
-def from_range(client: GitHubClient, repo: str, anchor: dict, base_sha: str, merged_head: str,
-               window: set[int]) -> bool | None:
-    own_a = own_patch(client, repo, base_sha, anchor["commit_sha"], anchor["path"])
-    own_h = own_patch(client, repo, base_sha, merged_head, anchor["path"])
+def substantive(text: str) -> bool:
+    return not TRIVIAL_RE.fullmatch(text)
+
+
+def from_range(client: GitHubClient, repo: str, anchor: dict, pr: dict, window: set[int]) -> bool | None:
+    """`pr`: the PR record (head_sha, base_sha, commits)."""
+    merged_head = pr["head_sha"]
+    own_a = own_patch(client, repo, pr, anchor["commit_sha"], anchor["path"])
+    own_h = own_patch(client, repo, pr, merged_head, anchor["path"])
     if own_a is None or own_a is MISSING or own_h is None:
         return None
-    anchored_own = {text for line, text in own_a.added if line in window}
+    anchored_own = {text for line, text in own_a.added if line in window and substantive(text)}
     if own_h is MISSING:
         return True if anchored_own else None
     if anchored_own:
