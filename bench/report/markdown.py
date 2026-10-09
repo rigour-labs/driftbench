@@ -149,6 +149,7 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", 
                         f"{mins['approved_heads']}). No scores are reported for this repository, and it "
                         "is left out of the calibration sample.", ""]
     lines += [MAIN_HEADER, "|---" * MAIN_COLUMNS + "|", *(tool_row(n, m) for n, m in summary["tools"].items()), ""]
+    lines += spot_check_lines(summary["repo"], calibration or {})
     note = range_note(summary, calibration or {})
     if note:
         lines += [note, ""]
@@ -163,6 +164,35 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", 
                   "Each class has few points, so these intervals are wide: read them as rough, not as rankings.",
                   "", *class_table(classes), "", *model_line(agreement)]
     return lines
+
+
+def judged_by(judges: list[str]) -> str:
+    if all(j.startswith("model:") for j in judges):
+        return "AI verdict, non-Claude model"
+    return "hand-checked" if judges == ["human"] else "human and AI verdicts"
+
+
+def spot_check_lines(repo: str, calibration: dict) -> list[str]:
+    """Right under the headline: how many of an entrant's same-spot matches were the same issue when checked."""
+    lines = []
+    for tool, tally in sorted(calibration.get("location_by_repo", {}).get(repo, {}).items()):
+        verdicts = tally["verdicts"]
+        partly = f", partly {verdicts['partly']}" if verdicts.get("partly") else ""
+        lines.append(f"- {tool}: same issue on spot-check: {verdicts.get('yes', 0)} of {sum(verdicts.values())} "
+                     f"checked{partly} ({judged_by(tally['judges'])}).")
+    return ["Same-spot matches are positions, not meaning; the spot-check reads them:", "", *lines, ""] if lines else []
+
+
+def basis_note(acted: dict[str, dict]) -> str:
+    """Whether acted-on agreement differs clearly by basis: a basis whose 95% interval sits wholly below another's."""
+    intervals = {basis: wilson(c.get("agree", 0), c.get("agree", 0) + c.get("disagree", 0)) for basis, c in acted.items()}
+    intervals = {basis: ci for basis, ci in intervals.items() if ci}
+    if len(intervals) < 2:
+        return ""
+    clear = any(low_ci[1] < high_ci[0] for low_ci in intervals.values() for high_ci in intervals.values())
+    if clear:
+        return "Per-basis agreement differs clearly; read acted-on numbers per basis."
+    return "Per-basis agreement differs, but not clearly at these sample sizes; acted-on is pooled."
 
 
 def calibration_status(calibration: dict) -> str:
@@ -183,7 +213,8 @@ def calibration_section(calibration: dict) -> list[str]:
         lines.append(f"- {tool}, same issue at a location match: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
     for basis, counts in calibration["acted_on"].items():
         lines.append(f"- acted-on ({basis}): agree {counts.get('agree', 0)}, disagree {counts.get('disagree', 0)}")
-    return lines + [""]
+    note = basis_note(calibration["acted_on"])
+    return lines + (["", note] if note else []) + [""]
 
 
 def render(run_name: str, summaries: list[dict], classes: dict[str, dict], calibration: dict,
