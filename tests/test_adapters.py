@@ -23,7 +23,7 @@ def test_rigour_blocking_follows_its_failures_list():
 
 def test_rigour_command_is_pinned_and_uses_the_merge_base(tmp_path):
     assert rigour.command(request(tmp_path)) == [
-        "npx", "--yes", "@rigour-labs/cli@6.10.0", "review", "--base", "b" * 40, "--json"]
+        "npx", "--yes", "@rigour-labs/cli@6.11.2", "review", "--base", "b" * 40, "--json"]
 
 
 def test_rigour_review_verdicts(tmp_path, monkeypatch):

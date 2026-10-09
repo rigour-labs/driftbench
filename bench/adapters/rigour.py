@@ -14,7 +14,7 @@ import subprocess
 
 from bench.harness.types import AdapterError, Finding, ReviewInput, ReviewOutput
 
-VERSION = "6.10.0"
+VERSION = "6.11.2"
 NON_BLOCKING_LISTS = ("advisory", "file_findings", "context_findings")
 
 
