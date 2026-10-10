@@ -82,4 +82,11 @@ one timeout, one provider and one pinned Claude Code CLI, all recorded in
   so its blocking-only catch rate and false blocks are shown as "n/a", not
   as 0.
 
+A **diagnostic** run (never scored) may run the free Rigour entrant on another
+exact version or with another `rigour.yml` (`--rigour-version`,
+`--rigour-config`, e.g. `configs/rigour-security-block.yml`). It does this to
+see what a release candidate's new check says on the frozen corpus. The
+version, the config and its sha256 are fixed in `run.json`; scored runs
+always use the pin.
+
 The method these rules belong to is in [docs/SPEC.md](SPEC.md).
