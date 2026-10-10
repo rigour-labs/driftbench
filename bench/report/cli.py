@@ -4,6 +4,8 @@ from __future__ import annotations
 import argparse
 import functools
 import sys
+
+import yaml
 from pathlib import Path
 
 from bench.collect.github import GitHubClient, GitHubError
@@ -20,6 +22,8 @@ from bench.points.texts import TextSource
 from bench.repos import slug_of
 from bench.report.calibration import CalibrationError, draw, read_calibration, summarise_calibration, write_calibration
 from bench.report.calibration_cli import cmd_ai, cmd_merge, cmd_show
+from bench.issues.cli import OUT as ISSUES_FILE
+from bench.issues.summary import consistency, per_entrant
 from bench.report.classes import per_class
 from bench.report.markdown import render
 from bench.score.cli import ScoreFileError, read_ledger, read_summary
@@ -100,6 +104,18 @@ def class_results(args: argparse.Namespace, repo: str, ledger: list[dict],
     return per_class([row for row in ledger if row["repo"] == repo], usable), "", agreement
 
 
+def issue_results(out: Path) -> dict | None:
+    """The issue-level comparison per repo and entrant, and the judge's self-consistency, if it was run."""
+    path = out / ISSUES_FILE
+    if not path.exists():
+        return None
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    judgments = data.get("judgments") or {}
+    repos = sorted({item["repo"] for item in judgments.values()})
+    return {"model": data.get("model"), "repos": {repo: per_entrant(judgments, repo) for repo in repos},
+            "consistency": consistency(judgments, data.get("repeats") or {})}
+
+
 def load_manifest(run_dir: Path) -> dict | None:
     path = run_dir / "run.json"
     return read_manifest(path) if path.exists() else None
@@ -118,7 +134,7 @@ def cmd_report(args: argparse.Namespace) -> int:
         repo = summary["repo"]
         classes[repo], notes[repo], models[repo] = class_results(args, repo, ledger, manifest)
     calibration = summarise_calibration(read_calibration(out / "calibration.yaml"))
-    page = render(args.run.name, summaries, classes, calibration, notes, models)
+    page = render(args.run.name, summaries, classes, calibration, notes, models, issue_results(out))
     (out / "summary.md").write_text(page, encoding="utf-8")
     print(f"wrote {out / 'summary.md'}")
     return 0
