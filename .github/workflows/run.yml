@@ -86,6 +86,15 @@ jobs:
           print(f"paid={'true' if paid else 'false'}")
           print(f"claude_code={CLAUDE_CODE_VERSION}")
           PY
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        if: steps.paid.outputs.paid == 'true'
+        with:
+          node-version: "22"
+      - name: Install Rigour's core at the pinned version (paid runs; its PROMPT_VERSION goes in run.json)
+        if: steps.paid.outputs.paid == 'true'
+        run: |
+          core=$(python -c "from bench.adapters.rigour import VERSION; print(VERSION)")
+          npm install --prefix "$RUNNER_TEMP/rigour" --no-save "@rigour-labs/core@${core}"
       - name: Fix the run record once (start time, entrant versions, label blob hashes, paid settings)
         env:
           ENTRANTS: ${{ inputs.entrants }}
@@ -104,6 +113,7 @@ jobs:
           if [ -n "$DIAGNOSTIC" ]; then paid_args+=(--diagnostic "$DIAGNOSTIC"); fi
           if [ "$PAID" = "true" ]; then
             paid_args+=(--model "$MODEL" --max-usd "$MAX_USD" --provider "$PROVIDER")
+            paid_args+=(--rigour-core "$RUNNER_TEMP/rigour/node_modules/@rigour-labs/core")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
           fi
           # word splitting of ENTRANTS is intended: one argument per entrant name
@@ -221,6 +231,14 @@ jobs:
         env:
           REPO: ${{ matrix.repo }}
         run: echo "slug=${REPO/\//__}" >> "$GITHUB_OUTPUT"
+      - name: Hash the installed files that hold each paid entrant's instructions (never their text)
+        if: always() && needs.start.outputs.paid == 'true'
+        env:
+          NAME: ${{ needs.start.outputs.name }}
+          SLUG: ${{ steps.slug.outputs.slug }}
+        run: |
+          mkdir -p "work/runs/$NAME"
+          python -m bench.harness.prompts installed "work/runs/$NAME/instructions-$SLUG.json"
       - name: Record this repo's job outcome
         if: always()
         env:

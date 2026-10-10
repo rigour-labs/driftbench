@@ -14,6 +14,7 @@ from bench.adapters.tool_access import ToolAccessError, check_parity, pinned_rig
 from bench.harness.budget import Budget, BudgetError
 from bench.collect.corpus import CorpusError, read_corpus
 from bench.harness.gitrepo import GitError, RepoCheckout
+from bench.harness.prompts import prompt_record
 from bench.harness.runner import SMOKE_MIN_CHANGED_LINES, RunConfig, run_corpus
 from bench.labels.fingerprint import label_fingerprint
 from bench.labels.openrouter import OpenRouterError, key_usage
@@ -39,6 +40,8 @@ def add_run_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     manifest.add_argument("--out", type=Path, required=True)
     manifest.add_argument("--labels", type=Path, default=root / "labels")
     manifest.add_argument("--timeout", type=int, default=900, help="seconds per review")
+    manifest.add_argument("--rigour-core", type=Path, help="paid Rigour: the installed @rigour-labs/core at the pinned "
+                                                          "version, to record its PROMPT_VERSION")
     add_paid_args(manifest)
     manifest.set_defaults(handler=cmd_manifest)
 
@@ -206,7 +209,10 @@ def cmd_manifest(args: argparse.Namespace) -> int:
     try:
         paid, _ = paid_settings(args)
         adapters = select_adapters(args.entrants, paid)
-        manifest = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters), smoke_record(args),
+        paid_run = paid_record(args, adapters)
+        if paid_run:
+            paid_run["prompts"] = prompt_record([a.name for a in adapters if a.paid], args.rigour_core)
+        manifest = run_manifest(args.out, adapters, args.labels, paid_run, smoke_record(args),
                                 subsample_record(args), diagnostic_record(args))
     except ValueError as exc:
         print(exc, file=sys.stderr)
