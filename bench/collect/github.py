@@ -17,6 +17,7 @@ from typing import Any
 
 MIN_INTERVAL_S = 0.8
 MAX_RETRIES = 6
+GRAPHQL = "graphql"
 RATE_LIMIT_MARKERS = ("rate limit", "abuse detection", "http 429")
 PRIMARY_LIMIT_MARKER = "api rate limit exceeded"  # hourly quota; wait for its reset
 MAX_RESET_WAIT_S = 3700
@@ -69,6 +70,13 @@ class GitHubClient:
         """One GET, or None when GitHub answers 404 (e.g. a commit that no longer exists)."""
         return self.cached(path, {}, paginate=False, allow_missing=True)
 
+    def graphql(self, query: str) -> Any:
+        """One GraphQL query (POST), cached like a GET; GitHub's errors raise."""
+        data = self.cached(GRAPHQL, {"query": query}, paginate=False)
+        if not isinstance(data, dict) or data.get("errors") or "data" not in data:
+            raise GitHubError(f"graphql: {str((data or {}).get('errors') if isinstance(data, dict) else data)[:300]}")
+        return data["data"]
+
     def get_all(self, path: str, params: dict[str, str] | None = None) -> list:
         """Every page of a list endpoint, concatenated."""
         pages = self.cached(path, {"per_page": "100", **(params or {})}, paginate=True)
@@ -91,7 +99,8 @@ class GitHubClient:
         return self.cache_dir / f"{hashlib.sha256(key.encode()).hexdigest()}.json"
 
     def fetch(self, path: str, params: dict[str, str], paginate: bool, allow_missing: bool) -> Any:
-        args = ["gh", "api", "-X", "GET", path, "-H", "Accept: application/vnd.github+json"]
+        args = (["gh", "api", GRAPHQL] if path == GRAPHQL
+                else ["gh", "api", "-X", "GET", path, "-H", "Accept: application/vnd.github+json"])
         for key, value in params.items():
             args += ["-f", f"{key}={value}"]
         if paginate:

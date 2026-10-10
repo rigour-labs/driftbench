@@ -26,8 +26,17 @@ A task is a merged pull request from the frozen corpus that:
     history (`userContentEdits`), never a later edit, which can describe the
     review's outcome.
 
-Statements that quote the diff or name the fix line by line are excluded, and
-the exclusion is listed.
+Statements that quote the diff (a `diff` block, or three or more diff-like
+lines) or are under 80 characters are excluded, and each exclusion is listed.
+A pull request that changed more files than a run's limit is left out, so a
+task fits the per-task bound.
+
+`bench build tasks` writes every eligible pull request in a seeded order
+(`tasks/*.yaml`: IDs, SHAs, test paths and the statement's hash, never its
+text). A run takes the first `count` in that order whose hidden tests
+discriminate: on the runner, before any agent spends, they must fail or not
+build at the parent and pass on the merged change. A test that skips or
+cannot run there checks nothing, and its task is passed over and listed.
 
 The agent starts at the pull request's **parent commit**: the merge base of
 its first head with its base branch. Starting there gives it the code as it
