@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "failures": [],
+  "reviewer": {
+    "outcome": "findings",
+    "blind": true,
+    "items": [],
+    "advisory": [{"file": "pkg/worker/loop.go", "line": 42, "class": "correctness", "issue": "the retry loop never stops after shutdown"}],
+    "notes": [],
+    "dropped": [{"file": "pkg/worker/window.go", "line": 12, "class": "correctness", "issue": "off-by-one in the window check", "why": "below the confidence floor"}],
+    "unverified": [{"file": "pkg/worker/loop.go", "line": 50, "class": "contract", "issue": "error from Close is ignored", "why": "could not confirm against the code"}],
+    "disputed": [{"file": "pkg/worker/window.go", "line": 30, "class": "performance", "issue": "allocates per packet", "why": "judges split"}],
+    "dismissed": [],
+    "shown": {"blocking": 0, "should_fix": 1, "folded": 3},
+    "cost_usd": 0.21, "spent_usd": 0.23, "tokens": {"input": 41000, "output": 900}, "cached": false, "pr": null,
+    "record": {"judges": [{"reviewer": "claude", "model": "m", "cost_usd": 0.21}], "blind": true,
+               "reported": {"human_reviews": 0}}
+  }
+}

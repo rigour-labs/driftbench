@@ -35,6 +35,6 @@ def published_finding(finding: dict) -> dict:
     return {**finding, "message": short_message(finding.get("message", ""))}
 
 
-def paid_output(review_text: str, findings: list[dict]) -> dict:
-    """A paid entrant's answer and findings as the tool wrote them (release tarball only)."""
-    return {"review_text": review_text, "findings": findings}
+def paid_output(review_text: str, findings: list[dict], held_back: dict | None = None) -> dict:
+    """A paid entrant's answer and findings as the tool wrote them, and what it held back (release tarball only)."""
+    return {"review_text": review_text, "findings": findings, **({"held_back": held_back} if held_back else {})}

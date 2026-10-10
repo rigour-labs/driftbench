@@ -72,6 +72,18 @@ def spent_usd(reviewer: dict) -> float | None:
     return None
 
 
+HELD_BACK = ("dropped", "unverified", "disputed", "dismissed")
+
+
+def held_back(reviewer: dict) -> dict:
+    """What the reviewer considered but didn't serve: each list with its entries as written (full messages),
+    the `shown` tally (including `folded`), and a count per list. Kept so "saw it and filtered it out" can be
+    told from "never saw it"."""
+    lists = {key: [e for e in (reviewer.get(key) or []) if isinstance(e, dict)] for key in HELD_BACK}
+    return {**lists, "shown": reviewer.get("shown") if isinstance(reviewer.get("shown"), dict) else None,
+            "counts": {key: len(entries) for key, entries in lists.items()}}
+
+
 def to_output(report: dict) -> ReviewOutput:
     reviewer = report.get("reviewer")
     if not isinstance(reviewer, dict):
@@ -85,7 +97,7 @@ def to_output(report: dict) -> ReviewOutput:
     return ReviewOutput(findings=gates + reviewer_findings(reviewer), verdict="fail" if blocks else "pass",
                         cost_usd=spent_usd(reviewer), input_tokens=tokens.get("input"),
                         output_tokens=tokens.get("output"), model_runs=model_runs(reviewer),
-                        leak_signals=leak_signals(reviewer))
+                        leak_signals=leak_signals(reviewer), held_back=held_back(reviewer))
 
 
 class RigourReviewer:
