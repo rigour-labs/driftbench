@@ -99,7 +99,11 @@ order (docs/ISSUES.md).
    and answers one question: does this diff have the problem the reviewer
    pointed out? Reported per arm as points repeated out of points that
    apply. A point about code the agent never wrote is "not applicable" and
-   counted apart. **Lower is better.**
+   counted apart. **Lower is better.** The judge sees both arms' diffs for
+   the point as A and B in a seeded order, nothing naming an arm, and
+   answers repeated, avoided or not_applicable for each; a diff over 30,000
+   characters is cut, and the cut is recorded (`bench build judge`, then
+   `bench build report`).
 2. **Tests.** The pull request's own changed test files, hidden from the
    agent, are applied to the agent's version, and the repository's test
    command runs on them. The result is pass, fail or does not build. The

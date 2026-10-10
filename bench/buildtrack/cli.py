@@ -11,6 +11,7 @@ from pathlib import Path
 
 import yaml
 
+from bench.buildtrack.judge_cli import add_judge_actions
 from bench.buildtrack.tasks import select
 from bench.collect.corpus import CorpusError, read_corpus
 from bench.collect.github import GitHubClient, GitHubError
@@ -32,6 +33,7 @@ def add_build_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     tasks.add_argument("--points", type=Path, default=root / "work" / "points")
     tasks.add_argument("--cache", type=Path, default=root / "work" / "cache", help="API cache (never published)")
     tasks.set_defaults(handler=cmd_tasks)
+    add_judge_actions(actions, root)
 
 
 def cmd_tasks(args: argparse.Namespace) -> int:
