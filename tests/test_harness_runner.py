@@ -211,3 +211,18 @@ def test_a_failing_entrant_in_a_smoke_run_makes_one_attempt(setup):
     smoke = dataclasses.replace(config, max_heads=1, min_changed_lines=5)
     assert run_corpus(FailingTool(), checkout, corpus, smoke) == {"written": 1, "skipped": 0, "error": 1}
     assert not record_path(smoke, FailingTool(), "o/r", 5, origin["head2"]).exists()
+
+
+def test_records_keep_model_runs_leak_signals_and_numeric_diagnostics(setup):
+    corpus, checkout, config, origin = setup
+
+    class Reporting:
+        name, version, paid, reads_history = "reporting", "1", False, False
+
+        def review(self, request):
+            return ReviewOutput([], "pass", model_runs=3, leak_signals=0,
+                                diagnostics={"result_chars": 120, "citation_like": 0})
+    run_corpus(Reporting(), checkout, corpus, config)
+    record = read(config, Reporting(), origin["head1"])
+    assert record["model_runs"] == 3 and record["leak_signals"] == 0
+    assert record["diagnostics"] == {"result_chars": 120, "citation_like": 0}

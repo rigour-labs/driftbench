@@ -98,7 +98,10 @@ def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, conf
         "input_tokens": output.input_tokens,
         "output_tokens": output.output_tokens,
         "error": output.error[:300],
+        "model_runs": output.model_runs,
+        "leak_signals": output.leak_signals,
         **({"charged": output.charged} if output.charged else {}),
+        **({"diagnostics": output.diagnostics} if output.diagnostics else {}),
     }
 
 
