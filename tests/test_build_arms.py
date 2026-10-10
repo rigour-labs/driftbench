@@ -87,7 +87,7 @@ def test_what_rigour_setup_installed_is_recorded(tmp_path):
 
 def test_hidden_tests_run_per_go_package_and_unknown_repos_refuse():
     assert packages(["net/dns/a_test.go", "net/dns/b_test.go", "x_test.go"]) == ["./net/dns", "."]
-    assert GO.test_command(["net/dns/a_test.go"]) == ["go", "test", "-count=1", "./net/dns"]
+    assert GO.test_command(["net/dns/a_test.go"]) == ["go", "test", "-count=1", "-json", "./net/dns"]
     with pytest.raises(ToolchainError):
         toolchain("o/unknown")
 
