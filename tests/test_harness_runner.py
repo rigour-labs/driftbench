@@ -200,7 +200,7 @@ def test_smoke_runs_are_recorded_and_never_scored(tmp_path, capsys):
     smoke = read_manifest(out / "run.json")["smoke"]
     assert smoke["max_heads"] == 1 and smoke["min_changed_lines"] == 20 and "corpus order" in smoke["rule"]
     assert main(["score", "--run", str(out), "--out", str(tmp_path / "results")]) == 1
-    assert "smoke runs are never scored" in capsys.readouterr().err
+    assert "never scored" in capsys.readouterr().err
     full = tmp_path / "full"
     assert main(["manifest", "--entrants", "free", "--out", str(full), "--labels", str(tmp_path)]) == 0
     assert "smoke" not in read_manifest(full / "run.json")
@@ -246,3 +246,23 @@ def test_a_paid_entrants_whole_answer_is_kept_and_free_entrants_get_none(setup):
     assert record["paid_output"]["findings"][0]["message"] == 'Use "x" here: Found: secret code'
     run_corpus(EveryHunk(), checkout, corpus, config)
     assert "paid_output" not in read(config, EveryHunk(), origin["head1"])
+
+
+def test_an_explicit_selection_runs_only_its_heads(setup):
+    corpus, checkout, config, origin = setup
+    only = dataclasses.replace(config, only_heads=frozenset({origin["head2"]}))
+    assert run_corpus(EveryHunk(), checkout, corpus, only)["written"] == 1
+    assert record_path(only, EveryHunk(), "o/r", 5, origin["head2"]).exists()
+    assert not record_path(only, EveryHunk(), "o/r", 5, origin["head1"]).exists()
+
+
+def test_a_diagnostic_run_states_its_purpose_and_limit_and_is_never_scored(tmp_path, capsys):
+    from bench.__main__ import main
+    from bench.harness.cli import read_manifest
+    out = tmp_path / "run"
+    assert main(["manifest", "--entrants", "free", "--out", str(out), "--labels", str(tmp_path),
+                 "--diagnostic", "tell filtered from unseen"]) == 0
+    diagnostic = read_manifest(out / "run.json")["diagnostic"]
+    assert diagnostic["purpose"] == "tell filtered from unseen" and "not what they did" in diagnostic["limit"]
+    assert main(["score", "--run", str(out), "--out", str(tmp_path / "results")]) == 1
+    assert "never scored" in capsys.readouterr().err

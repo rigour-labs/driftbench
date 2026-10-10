@@ -56,3 +56,13 @@ def test_a_failed_check_marks_the_draft_and_never_fails_the_score_job():
     assert "if ! python -m bench.release_check" in check["run"] and "check-failed.txt" in check["run"]
     notes = next(s for s in steps("draft-release") if "notes.md" in s.get("run", ""))
     assert "CHECK FAILED: do not publish" in notes["run"]
+
+
+def test_a_diagnostic_run_is_never_scored_and_its_draft_says_so():
+    assert "diagnostic" in WORKFLOW[True]["workflow_dispatch"]["inputs"]   # PyYAML reads the `on:` key as True
+    using = [s for s in scripts() if "paid_args" in s]
+    assert all('paid_args+=(--diagnostic "$DIAGNOSTIC")' in s for s in using)
+    score = next(s for s in steps("score") if "bench score" in s.get("run", ""))
+    assert '[ -z "$DIAGNOSTIC" ]' in score["run"]
+    notes = next(s for s in steps("draft-release") if "notes.md" in s.get("run", ""))
+    assert "DIAGNOSTIC run, never scored: it is not a result." in notes["run"] and 'diagnostic-$NAME' in notes["run"]

@@ -44,9 +44,9 @@ def tools_in(run_dir: Path) -> list[str]:
 
 
 def is_smoke(run_dir: Path) -> bool:
-    """Whether the run's record marks it a smoke run; ValueError if run.json exists but can't be read."""
+    """Whether the run's record marks it a smoke or diagnostic run; ValueError if run.json can't be read."""
     path = run_dir / "run.json"
-    return path.exists() and "smoke" in read_manifest(path)
+    return path.exists() and bool({"smoke", "diagnostic"} & set(read_manifest(path)))
 
 
 def cmd_score(args: argparse.Namespace) -> int:
@@ -58,7 +58,7 @@ def cmd_score(args: argparse.Namespace) -> int:
         print(exc, file=sys.stderr)
         return 1
     if smoke:
-        print(f"{args.run} is a smoke run (run.json has `smoke`); smoke runs are never scored", file=sys.stderr)
+        print(f"{args.run} is a smoke or diagnostic run (run.json says so); those are never scored", file=sys.stderr)
         return 1
     out = args.out or Path("results") / args.run.name
     client = GitHubClient(args.cache)

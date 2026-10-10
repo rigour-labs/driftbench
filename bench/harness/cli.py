@@ -18,7 +18,7 @@ from bench.harness.runner import SMOKE_MIN_CHANGED_LINES, RunConfig, run_corpus
 from bench.labels.fingerprint import label_fingerprint
 from bench.labels.openrouter import OpenRouterError, key_usage
 from bench.repos import slug_of
-from bench.subsample import SubsampleError, cap_shares, read_selection, restrict, selection_record
+from bench.subsample import SubsampleError, cap_shares, read_selection, restrict, selected_heads, selection_record
 
 
 def add_run_parser(commands: argparse._SubParsersAction, root: Path) -> None:
@@ -51,6 +51,8 @@ def add_paid_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--provider", choices=PROVIDERS, default="anthropic",
                         help="paid entrants: one provider for all (openrouter reads OPENROUTER_API_KEY)")
     parser.add_argument("--subsample", type=Path, help="a committed selection file: only its pull requests run")
+    parser.add_argument("--diagnostic", metavar="PURPOSE",
+                        help="a diagnostic run (never scored): what it is for, recorded in run.json and its notes")
     parser.add_argument("--max-heads", type=int, default=0,
                         help=f"smoke run: only the first N heads per entrant per repo with at least "
                              f"{SMOKE_MIN_CHANGED_LINES} changed lines; never scored")
@@ -90,13 +92,13 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 1
     try:
         started = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters),
-                               smoke_record(args), subsample_record(args))["run_started_at"]
+                               smoke_record(args), subsample_record(args), diagnostic_record(args))["run_started_at"]
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 1
     config = RunConfig(out_dir=args.out, scratch_dir=args.out / "_scratch",
                        npm_cache=args.repos_dir.parent / "npm-cache", timeout_s=args.timeout, run_started_at=started,
-                       budget=budget, max_heads=args.max_heads)
+                       budget=budget, max_heads=args.max_heads, only_heads=selected_heads(selection))
     usage_start = gateway_usage(args, adapters)
     for corpus in corpora:
         checkout = RepoCheckout(f"https://github.com/{corpus['repo']}.git", args.repos_dir / slug_of(corpus["repo"]))
@@ -164,8 +166,18 @@ def subsample_record(args: argparse.Namespace) -> dict | None:
     return selection_record(args.subsample, read_selection(args.subsample)) if args.subsample else None
 
 
+DIAGNOSTIC_LIMIT = ("The entrants are language models, so a re-run can serve different findings than an earlier run "
+                    "on the same head: this shows what they consider and filter on these heads in general, not what "
+                    "they did in that earlier run.")
+
+
+def diagnostic_record(args: argparse.Namespace) -> dict | None:
+    """A diagnostic run's purpose and limit, fixed in run.json so it can never be taken for a result."""
+    return {"purpose": args.diagnostic, "limit": DIAGNOSTIC_LIMIT} if args.diagnostic else None
+
+
 def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None = None,
-                 smoke: dict | None = None, subsample: dict | None = None) -> dict:
+                 smoke: dict | None = None, subsample: dict | None = None, diagnostic: dict | None = None) -> dict:
     """`<out>/run.json`, written once at the first start; a resumed run keeps the first record.
 
     It fixes the labels by content (bench/labels/fingerprint.py): the HEAD
@@ -183,6 +195,7 @@ def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None 
         **({"paid": paid} if paid else {}),
         **({"smoke": smoke} if smoke else {}),
         **({"subsample": subsample} if subsample else {}),
+        **({"diagnostic": diagnostic} if diagnostic else {}),
     }
     out.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n", encoding="utf-8")
@@ -194,7 +207,7 @@ def cmd_manifest(args: argparse.Namespace) -> int:
         paid, _ = paid_settings(args)
         adapters = select_adapters(args.entrants, paid)
         manifest = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters), smoke_record(args),
-                                subsample_record(args))
+                                subsample_record(args), diagnostic_record(args))
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 1
