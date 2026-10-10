@@ -14,6 +14,7 @@ from bench.report.cli import add_report_parsers
 from bench.score.cli import add_score_parser
 from bench.issues.cli import add_issues_parser
 from bench.learning.cli import add_learning_parser
+from bench.buildtrack.cli import add_build_parser
 from bench.subsample_cli import add_subsample_parser
 from bench.points.points_file import build_points, write_points
 from bench.repos import RepoListError, load_repos
@@ -61,6 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_subsample_parser(commands, ROOT)
     add_issues_parser(commands, ROOT)
     add_learning_parser(commands, ROOT)
+    add_build_parser(commands, ROOT)
     return parser
 
 

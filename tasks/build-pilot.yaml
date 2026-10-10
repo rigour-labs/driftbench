@@ -1,0 +1,391 @@
+repo: tailscale/tailscale
+seed: 20261011
+count: 5
+eligible: 18
+max_changed_files: 10
+rule: merged corpus pull requests that changed a test file and another file (at most
+  max_changed_files in all), with an acted-on human point and a statement as first
+  written; in an order drawn with the seed; a run takes the first `count` whose hidden
+  tests fail at the parent and pass on the merged change
+tasks:
+- pr: 21615
+  base_sha: 2249be1ac8ad7f0031c74983d354d2a94d86ee74
+  first_head: a9aeeac275fc480909d5537447d1b56996ea51ec
+  merged_head: f5ca0880cd56ae6738e8399570a3554cd80f8dba
+  created_at: '2026-10-01T21:22:22Z'
+  test_files:
+  - feature/exitnodehealth/responsiveness_test.go
+  - wgengine/magicsock/exitnode_disabled_test.go
+  - wgengine/magicsock/exitnode_test.go
+  changed_files: 9
+  points:
+  - 21615-inline-4161356237-0
+  - 21615-inline-4161388459-0
+  - 21615-inline-4161521434-0
+  - 21615-inline-4166318456-0
+  statement:
+    source: pull request description
+    chars: 516
+    sha256: 633149eec776341a947851a7715951ed08139b5ac623cc316d4c710528c80737
+- pr: 21485
+  base_sha: 48c7fbcc56db8c48e54f4fff9c8d7d128b261eef
+  first_head: 1954fd4d4e11768bd6340ca0cfc5c616271094e1
+  merged_head: 03cbb48056514985c2f120c3530032971db1d224
+  created_at: '2026-09-25T21:31:49Z'
+  test_files:
+  - derp/derp_test.go
+  - derp/derpserver/debugclients_test.go
+  changed_files: 6
+  points:
+  - 21485-inline-4123380736-0
+  statement:
+    source: pull request description
+    chars: 1939
+    sha256: ec37578cfef5631f0a32f86d50750f7aee93cd79a686f399ee7ed4f7aa8f6f05
+- pr: 21672
+  base_sha: b62885dd028442465e1938493e05cc514606d55b
+  first_head: 9b0f3fdc787bc753410cf771f5d6e5c1d24979db
+  merged_head: 72e733d94a65a665b70f396c01b4448acea1822a
+  created_at: '2026-10-06T16:38:53Z'
+  test_files:
+  - tstest/natlab/vmtest/dhcpcd_test.go
+  - tstest/natlab/vmtest/dns_dhcpcd_test.go
+  - tstest/natlab/vmtest/dns_openresolv_test.go
+  changed_files: 5
+  points:
+  - 21672-inline-4199419366-0
+  - 21672-inline-4199446928-0
+  - 21672-inline-4199494901-0
+  - 21672-inline-4199514440-0
+  - 21672-inline-4199591200-0
+  - 21672-inline-4199607639-0
+  - 21672-inline-4199614079-0
+  - 21672-inline-4199630481-0
+  - 21672-inline-4199632909-0
+  statement:
+    source: pull request description
+    chars: 484
+    sha256: 18f64fb1778f89cfe1d0ccebbcf43c907c0d05f6379fa14d0f0336e3e6816781
+- pr: 21369
+  base_sha: b6c6c59dde58194f370be50a39ca24339406dbbd
+  first_head: c7402b6741be96b6253897fc3001f920404f35df
+  merged_head: 8c24b63684eff0333f1eeba5d039b91ef4120f37
+  created_at: '2026-09-17T23:51:06Z'
+  test_files:
+  - ssh/tailssh/tailssh_test.go
+  changed_files: 2
+  points:
+  - 21369-inline-4080541445-0
+  statement:
+    source: pull request description
+    chars: 869
+    sha256: 96021920f74c975b76a88b676a41f4b181912e059f9294e7e040c558de289755
+- pr: 21366
+  base_sha: 630e704763109a0e943d8af4c1439c9cabc23877
+  first_head: 52b20339becad4d973163916c6998c4e201fa5e1
+  merged_head: 6e230bc8ae4044ba56d265fa5298fdaea8413e66
+  created_at: '2026-09-17T22:55:31Z'
+  test_files:
+  - derp/derpserver/derpserver_test.go
+  changed_files: 2
+  points:
+  - 21366-inline-4050822159-0
+  statement:
+    source: pull request description
+    chars: 1152
+    sha256: b83075c36aa0825c22f57c52d1bc93af4ec09c6843f6785df77c1f69fabda1cd
+- pr: 20836
+  base_sha: e1d17a6b999a47711757d0f7d69ee8b9bc8d84ab
+  first_head: 0236f7a4f34579b04d7d4eeed9043925314b9061
+  merged_head: c0df6c90110f1d7ad50231ec2e8571b710d3234d
+  created_at: '2026-08-12T14:49:36Z'
+  test_files:
+  - cmd/k8s-operator/e2e/svc_test.go
+  - cmd/k8s-operator/svc-for-pg_test.go
+  changed_files: 3
+  points:
+  - 20836-inline-3861419778-0
+  - 20836-inline-3861422128-0
+  - 20836-inline-3861423511-0
+  - 20836-inline-3861425430-0
+  statement:
+    source: pull request description
+    chars: 898
+    sha256: 95f3009127b84c844e09ae1624f41cad388df421ccf880fa240f68567a547eea
+- pr: 21575
+  base_sha: b8dc4061b0451836e8528d9780d58f5f61cb3082
+  first_head: 70dd871e22b99bb05918687cbac6275f81d3497a
+  merged_head: 3e9ed1e4da0cd0ebbd46a354d44543b4624288d8
+  created_at: '2026-09-29T14:39:10Z'
+  test_files:
+  - ipn/ipnlocal/local_test.go
+  - tstest/largetailnet/delta_test.go
+  changed_files: 3
+  points:
+  - 21575-inline-4135467280-0
+  statement:
+    source: pull request description
+    chars: 132
+    sha256: c89083c138addac08b38750f0b0b4c9a6711e71a316e1687910ef44f0ddf037d
+- pr: 21606
+  base_sha: 741b13b50981891dc67857adb4774185a0bc2a0a
+  first_head: 33bf232e81468bfd0f63446e9bb93489d2dea200
+  merged_head: 5ce4caf8b512b775d4aef49ddee70bed84cdd3fa
+  created_at: '2026-10-01T03:21:19Z'
+  test_files:
+  - feature/conn25/conn25_test.go
+  - ipn/ipnlocal/dnsconfig_test.go
+  - ipn/ipnlocal/local_test.go
+  changed_files: 8
+  points:
+  - 21606-inline-4184818418-0
+  - 21606-inline-4185571080-0
+  - 21606-inline-4185589592-0
+  statement:
+    source: pull request description
+    chars: 1010
+    sha256: 458ac5339aab5699180368ec8244fadb90d34763c30713eb6d8e4624c6eee4c8
+- pr: 21405
+  base_sha: 3f3e56f4124fff853d50e30c05c86e08d758a3da
+  first_head: d6607ec0819a90aea33c9ce4872c400727b8d6aa
+  merged_head: 624a590b2f836c3d235b5ebad08e1e97f35a74be
+  created_at: '2026-09-21T01:58:46Z'
+  test_files:
+  - net/pktinfo/pktinfo_linux_test.go
+  - net/stunserver/pktinfo_linux_test.go
+  changed_files: 9
+  points:
+  - 21405-inline-4063039404-0
+  - 21405-inline-4063062368-0
+  - 21405-inline-4063082387-0
+  - 21405-inline-4063106350-0
+  - 21405-inline-4063123542-0
+  statement:
+    source: 'issue #21404'
+    chars: 1228
+    sha256: 87fc3341f36677ff9c5b19459be3fabdb84e60eb1918090c1fb01c3c6f459890
+- pr: 21618
+  base_sha: 12e898010c515ca339f1e740e5f7a7fa948df0b2
+  first_head: b1ae5a062bb5f20f0e3e54592c68a40da7b41235
+  merged_head: 67f8c81e610d9f469baf648dcea24a9589b17fb6
+  created_at: '2026-10-01T22:18:31Z'
+  test_files:
+  - logpolicy/logpolicy_test.go
+  - net/dnscache/dnscache_test.go
+  changed_files: 4
+  points:
+  - 21618-inline-4161473733-0
+  - 21618-inline-4161511322-0
+  - 21618-inline-4161513729-0
+  - 21618-inline-4161536853-0
+  statement:
+    source: pull request description
+    chars: 646
+    sha256: b36a8627f7898130c50984d99b8215418d7b98ad3c0751f03191cfbd875c97b4
+- pr: 21420
+  base_sha: 1edf391c9c245ebf622cf78048c851a47752af56
+  first_head: 67f09a1b095ff8fc8a20ece582fe61cdad8c8943
+  merged_head: 3ec09111a611ec74f51602de04ec0131cb4b1773
+  created_at: '2026-09-22T17:29:17Z'
+  test_files:
+  - net/netns/netns_linux_test.go
+  - tstest/natlab/vmtest/peerapi_lan_test.go
+  changed_files: 8
+  points:
+  - 21420-inline-4075178127-0
+  statement:
+    source: pull request description
+    chars: 850
+    sha256: c989d165efaa2846ff9d4a2c1aaffcb3c2cced9f5a7eb6bfc5b33331be593bda
+- pr: 21467
+  base_sha: d229a06f9a4b2340f0749288df0ac4f6de223acd
+  first_head: 6bf537ddbc24b61452b526ca30f0385135e41ec9
+  merged_head: 995fa78bd8cdecba3006309838cf8f368a7b41b3
+  created_at: '2026-09-24T17:11:32Z'
+  test_files:
+  - cmd/k8s-operator/testutils_test.go
+  changed_files: 7
+  points:
+  - 21467-inline-4097317142-0
+  - 21467-inline-4097428178-0
+  - 21467-inline-4097492396-0
+  statement:
+    source: pull request description
+    chars: 800
+    sha256: 990ffa5d4c2a4458531d18fa781afd9a02a7d80e5b4bde8d095692d1a2719d0a
+- pr: 21374
+  base_sha: 610b05c58e8dff3c5ff12ffb35d68e4697216ed6
+  first_head: 5d0fe3b63fafa20a89c061809a8faf39e71eda98
+  merged_head: 6d92a96be80358ece0e44bc820fd0986d2b8e12d
+  created_at: '2026-09-18T03:01:27Z'
+  test_files:
+  - cmd/containerboot/main_test.go
+  changed_files: 2
+  points:
+  - 21374-inline-4061722834-0
+  - 21374-inline-4061749558-0
+  - 21374-inline-4061769951-0
+  - 21374-inline-4061796798-0
+  statement:
+    source: 'issue #21373'
+    chars: 3632
+    sha256: a012552ea5570532e792961723c49e131fe4bf21d1d6d3698297b2329d15751e
+- pr: 21133
+  base_sha: f5f326030b8b681079c84799ba5ec097601fcaff
+  first_head: 0ed6831abc3d5044e7d034fc14d8850f19e75c97
+  merged_head: 373e839e81c66b5f3a2c11a2ff50d8547914ef72
+  created_at: '2026-09-05T16:03:11Z'
+  test_files:
+  - control/controlclient/auto_test.go
+  changed_files: 2
+  points:
+  - 21133-inline-4125635283-0
+  statement:
+    source: 'issue #21132'
+    chars: 2135
+    sha256: 065758408d6fc0ab32f1979a7ddea63ea55d89bb5c97b39dd8d8c12796336181
+- pr: 21038
+  base_sha: 7bb87d3614cbea0381607473ad1522b40478db60
+  first_head: 8e5330d1eebf7fb5bedf20c41dc79186eb577b42
+  merged_head: 8565017487f04f8eca374e7e922abb3574ae050a
+  created_at: '2026-08-30T09:13:06Z'
+  test_files:
+  - derp/derphttp/derphttp_proxy_test.go
+  changed_files: 9
+  points:
+  - 21038-inline-3990971064-0
+  - 21038-inline-3991561782-0
+  statement:
+    source: pull request description
+    chars: 1374
+    sha256: 78c71194dff254be019b424a35f061bf0ea249ebdd15905ef9f5a1bc42a149a6
+- pr: 21588
+  base_sha: 12e898010c515ca339f1e740e5f7a7fa948df0b2
+  first_head: 4c9ccf76f76657447b43cb9590e5fdfa6f438fb8
+  merged_head: 67bb6c73d0495a9eb4aca8099081ffd25b9d4a7f
+  created_at: '2026-09-29T23:23:04Z'
+  test_files:
+  - cmd/derper/saved_syn_linux_test.go
+  - derp/derpserver/derpserver_linux_test.go
+  changed_files: 10
+  points:
+  - 21588-inline-4156413976-0
+  - 21588-inline-4156468111-0
+  statement:
+    source: pull request description
+    chars: 815
+    sha256: 67556c8c0a70465e37395a2e7d34f7f15714cc6bc69eab4103bb8ce5834f5d82
+- pr: 21451
+  base_sha: 7bb87d3614cbea0381607473ad1522b40478db60
+  first_head: f46e9dfdeeb9da52cda5410267f3d7f624785b90
+  merged_head: a5d364d6a91ea6546c05121d1018795a15e2edbe
+  created_at: '2026-09-24T00:20:43Z'
+  test_files:
+  - feature/conn25/conn25_test.go
+  changed_files: 2
+  points:
+  - 21451-inline-4123688579-0
+  statement:
+    source: pull request description
+    chars: 117
+    sha256: 94e597740f7c36b1fd81d6702c9370d1645b5cde1936112cf5a50919000c9f61
+- pr: 21174
+  base_sha: 3014ad828eff09c2ce9bbcb6ae132d700abbb0d7
+  first_head: e407d98897c6216f74215610e7425967a3b7e36f
+  merged_head: 7de266cddc7bc9c2ab52a17f78f8da46eee6a083
+  created_at: '2026-09-09T13:27:59Z'
+  test_files:
+  - cmd/k8s-operator/egress-eps_test.go
+  - cmd/k8s-operator/egress-services_test.go
+  changed_files: 6
+  points:
+  - 21174-inline-4035243779-0
+  statement:
+    source: pull request description
+    chars: 504
+    sha256: a2cfed68b329905685086819cafc403d4520e75733edb1b3dab0324a4b9e7736
+excluded:
+- pr: 13686
+  reason: no acted-on human point
+- pr: 20794
+  reason: no acted-on human point
+- pr: 20829
+  reason: no acted-on human point
+- pr: 20990
+  reason: no acted-on human point
+- pr: 21017
+  reason: changed more than 10 files
+- pr: 21147
+  reason: changed no test file
+- pr: 21172
+  reason: changed more than 10 files
+- pr: 21332
+  reason: changed no test file
+- pr: 21356
+  reason: no acted-on human point
+- pr: 21358
+  reason: changed no test file
+- pr: 21359
+  reason: no acted-on human point
+- pr: 21362
+  reason: changed only tests
+- pr: 21392
+  reason: changed no test file
+- pr: 21393
+  reason: changed no test file
+- pr: 21401
+  reason: no acted-on human point
+- pr: 21412
+  reason: no acted-on human point
+- pr: 21421
+  reason: no acted-on human point
+- pr: 21425
+  reason: changed no test file
+- pr: 21433
+  reason: statement quotes a diff
+- pr: 21441
+  reason: changed only tests
+- pr: 21444
+  reason: changed no test file
+- pr: 21447
+  reason: no acted-on human point
+- pr: 21450
+  reason: no acted-on human point
+- pr: 21457
+  reason: changed no test file
+- pr: 21463
+  reason: changed more than 10 files
+- pr: 21472
+  reason: changed no test file
+- pr: 21479
+  reason: changed no test file
+- pr: 21483
+  reason: no acted-on human point
+- pr: 21495
+  reason: no acted-on human point
+- pr: 21518
+  reason: no acted-on human point
+- pr: 21521
+  reason: changed no test file
+- pr: 21524
+  reason: statement quotes a diff
+- pr: 21582
+  reason: no acted-on human point
+- pr: 21587
+  reason: changed no test file
+- pr: 21595
+  reason: changed more than 10 files
+- pr: 21611
+  reason: no acted-on human point
+- pr: 21616
+  reason: no acted-on human point
+- pr: 21627
+  reason: changed no test file
+- pr: 21633
+  reason: changed no test file
+- pr: 21664
+  reason: changed no test file
+- pr: 21665
+  reason: no acted-on human point
+- pr: 21694
+  reason: changed no test file

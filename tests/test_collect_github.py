@@ -110,3 +110,13 @@ def test_reset_wait_is_capped_and_survives_a_bad_answer():
     sleeps = []
     GitHubClient(None, runner=runner, sleep=sleeps.append, clock=lambda: 0.0).get("x")
     assert 3700 in sleeps
+
+
+def test_graphql_posts_the_query_and_raises_on_errors(tmp_path):
+    runner = ScriptedRunner((0, '{"data": {"repository": {"x": 1}}}', ""), (0, '{"errors": [{"message": "bad"}]}', ""))
+    client, _ = make_client(runner, cache=tmp_path)
+    assert client.graphql("query { repository { x } }") == {"repository": {"x": 1}}
+    assert runner.calls[0][:3] == ["gh", "api", "graphql"] and "query=query { repository { x } }" in runner.calls[0]
+    assert client.graphql("query { repository { x } }") == {"repository": {"x": 1}}   # cached
+    with pytest.raises(GitHubError, match="bad"):
+        client.graphql("query { broken }")
