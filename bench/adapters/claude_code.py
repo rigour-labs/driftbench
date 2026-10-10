@@ -22,13 +22,13 @@ import re
 import subprocess
 
 from bench.adapters.claude_cli import CLAUDE_CODE_VERSION, paid_env, provider_env_names, require_claude_cli
+from bench.adapters.citations import citations, diagnostics
 from bench.adapters.tool_access import DENIED_TOOLS, ISOLATION_ARGS, ISOLATION_ENV, NETWORK_DENIED, READ_ONLY_TOOLS
 from bench.harness.diffstat import parse_hunks
 from bench.harness.types import AdapterError, Finding, ReviewInput, ReviewOutput
 
 LEAKY_TOOLS = {"WebFetch", "WebSearch"}
 LEAKY_COMMAND_RE = re.compile(r"(?<![\w-])(?:gh|curl|wget)(?![\w-])|api\.github\.com|github\.com/.+/pull")
-CITATION_RE = re.compile(r"`?([\w./-]+\.[\w]+):L?(\d+)(?:-L?(\d+))?`?")
 TIMEOUT_MARGIN_S = 120
 
 
@@ -58,18 +58,20 @@ def leak_signals(stream: list[dict]) -> int:
     return count
 
 
-def citations(text: str, changed_paths: set[str]) -> list[Finding]:
-    """Each file:line the review cites for a changed file, once."""
-    seen: set[tuple[str, int, int | None]] = set()
-    findings = []
-    for line in text.splitlines():
-        for match in CITATION_RE.finditer(line):
-            path, first = match.group(1), int(match.group(2))
-            last = int(match.group(3)) if match.group(3) else None
-            if path in changed_paths and (path, first, last) not in seen:
-                seen.add((path, first, last))
-                findings.append(Finding(path, first, False, line.strip(), "code-review", end_line=last))
-    return findings
+def token_counts(result: dict) -> tuple[int | None, int | None]:
+    """(input incl. cache, output) tokens: summed over `modelUsage` (every model the run used, subagents
+    included) when Claude Code reports it, else from the top-level `usage`."""
+    per_model = [u for u in (result.get("modelUsage") or {}).values() if isinstance(u, dict)]
+    if per_model:
+        inputs = sum(int(u.get(k) or 0) for u in per_model
+                     for k in ("inputTokens", "cacheReadInputTokens", "cacheCreationInputTokens"))
+        outputs = sum(int(u.get("outputTokens") or 0) for u in per_model)
+    else:
+        usage = result.get("usage") or {}
+        inputs = sum(int(usage.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens",
+                                                       "cache_creation_input_tokens"))
+        outputs = int(usage.get("output_tokens") or 0)
+    return inputs or None, outputs or None
 
 
 def to_output(stream: list[dict], changed_paths: set[str]) -> ReviewOutput:
@@ -79,13 +81,12 @@ def to_output(stream: list[dict], changed_paths: set[str]) -> ReviewOutput:
     if result.get("is_error"):
         raise AdapterError(f"claude reported an error: {str(result.get('result'))[:200]}",
                            cost_usd=result.get("total_cost_usd"))
-    usage = result.get("usage") or {}
-    inputs = sum(int(usage.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens",
-                                                   "cache_creation_input_tokens"))
-    return ReviewOutput(findings=citations(str(result.get("result") or ""), changed_paths), verdict="pass",
-                        cost_usd=result.get("total_cost_usd"), input_tokens=inputs or None,
-                        output_tokens=usage.get("output_tokens"), model_runs=result.get("num_turns"),
-                        leak_signals=leak_signals(stream))
+    inputs, outputs = token_counts(result)
+    text = str(result.get("result") or "")
+    return ReviewOutput(findings=citations(text, changed_paths), verdict="pass",
+                        cost_usd=result.get("total_cost_usd"), input_tokens=inputs, output_tokens=outputs,
+                        model_runs=result.get("num_turns"), leak_signals=leak_signals(stream),
+                        diagnostics=diagnostics(text, changed_paths, result.get("num_turns")))
 
 
 class ClaudeCodeReview:

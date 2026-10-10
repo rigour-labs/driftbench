@@ -42,6 +42,7 @@ class ReviewOutput:
     model_runs: int | None = None  # model calls the tool made; 0 = honestly free (nothing to review, cached)
     leak_signals: int = 0          # signs the tool saw the PR's human reviews or fetched PR data
     charged: str = ""              # paid reviews: "reported" (the tool's cost) or "bound" (the per-head bound)
+    diagnostics: dict | None = None  # numbers only, never text: how the tool's answer was read
 
 
 class AdapterError(RuntimeError):

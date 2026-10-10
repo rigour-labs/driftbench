@@ -204,3 +204,17 @@ def test_the_pinned_rigour_reports_spent_usd_and_it_is_read():
     cached["reviewer"].update(cached=True, spent_usd=0, cost_usd=0.42)   # a cached verdict re-reports old cost
     out = rigour_reviewer.to_output(cached)
     assert out.cost_usd == 0 and out.model_runs == 0                 # honest $0, nothing ran
+
+
+def test_claude_code_tokens_come_from_model_usage_and_diagnostics_are_recorded():
+    result = {"type": "result", "is_error": False, "result": "Issue at `src/a.py:3`", "total_cost_usd": 0.3,
+              "num_turns": 5, "usage": {"input_tokens": 0, "output_tokens": 0},
+              "modelUsage": {"m1": {"inputTokens": 100, "outputTokens": 20, "cacheReadInputTokens": 1000,
+                                    "cacheCreationInputTokens": 50},
+                             "m2": {"inputTokens": 10, "outputTokens": 5}}}
+    out = claude_code.to_output([result], {"src/a.py"})
+    assert (out.input_tokens, out.output_tokens, out.model_runs) == (1160, 25, 5)
+    assert out.diagnostics == {"result_chars": 21, "citation_like": 1, "link_like": 0, "cited_changed": 1, "num_turns": 5}
+    plain = claude_code.to_output([{**result, "modelUsage": None, "usage": {"input_tokens": 7, "output_tokens": 3}}],
+                                  {"src/a.py"})
+    assert (plain.input_tokens, plain.output_tokens) == (7, 3)
