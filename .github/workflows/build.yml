@@ -70,8 +70,7 @@ jobs:
         env:
           DRY: ${{ inputs.dry_run }}
         run: echo "name=build-$([ "$DRY" = "true" ] && echo dry- || true)$(date -u +%Y-%m-%d)-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
-      - name: Install the pinned Claude Code CLI (paid runs only)
-        if: inputs.dry_run == false
+      - name: Install the pinned Claude Code CLI (dry runs too, so Rigour's setup registers its MCP server as it would)
         run: |
           version=$(python -c "from bench.adapters.claude_cli import CLAUDE_CODE_VERSION as v; print(v)")
           npm install --global "@anthropic-ai/claude-code@${version}"

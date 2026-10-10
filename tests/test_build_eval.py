@@ -106,3 +106,9 @@ def test_every_block_on_the_approved_change_is_listed_as_a_false_block(tmp_path)
     assert clean == {"false_blocks": 0, "listed": [], "files": 1}
     flagged = hooks.false_blocks(repo, home, ENV, {"b.go": hooks.planted()})
     assert flagged["false_blocks"] == 2 and flagged["listed"][0].startswith("b.go: ") and flagged["listed"][1].startswith("stop: ")
+
+
+def test_a_hooks_message_is_its_own_reason_not_its_json():
+    assert hooks.said('{"decision": "block", "reason": "a.go:6 hardcoded secret"}', "") == "a.go:6 hardcoded secret"
+    assert hooks.said('{"continue": false, "user_message": "1 issue found"}', "") == "1 issue found"
+    assert hooks.said("", "info: scanning\n[rigour/security] a.go:6: secret\n") == "[rigour/security] a.go:6: secret"

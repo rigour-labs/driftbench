@@ -83,10 +83,9 @@ def run_hookcheck(checkout: RepoCheckout, parent: str, config: BuildConfig) -> d
         return hooks.hookcheck(repo, box.home, env)
 
 
-def run_false_blocks(checkout: RepoCheckout, parent: str, task: dict, config: BuildConfig) -> dict:
+def run_false_blocks(checkout: RepoCheckout, task: dict, config: BuildConfig) -> dict:
     with sandbox(config.scratch, config.npm_cache) as box:
-        return false_blocks(checkout, parent, task["merged_head"], box.home, box.repo, base_env(box.env, config),
-                            config.rigour_version)
+        return false_blocks(checkout, task, box.home, box.repo, base_env(box.env, config), config.rigour_version)
 
 
 def charge(budget: Budget, arm: str, record: dict, bound: float) -> None:
@@ -103,7 +102,7 @@ def run_task(checkout: RepoCheckout, task: dict, parent: str, prompt: str, confi
     for arm in order:
         record["arms"][arm] = run_arm(arm, checkout, task, parent, prompt, config)
         charge(budget, arm, record["arms"][arm], config.task_bound)
-    record["reference"] = {"false_blocks": run_false_blocks(checkout, parent, task, config)}
+    record["reference"] = {"false_blocks": run_false_blocks(checkout, task, config)}
     return record
 
 

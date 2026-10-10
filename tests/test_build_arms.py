@@ -132,3 +132,12 @@ def test_every_commit_a_task_reads_is_fetched_before_it_starts():
     checkout = Checkout()
     assert parent(checkout, {"pr": 9, "base_sha": "b", "first_head": "f", "merged_head": "m"}) == "parent"
     assert checkout.fetched == ["b", "f", "m"]
+
+
+def test_the_approved_change_is_the_pull_requests_own_not_what_main_gained(history):
+    """Dry run 38069174263 counted 23 'false blocks' over 50 files for a 2-file pull request: the diff from the
+    task's parent to the merged head carried main's later work. The change is base..merged head, from its fork."""
+    from bench.buildtrack.reference import change_base, merged_files
+    checkout, shas, _ = history
+    base = change_base(checkout, shas["later"], shas["second"])                # main moved on; the branch did not
+    assert base == shas["base"] and set(merged_files(checkout, base, shas["second"])) == {"b.go"}

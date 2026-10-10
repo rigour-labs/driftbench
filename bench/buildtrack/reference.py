@@ -2,8 +2,10 @@
 
 - Do the hidden tests discriminate? They must fail or not build at the
   parent (with the tests added) and pass on the merged head.
-- False blocks: the real merged change, written uncommitted into the parent's
-  snapshot with Rigour set up by default, must pass Rigour's hooks.
+- False blocks: the real merged change, written uncommitted into a snapshot of
+  its own base (where its final head forked) with Rigour set up by default,
+  must pass Rigour's hooks. Its own base, not the task's parent: a branch
+  rebased onto newer main would otherwise carry everything main gained.
 Dependencies are fetched with the network before anything runs offline.
 """
 from __future__ import annotations
@@ -46,18 +48,27 @@ def discrimination(checkout: RepoCheckout, task: dict, parent: str, toolchain: T
             "discriminates": at_parent["outcome"] in ("fail", "no-build") and at_merged["outcome"] == "pass"}
 
 
-def merged_files(checkout: RepoCheckout, parent: str, merged_head: str) -> dict[str, str]:
-    """Every file the merged head changed from the parent, as merged (deleted files left out)."""
-    names = checkout.git("diff", "--name-only", "--diff-filter=d", parent, merged_head).stdout.split()
+def change_base(checkout: RepoCheckout, base_sha: str, merged_head: str) -> str:
+    """Where the merged head forked from its base: the pull request's own change is base..merged_head, without
+    anything main gained when the branch was rebased or updated."""
+    return checkout.merge_base(base_sha, merged_head)
+
+
+def merged_files(checkout: RepoCheckout, base: str, merged_head: str) -> dict[str, str]:
+    """Every file the pull request changed, as merged (deleted files left out)."""
+    names = checkout.git("diff", "--name-only", "--diff-filter=d", base, merged_head).stdout.split()
     return files_at(checkout, merged_head, names)
 
 
-def false_blocks(checkout: RepoCheckout, parent: str, merged_head: str, home: Path, dest: Path,
-                 env: dict[str, str], version: str) -> dict:
-    repo = snapshot(checkout, parent, dest)
+def false_blocks(checkout: RepoCheckout, task: dict, home: Path, dest: Path, env: dict[str, str],
+                 version: str) -> dict:
+    """The approved change, written uncommitted into its own base's snapshot with Rigour set up by default:
+    every hook block on it is a false block."""
     try:
+        base = change_base(checkout, task["base_sha"], task["merged_head"])
+        repo = snapshot(checkout, base, dest)
         setup = setup_rigour(repo, env, version)
-        found = hooks.false_blocks(repo, home, env, merged_files(checkout, parent, merged_head))
+        found = hooks.false_blocks(repo, home, env, merged_files(checkout, base, task["merged_head"]))
     except (ArmError, GitError) as exc:
         raise ArmError(f"false-block check: {exc}") from exc
-    return {**found, "setup": setup}
+    return {**found, "base": base, "setup": setup}
