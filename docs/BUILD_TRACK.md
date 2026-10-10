@@ -132,6 +132,17 @@ in one arm only.
 - **The judge:** it sees the agent's diff and the human point, never which
   arm produced the diff.
 
+## Before the pilot: do Rigour's hooks see the agent's work?
+
+The agent cannot commit, so its work stays uncommitted. A hook that checks
+only commits would check nothing in arm B, and the run would wrongly show
+Rigour adding nothing. So before any agent spends, `bench build hookcheck`
+runs on one task's snapshot with the pinned Rigour set up by default. It
+plants a proven issue (a fake AWS key pair in AWS's format, made fresh each time), uncommitted, then runs the
+installed Stop hook and edit hook exactly as Claude Code does: same commands,
+same payloads on stdin, `CLAUDE_PROJECT_DIR` set. The pilot runs only if both
+hooks block, and the result is kept in the run record.
+
 ## Pilot
 
 - **Scope:** 5 tasks, from one repository whose tests build and run on the

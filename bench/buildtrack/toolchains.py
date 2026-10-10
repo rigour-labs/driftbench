@@ -2,7 +2,7 @@
 
 `prepare` runs before the agent, with the network, to fill the dependency
 cache. The agent then runs with `env` (no fetching) and may use only the
-`commands` as shell. `test` runs the hidden tests, given their packages.
+`commands` as shell. `test` runs the hidden tests, given their packages, with machine-readable output.
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ GO = Toolchain(
     prepare=("go", "mod", "download"),
     env={"GOPROXY": "off", "GOFLAGS": "-mod=mod", "GOTOOLCHAIN": "local", "GOSUMDB": "off", "CGO_ENABLED": "0"},
     commands=("Bash(go build:*)", "Bash(go test:*)", "Bash(go vet:*)", "Bash(gofmt:*)"),
-    test=("go", "test", "-count=1"),
+    test=("go", "test", "-count=1", "-json"),
 )
 
 TOOLCHAINS = {"tailscale/tailscale": GO}
