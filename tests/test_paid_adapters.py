@@ -230,3 +230,19 @@ def test_claude_code_with_zero_turns_but_output_counts_as_a_model_run():
     assert out.model_runs == 1 and unreported(out)               # a $0 report from a model that ran: charged the bound
     idle = claude_code.to_output([{**result, "modelUsage": {}, "usage": {}}], {"src/a.py"})
     assert idle.model_runs == 0
+
+
+def test_what_the_rigour_reviewer_held_back_is_kept_with_full_messages():
+    """tests/fixtures/rigour-reviewer-held-back.json (synthetic): dropped, unverified, disputed and dismissed
+    findings, and the shown tally, are kept so "saw it and filtered it" can be told from "never saw it"."""
+    from tests.fixture_files import load_json
+    report = load_json("rigour-reviewer-held-back.json")
+    out = rigour_reviewer.to_output(report)
+    assert [f.message for f in out.findings] == ["the retry loop never stops after shutdown"]   # served only
+    held = out.held_back
+    assert held["counts"] == {"dropped": 1, "unverified": 1, "disputed": 1, "dismissed": 0}
+    assert held["dropped"][0]["issue"] == "off-by-one in the window check" and held["dropped"][0]["why"]
+    assert held["shown"] == {"blocking": 0, "should_fix": 1, "folded": 3}
+    bare = rigour_reviewer.to_output({"status": "PASS", "reviewer": {**report["reviewer"], "dropped": None,
+                                                                      "shown": "n/a"}})
+    assert bare.held_back["counts"]["dropped"] == 0 and bare.held_back["shown"] is None

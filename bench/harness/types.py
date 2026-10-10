@@ -44,6 +44,7 @@ class ReviewOutput:
     charged: str = ""              # paid reviews: "reported" (the tool's cost) or "bound" (the per-head bound)
     diagnostics: dict | None = None  # numbers only, never text: how the tool's answer was read
     review_text: str = ""          # paid entrants: the tool's whole answer, kept in the run's release only
+    held_back: dict | None = None  # paid entrants: what the tool considered but didn't serve (release only)
 
 
 class AdapterError(RuntimeError):
