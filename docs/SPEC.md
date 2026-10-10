@@ -337,7 +337,7 @@ explicit approval and a dollar cap, and is never part of the headline.
 
 ## Reporting rules
 
-- Per tool, per repository. Pooled numbers only alongside per-repo ones.
+- Per tool, per repository. Pooled numbers only alongside per-repo ones. Subsamples: docs/SUBSAMPLES.md.
 - A repository is reported only with **at least 20 acted-on points and at
   least 10 approved heads** (trusted approvals, not overridden; counted from
   the corpus). Below that, the page says *insufficient data*, the summary

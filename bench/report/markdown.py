@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from bench.labels.model_agreement import MIN_RATE_N
+from bench.subsample import SKIPPED
 from bench.score.match import WINDOWS
 from bench.score.metrics import wilson
 
@@ -69,10 +70,22 @@ def block_row(name: str, metrics: dict) -> str:
     return "| " + " | ".join(cells) + " |"
 
 
+def selection_line(summary: dict) -> str:
+    chosen = summary.get("subsample")
+    if not chosen:
+        return ""
+    if chosen["rule"] == "full corpus":
+        return "Selection: full corpus. "
+    if chosen["rule"].startswith(SKIPPED):
+        return f"Selection: {chosen['rule']}. "
+    return (f"Selection: a seeded subsample of {chosen['prs']} PRs and {chosen['heads']} heads ({chosen['rule']}); "
+            "every count below is over it, so intervals are wider than a full run's. ")
+
+
 def corpus_line(summary: dict) -> str:
     c = summary["corpus"]
     checks = ", ".join(f"{k} {v}" for k, v in c["review_commit_checks"].items())
-    return (f"{c['prs']} PRs, {c['rounds']} rounds, {c['points_location_scorable']} location-scorable points "
+    return selection_line(summary) + (f"{c['prs']} PRs, {c['rounds']} rounds, {c['points_location_scorable']} location-scorable points "
             f"({c['points_acted_on']} acted on, {c['acted_on_unknown']} unknown), {c['kept_not_location_scorable']} "
             f"kept points not location-scorable, {c['approved_heads']} approved heads. Review commits: {checks}.")
 
@@ -141,6 +154,9 @@ def model_line(agreement: dict | None) -> list[str]:
 
 def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", calibration: dict | None = None,
                  agreement: dict | None = None) -> list[str]:
+    if (summary.get("subsample") or {}).get("rule", "").startswith(SKIPPED):
+        return [f"## {summary['repo']}", "", f"Pinned at `{summary['pin'][:12]}`. {selection_line(summary)}"
+                "No entrant reviewed it in this run, so it has no scores here; earlier runs' results for it stand.", ""]
     lines = [f"## {summary['repo']}", "", f"Pinned at `{summary['pin'][:12]}`. {corpus_line(summary)}", ""]
     if not summary["reportable"]:
         mins, c = summary["minimums"], summary["corpus"]

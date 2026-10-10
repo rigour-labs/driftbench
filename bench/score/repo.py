@@ -113,5 +113,5 @@ def published_summary(summary: dict) -> dict:
     corpus, mins = summary["corpus"], summary["minimums"]
     reason = (f"{corpus['points_acted_on']} acted-on points (minimum {mins['acted_on_points']}) and "
               f"{corpus['approved_heads']} approved heads (minimum {mins['approved_heads']})")
-    kept = ("repo", "pin", "method_version", "minimums", "reportable", "corpus")
-    return {**{key: summary[key] for key in kept}, "insufficient_data": reason}
+    kept = ("repo", "pin", "method_version", "minimums", "reportable", "corpus", "subsample")
+    return {**{key: summary[key] for key in kept if key in summary}, "insufficient_data": reason}

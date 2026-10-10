@@ -18,6 +18,7 @@ from bench.harness.runner import SMOKE_MIN_CHANGED_LINES, RunConfig, run_corpus
 from bench.labels.fingerprint import label_fingerprint
 from bench.labels.openrouter import OpenRouterError, key_usage
 from bench.repos import slug_of
+from bench.subsample import SubsampleError, cap_shares, read_selection, restrict, selection_record
 
 
 def add_run_parser(commands: argparse._SubParsersAction, root: Path) -> None:
@@ -49,6 +50,7 @@ def add_paid_args(parser: argparse.ArgumentParser) -> None:
                         help="paid entrants: per-head upper bound from the run estimate (repeatable)")
     parser.add_argument("--provider", choices=PROVIDERS, default="anthropic",
                         help="paid entrants: one provider for all (openrouter reads OPENROUTER_API_KEY)")
+    parser.add_argument("--subsample", type=Path, help="a committed selection file: only its pull requests run")
     parser.add_argument("--max-heads", type=int, default=0,
                         help=f"smoke run: only the first N heads per entrant per repo with at least "
                              f"{SMOKE_MIN_CHANGED_LINES} changed lines; never scored")
@@ -77,8 +79,9 @@ def cmd_run(args: argparse.Namespace) -> int:
             budget.per_head_bound(adapter.name)  # BudgetError now, not mid-run, if a paid entrant has no bound
         if any(a.paid for a in adapters):
             check_parity(pinned_rigour_source(RIGOUR_VERSION, args.repos_dir.parent / "npm-cache"))
-        corpora = [read_corpus(p) for p in sorted(args.corpus.glob("*.json"))]
-    except (ValueError, CorpusError, BudgetError, ToolAccessError) as exc:
+        selection = read_selection(args.subsample) if args.subsample else None
+        corpora = [restrict(read_corpus(p), selection) for p in sorted(args.corpus.glob("*.json"))]
+    except (ValueError, CorpusError, BudgetError, ToolAccessError, SubsampleError) as exc:
         print(exc, file=sys.stderr)
         return 1
     corpora = [c for c in corpora if not args.repo or c["repo"] in args.repo]
@@ -87,7 +90,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 1
     try:
         started = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters),
-                               smoke_record(args))["run_started_at"]
+                               smoke_record(args), subsample_record(args))["run_started_at"]
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 1
@@ -136,9 +139,14 @@ def paid_record(args: argparse.Namespace, adapters: list) -> dict | None:
     """What makes the paid comparison fair, fixed in run.json: model, timeout, CLI version, cap, bounds."""
     if not any(a.paid for a in adapters):
         return None
-    return {"model": args.model, "provider": args.provider, "timeout_s": args.timeout,
-            "claude_code": CLAUDE_CODE_VERSION, "max_usd": args.max_usd, "head_bounds": args.head_bound,
-            "tools": tool_record()}
+    record = {"model": args.model, "provider": args.provider, "timeout_s": args.timeout,
+              "claude_code": CLAUDE_CODE_VERSION, "max_usd": args.max_usd, "head_bounds": args.head_bound,
+              "tools": tool_record()}
+    if args.subsample and args.max_usd:
+        selection = read_selection(args.subsample)
+        running = [repo for repo, chosen in selection["repos"].items() if chosen["heads"]]
+        record["cap_shares"] = cap_shares(selection, running, args.max_usd)
+    return record
 
 
 def smoke_record(args: argparse.Namespace) -> dict | None:
@@ -149,8 +157,13 @@ def smoke_record(args: argparse.Namespace) -> dict | None:
             "rule": "the first heads in corpus order whose diff has at least min_changed_lines changed lines"}
 
 
+def subsample_record(args: argparse.Namespace) -> dict | None:
+    """The selection a run used: file, hash, seed, and each repo's rule and counts (bench/subsample.py)."""
+    return selection_record(args.subsample, read_selection(args.subsample)) if args.subsample else None
+
+
 def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None = None,
-                 smoke: dict | None = None) -> dict:
+                 smoke: dict | None = None, subsample: dict | None = None) -> dict:
     """`<out>/run.json`, written once at the first start; a resumed run keeps the first record.
 
     It fixes the labels by content (bench/labels/fingerprint.py): the HEAD
@@ -167,6 +180,7 @@ def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None 
         "labels": label_fingerprint(labels_dir),
         **({"paid": paid} if paid else {}),
         **({"smoke": smoke} if smoke else {}),
+        **({"subsample": subsample} if subsample else {}),
     }
     out.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n", encoding="utf-8")
@@ -177,7 +191,8 @@ def cmd_manifest(args: argparse.Namespace) -> int:
     try:
         paid, _ = paid_settings(args)
         adapters = select_adapters(args.entrants, paid)
-        manifest = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters), smoke_record(args))
+        manifest = run_manifest(args.out, adapters, args.labels, paid_record(args, adapters), smoke_record(args),
+                                subsample_record(args))
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 1

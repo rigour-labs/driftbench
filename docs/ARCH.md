@@ -102,7 +102,7 @@ review is bounded (bench/harness/budget.py, bench/harness/paid.py).
 
 In `run.yml`, a paid run takes the `model`, `max_usd`, `head_bounds` and
 `provider` inputs. The start job records them in `run.json`; each repo job
-gets an even share of the cap; the pinned Claude Code CLI is installed and
+gets a share of the cap (in proportion to its selected heads with a subsample, docs/SUBSAMPLES.md, else even); the pinned Claude Code CLI is installed and
 the provider's secret (`ANTHROPIC_API_KEY`, or `OPENROUTER_API_KEY`) is
 exposed only in the paid review step; the score job writes `spend.md`
 (`bench spend`, with `--openrouter` for that provider) into the draft
