@@ -141,6 +141,8 @@ def paid_record(args: argparse.Namespace, adapters: list) -> dict | None:
         return None
     record = {"model": args.model, "provider": args.provider, "timeout_s": args.timeout,
               "claude_code": CLAUDE_CODE_VERSION, "max_usd": args.max_usd, "head_bounds": args.head_bound,
+              "cap_counts": "each review's reported cost: Claude Code's list-price estimate (total_cost_usd, "
+                            "Rigour's spent_usd), not the provider's bill; the billed amount is in the run's notes",
               "tools": tool_record()}
     if args.subsample and args.max_usd:
         selection = read_selection(args.subsample)

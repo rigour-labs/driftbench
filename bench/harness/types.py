@@ -43,6 +43,7 @@ class ReviewOutput:
     leak_signals: int = 0          # signs the tool saw the PR's human reviews or fetched PR data
     charged: str = ""              # paid reviews: "reported" (the tool's cost) or "bound" (the per-head bound)
     diagnostics: dict | None = None  # numbers only, never text: how the tool's answer was read
+    review_text: str = ""          # paid entrants: the tool's whole answer, kept in the run's release only
 
 
 class AdapterError(RuntimeError):

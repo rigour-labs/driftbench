@@ -165,6 +165,7 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", 
                         f"{mins['approved_heads']}). No scores are reported for this repository, and it "
                         "is left out of the calibration sample.", ""]
     lines += [MAIN_HEADER, "|---" * MAIN_COLUMNS + "|", *(tool_row(n, m) for n, m in summary["tools"].items()), ""]
+    lines += uncited_lines(summary["tools"])
     lines += spot_check_lines(summary["repo"], calibration or {})
     note = range_note(summary, calibration or {})
     if note:
@@ -186,6 +187,18 @@ def judged_by(judges: list[str]) -> str:
     if all(j.startswith("model:") for j in judges):
         return "AI verdict, non-Claude model"
     return "hand-checked" if judges == ["human"] else "human and AI verdicts"
+
+
+def uncited_lines(tools: dict[str, dict]) -> list[str]:
+    """Under the headline: an entrant whose answers cite no place can't score on location, whatever they say."""
+    lines = []
+    for name, metrics in tools.items():
+        if metrics.get("uncited_heads"):
+            label = "Claude Code's /code-review" if name == "claude-code-review" else name
+            lines.append(f"- {label} cites no file:line in headless output ({metrics['uncited_heads']} of "
+                         f"{metrics['diagnosed_heads']} heads), so it can't score on location there; see the "
+                         "issue-level comparison.")
+    return lines + [""] if lines else []
 
 
 def spot_check_lines(repo: str, calibration: dict) -> list[str]:

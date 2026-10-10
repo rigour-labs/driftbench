@@ -80,6 +80,14 @@ def false_blocks(records_by_pr: dict[int, list[dict]]) -> dict:
     }
 
 
+def uncited(records: list[dict]) -> dict:
+    """Heads whose answer cited no place of any shape (from the numbers-only diagnostics), where recorded."""
+    read = [r["diagnostics"] for r in records if isinstance(r.get("diagnostics"), dict)]
+    if not read:
+        return {}
+    return {"uncited_heads": sum(1 for d in read if not d.get("citation_like")), "diagnosed_heads": len(read)}
+
+
 def volume_and_time(records: list[dict]) -> dict:
     """Noise and cost over every distinct head the tool reviewed."""
     scored = [r for r in records if r["verdict"] in SCORED_VERDICTS]
@@ -95,4 +103,5 @@ def volume_and_time(records: list[dict]) -> dict:
         "median_wall_s": round(median(walls), 2) if walls else None,
         "cost_usd_total": round(sum(costs), 4) if costs else None,
         "tokens_total": sum((r.get("input_tokens") or 0) + (r.get("output_tokens") or 0) for r in scored) or None,
+        **uncited(scored),
     }

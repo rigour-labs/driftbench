@@ -46,3 +46,16 @@ def test_scratch_is_skipped_and_an_undecodable_file_is_a_problem_not_a_crash(tmp
     (run / "tool" / "bad.json").write_bytes(b"\xff\xfe binary")
     found = check_paths([run])
     assert len(found) == 1 and "bad.json: unreadable (UnicodeDecodeError)" in found[0]
+
+
+def test_a_paid_entrants_own_output_passes_but_reduced_findings_are_still_checked(tmp_path):
+    import json
+    from bench.release_check import check_paths
+    record = {"findings": [{"message": "short"}],
+              "paid_output": {"review_text": "x" * 5000, "findings": [{"message": "y" * 900, "text": "z"}]}}
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps(record))
+    assert check_paths([path]) == []
+    record["findings"][0]["message"] = "m" * 200
+    path.write_text(json.dumps(record))
+    assert len(check_paths([path])) == 1

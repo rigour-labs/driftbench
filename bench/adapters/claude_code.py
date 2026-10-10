@@ -93,7 +93,7 @@ def to_output(stream: list[dict], changed_paths: set[str]) -> ReviewOutput:
     return ReviewOutput(findings=citations(text, changed_paths), verdict="pass",
                         cost_usd=result.get("total_cost_usd"), input_tokens=inputs, output_tokens=outputs,
                         model_runs=model_runs(result, outputs), leak_signals=leak_signals(stream),
-                        diagnostics=diagnostics(text, changed_paths, result.get("num_turns")))
+                        diagnostics=diagnostics(text, changed_paths, result.get("num_turns")), review_text=text)
 
 
 class ClaudeCodeReview:
