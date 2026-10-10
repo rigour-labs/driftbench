@@ -19,6 +19,7 @@ from bench.collect.corpus import CorpusError, read_corpus
 from bench.collect.github import GitHubClient
 from bench.harness.budget import Budget
 from bench.harness.cli import read_manifest
+from bench.issues.diagnose_cli import add_diagnose_action
 from bench.issues.inputs import entrant_review, judged_points, reviews_by_head
 from bench.issues.judge import ENTRANT, MAX_TOKENS, judge_point, prompt_sha256
 from bench.labels.openrouter import chat
@@ -47,6 +48,7 @@ def add_issues_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     judge.add_argument("--seed", type=int, default=2026)
     judge.add_argument("--repeats", type=int, default=10, help="points asked again for self-consistency")
     judge.set_defaults(handler=cmd_judge)
+    add_diagnose_action(actions, root)
 
 
 def check_args(args: argparse.Namespace) -> None:

@@ -44,3 +44,21 @@ as such.
 OPENROUTER_API_KEY=... python -m bench issues judge --run work/runs/<name> --results results/<name> \
     --model <non-Claude OpenRouter model ID> --max-usd 2
 ```
+
+## Diagnosis: held back, or never raised?
+
+For the points one entrant raised and another didn't, a diagnostic run
+(docs/SUBSAMPLES.md) re-reviews the heads behind them, keeping what
+Rigour's reviewer held back (dropped, unverified, disputed, dismissed).
+`bench issues diagnose` shows the same non-Claude judge, per point, every
+finding the reviewer wrote on the point's eligible heads, served and held
+back mixed and numbered, with nothing saying which list each came from.
+It names the findings that raise the point's issue. The point then lands
+in one bucket: `served` (raised this time), `held_back:<list>` (considered
+and filtered out), or `absent` (never raised). It is a diagnosis, never a
+result.
+
+```bash
+OPENROUTER_API_KEY=... python -m bench issues diagnose --run work/runs/<diagnostic> \
+    --judgments results/<earlier run>/issue-judgments.yaml --out diagnosis.yaml --model <non-Claude ID> --max-usd 1
+```
