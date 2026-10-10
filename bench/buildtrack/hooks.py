@@ -73,9 +73,18 @@ def run_hook(command: str, payload: dict, repo: Path, env: dict[str, str]) -> di
     result = subprocess.run(["sh", "-c", command], input=json.dumps(payload), cwd=repo, capture_output=True,
                             text=True, timeout=HOOK_TIMEOUT_S, check=False,
                             env={**env, "CLAUDE_PROJECT_DIR": str(repo)})
-    message = (result.stdout or "").strip() or (result.stderr or "").strip()
     return {"blocked": blocked(result.returncode, result.stdout or ""), "exit": result.returncode,
-            "message": short_message(message)}
+            "message": short_message(said(result.stdout or "", result.stderr or ""))}
+
+
+def said(stdout: str, stderr: str) -> str:
+    """What the hook told the agent: its JSON answer's reason or message, else its last line of output."""
+    answers = parse_json_lines(stdout, "hook")
+    for key in ("reason", "user_message", "systemMessage", "stopReason"):
+        if answers and isinstance(answers[-1].get(key), str):
+            return answers[-1][key]
+    lines = [line for line in (stdout + "\n" + stderr).splitlines() if line.strip() and not line.startswith("info:")]
+    return lines[-1] if lines else ""
 
 
 def on_files(repo: Path, home: Path, env: dict[str, str], files: dict[str, str], session: str) -> dict:
