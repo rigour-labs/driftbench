@@ -69,6 +69,14 @@ one timeout, one provider and one pinned Claude Code CLI, all recorded in
   or past reviews. Rigour's reviewer learns from a team's history, and this
   benchmark doesn't measure that; a later run with time-ordered learning
   (lessons only from pull requests merged before each head) would.
+- **Instructions.** Each paid run records which review instructions each
+  entrant ran, by hash only. Claude Code's `/code-review` is built into its
+  proprietary native binary: its text is never extracted, copied or
+  published. `run.json` records the native package, version and npm
+  integrity for Claude Code, and the core package, its integrity and its
+  `PROMPT_VERSION` for Rigour. Each review job adds the sha256 of the
+  installed files that hold them (`instructions-<repo>.json`). Anyone can
+  install the same versions and compare.
 - **Claude Code `/code-review`** reports findings in prose; each `path:line`
   it cites in a changed file becomes a finding. It has no blocking findings,
   so its blocking-only catch rate and false blocks are shown as "n/a", not

@@ -82,8 +82,10 @@ def test_a_paid_review_with_a_reported_cost_records_it(setup):
     assert read(config, PaidFake(), origin["head1"])["charged"] == "reported"
 
 
-def test_run_json_records_the_paid_settings_and_tool_access(tmp_path):
+def test_run_json_records_the_paid_settings_and_tool_access(tmp_path, monkeypatch):
     from bench.__main__ import main
+    from bench.harness import prompts
+    monkeypatch.setattr(prompts, "run_text", lambda args: "sha512-native")
     from bench.adapters.tool_access import tool_record
     from bench.harness.cli import read_manifest
     out = tmp_path / "run"
@@ -92,3 +94,4 @@ def test_run_json_records_the_paid_settings_and_tool_access(tmp_path):
     paid = read_manifest(out / "run.json")["paid"]
     assert paid["model"] == "model-x" and paid["max_usd"] == 5.0 and paid["tools"] == tool_record()
     assert paid["claude_code"] == "2.1.285"
+    assert paid["prompts"]["claude-code-review"]["integrity"] == "sha512-native"
