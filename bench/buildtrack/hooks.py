@@ -23,6 +23,7 @@ from pathlib import Path
 
 from bench.buildtrack.arms import read_json
 from bench.buildtrack.evaluate import parse_json_lines
+from bench.harness.publish import short_message
 
 HOOK_TIMEOUT_S = 900
 BLOCK_EXIT = 2
@@ -74,7 +75,7 @@ def run_hook(command: str, payload: dict, repo: Path, env: dict[str, str]) -> di
                             env={**env, "CLAUDE_PROJECT_DIR": str(repo)})
     message = (result.stdout or "").strip() or (result.stderr or "").strip()
     return {"blocked": blocked(result.returncode, result.stdout or ""), "exit": result.returncode,
-            "message": message[-300:]}
+            "message": short_message(message)}
 
 
 def on_files(repo: Path, home: Path, env: dict[str, str], files: dict[str, str], session: str) -> dict:

@@ -161,3 +161,26 @@ hooks block, and the result is kept in the run record.
 - **Afterwards:** the full run's estimate (tasks, repositories, dollars)
   comes from the pilot's measured cost per task, and is fixed before its cap
   is asked for.
+
+## Running it
+
+The `build` workflow runs the whole track for one task file:
+
+1. the lesson stores for its pull requests (docs/LEARNING.md), with the leak
+   assertions;
+2. the hook check;
+3. then, task by task in the file's order, the discrimination check, both
+   arms in a seeded order, the hidden tests on each arm's result, and the
+   false-block check;
+4. then the judge and the report.
+
+Each task's record is `tasks/<pr>.json`. The agent's diff sits under
+`paid_output`, and Rigour's setup and events are recorded as numbers and
+hashes. The statement itself is never recorded.
+
+A **dry run** (the default) does everything but the agent, so it costs
+nothing and proves the pipeline before a paid run. A paid run needs a cap
+(`max_usd`) and a per-arm bound (`task_bound`). A task starts only if the cap
+leaves room for both arms. The OpenRouter key's billed usage is read before
+and after.
+

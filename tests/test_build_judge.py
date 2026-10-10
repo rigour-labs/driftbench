@@ -76,7 +76,8 @@ def test_judge_and_report_commands_run_over_a_build_run_and_resume(tmp_path, mon
     (run / "tasks").mkdir(parents=True)
     points.mkdir()
     (points / "o__r.json").write_text(json.dumps({"schema": 1, "points": [{**POINT, "pr": 7}]}))
-    arm = lambda diff: {"agent": {"diff": diff, "cost_usd": 0.5, "turns": 3, "wall_s": 9}, "tests": {"outcome": "pass"}}
+    arm = lambda diff: {"agent": {"paid_output": {"diff": diff}, "cost_usd": 0.5, "turns": 3, "wall_s": 9},
+                        "tests": {"outcome": "pass"}}
     (run / "tasks" / "7.json").write_text(json.dumps({"repo": "o/r", "pr": 7, "points": [POINT["id"]],
                                                       "arms": {"alone": arm("+a"), "rigour": arm("+b")}}))
     monkeypatch.setattr(judge_cli, "point_text", lambda texts, point: "the retry never stops")

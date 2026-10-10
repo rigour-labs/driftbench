@@ -1,0 +1,160 @@
+name: build
+
+# The build track (docs/BUILD_TRACK.md): the same agent with and without
+# Rigour, on real tasks from the frozen corpus. A dry run (the default) runs
+# everything but the agent and costs nothing: clone, discrimination, the hook
+# check, Rigour's setup, hidden tests and false blocks. A paid run needs a cap
+# a maintainer was given, and the provider's key exists only in its steps.
+# Task statements and the API cache hold review-adjacent text: they stay on
+# the runner and in the Actions cache, never in an artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tasks:
+        description: Task file, e.g. tasks/build-pilot.yaml
+        required: true
+      corpus_tag:
+        description: Published corpus release tag (points, for the judge)
+        required: true
+      dry_run:
+        description: Everything but the agent (free)
+        type: boolean
+        default: true
+      model:
+        description: The agent's model (full ID)
+        default: anthropic/claude-sonnet-5.5
+      provider:
+        description: anthropic or openrouter
+        default: openrouter
+      max_usd:
+        description: Hard cap for the agents (paid runs)
+        default: "0"
+      task_bound:
+        description: Each arm's dollar bound per task (paid runs)
+        default: "0"
+      judge_model:
+        description: The non-Claude judge (paid runs)
+        default: openai/gpt-6.1-sol
+      judge_max_usd:
+        description: Hard cap for the judge (paid runs)
+        default: "0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: stable
+          cache: false
+      - run: pip install -e .
+      - id: stamp
+        env:
+          DRY: ${{ inputs.dry_run }}
+        run: echo "name=build-$([ "$DRY" = "true" ] && echo dry- || true)$(date -u +%Y-%m-%d)-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+      - name: Install the pinned Claude Code CLI (paid runs only)
+        if: inputs.dry_run == false
+        run: |
+          version=$(python -c "from bench.adapters.claude_cli import CLAUDE_CODE_VERSION as v; print(v)")
+          npm install --global "@anthropic-ai/claude-code@${version}"
+          found=$(claude --version | awk '{print $1}')
+          if [ "$found" != "$version" ]; then echo "claude CLI is '$found', expected $version" >&2; exit 1; fi
+      - name: Fetch the frozen corpus and points
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.corpus_tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.json' --dir release
+          mkdir -p work/corpus work/points
+          for f in release/corpus-*.json; do mv "$f" "work/corpus/${f#release/corpus-}"; done
+          for f in release/points-*.json; do mv "$f" "work/points/${f#release/points-}"; done
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            work/cache
+            work/learn-cache
+          key: build-cache-${{ github.run_id }}
+          restore-keys: build-cache-
+      - name: The time-correct lesson stores for these tasks (docs/LEARNING.md)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TASKS: ${{ inputs.tasks }}
+        run: |
+          python - <<'PY'
+          import os, yaml
+          drawn = yaml.safe_load(open(os.environ["TASKS"]))
+          selection = {"seed": None, "purpose": "build track lessons",
+                       "repos": {drawn["repo"]: {"rule": "the task file's pull requests", "heads": 0,
+                                                 "prs": [t["pr"] for t in drawn["tasks"]]}}}
+          yaml.safe_dump(selection, open("work/build-selection.yaml", "w"))
+          print(drawn["repo"], file=open("work/build-repo.txt", "w"))
+          PY
+          repo=$(cat work/build-repo.txt)
+          core=$(python -c "from bench.buildtrack.arms import RIGOUR_VERSION as v; print(v)")
+          npm install --prefix "$RUNNER_TEMP/rigour" --no-save "@rigour-labs/core@${core}"
+          python -m bench learning prepare --repo "$repo" --subsample work/build-selection.yaml --out work/learning
+          node bench/learning/stores.mjs "$RUNNER_TEMP/rigour/node_modules/@rigour-labs/core" \
+            work/learning/crawl.json "work/repos/${repo//\//__}" work/learning/heads.json work/learning
+          python -m bench learning check --out work/learning
+          test "$(jq '.totals.leaking_prs' work/learning/precheck-*.json)" = 0
+      - name: Run the tasks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.stamp.outputs.name }}
+          TASKS: ${{ inputs.tasks }}
+          DRY: ${{ inputs.dry_run }}
+          MODEL: ${{ inputs.model }}
+          PROVIDER: ${{ inputs.provider }}
+          MAX_USD: ${{ inputs.max_usd }}
+          TASK_BOUND: ${{ inputs.task_bound }}
+          ANTHROPIC_API_KEY: ${{ inputs.dry_run == false && inputs.provider == 'anthropic' && secrets.ANTHROPIC_API_KEY || '' }}
+          OPENROUTER_API_KEY: ${{ inputs.dry_run == false && inputs.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || '' }}
+        run: |
+          args=(--tasks "$TASKS" --out "work/build/$NAME" --model "$MODEL" --provider "$PROVIDER" --lessons work/learning)
+          if [ "$DRY" = "true" ]; then args+=(--dry-run); else args+=(--max-usd "$MAX_USD" --task-bound "$TASK_BOUND"); fi
+          python -m bench build run "${args[@]}"
+          cp work/learning/precheck-*.json "work/build/$NAME/"
+      - name: Judge (paid runs only)
+        if: inputs.dry_run == false
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.stamp.outputs.name }}
+          JUDGE: ${{ inputs.judge_model }}
+          JUDGE_MAX_USD: ${{ inputs.judge_max_usd }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python -m bench build judge --run "work/build/$NAME" --model "$JUDGE" --max-usd "$JUDGE_MAX_USD"
+      - name: Report
+        if: always()
+        env:
+          NAME: ${{ steps.stamp.outputs.name }}
+        run: |
+          if [ -d "work/build/$NAME" ]; then
+            python -m bench build report --run "work/build/$NAME"
+            python -m bench.release_check "work/build/$NAME"
+            { echo "### $NAME"; echo '```'; jq '.arms' "work/build/$NAME/summary.json"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: ${{ steps.stamp.outputs.name }}
+          path: work/build/${{ steps.stamp.outputs.name }}
+          if-no-files-found: warn
+          retention-days: 90

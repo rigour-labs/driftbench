@@ -85,12 +85,17 @@ def test_each_planted_key_pair_is_fresh_and_in_aws_format():
 
 def test_rigours_event_log_is_summarised_as_numbers(tmp_path):
     (tmp_path / ".rigour").mkdir()
-    (tmp_path / ".rigour" / "events.jsonl").write_text("\n".join(json.dumps(e) for e in (
-        {"type": "stop_review", "blocked": True, "against": "uncommitted work"},
-        {"type": "stop_review", "blocked": False}, {"type": "hook_check", "blocked": True})) + "\nnot json\n")
-    assert rigour_events(tmp_path) == {"events": 3, "by_type": {"stop_review": {"events": 2, "blocked": 1},
-                                                                 "hook_check": {"events": 1, "blocked": 1}}}
-    assert rigour_events(tmp_path / "none") == {"events": 0, "by_type": {}}
+    events = ({"type": "lessons_served", "lessons": ["l1", "l2"]},
+              {"type": "hook_check", "blocked": True, "files": ["a.go"], "findings": [{"gate": "security-patterns"}]},
+              {"type": "stop_review", "blocked": True, "against": "uncommitted work"},
+              {"type": "hook_check", "blocked": False, "files": ["a.go"]},
+              {"type": "stop_review", "blocked": False})
+    (tmp_path / ".rigour" / "events.jsonl").write_text("\n".join(json.dumps(e) for e in events) + "\nnot json\n")
+    out = rigour_events(tmp_path)
+    assert out["events"] == 5 and out["lessons_served"] == 2 and out["gates"] == {"security-patterns": 1}
+    assert out["by_type"]["hook_check"] == {"events": 2, "blocked": 1} and out["by_type"]["stop_review"]["blocked"] == 1
+    assert out["after_block"] == {"files_blocked": 1, "files_fixed": 1, "stop_blocked": True, "stop_cleared": True}
+    assert rigour_events(tmp_path / "none")["events"] == 0
 
 
 def test_every_block_on_the_approved_change_is_listed_as_a_false_block(tmp_path):
