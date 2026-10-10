@@ -42,3 +42,16 @@ A paid run's cap is split across the repository jobs in proportion to their
 selected heads (recorded in `run.json` as `cap_shares`), so the larger
 sample isn't stopped early by an even split. A review that doesn't fit is
 recorded `not_scored` and counted, as always.
+
+## Diagnostic runs
+
+A diagnostic run answers a question about an earlier result. It is never a
+result itself. Its selection lists exact heads with its purpose
+(`bench subsample --heads-from FILE --purpose ...`): only those heads run,
+not their whole pull requests. `--diagnostic PURPOSE` (run.yml
+`diagnostic`) records the purpose and its limit in `run.json`. `bench score`
+refuses the run, and its draft release is tagged `diagnostic-<name>` with a
+first line saying it is not a result. The limit, stated in its notes: the
+entrants are language models, so a re-run can serve different findings than
+the earlier run on the same head. It shows what they consider and filter on
+those heads in general, not exactly what they did then.

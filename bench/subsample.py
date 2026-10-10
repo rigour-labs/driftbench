@@ -8,7 +8,8 @@ grouped by their largest diff (changed lines, 0-50 / 50-200 / 200-600 /
 600+), each group's share of the target in proportion to its share of the
 repository's heads, pull requests within a group in a seeded random order.
 A repository can also be left out of a round, with the reason, which the
-page then states.
+page then states. A diagnostic run instead lists exact heads with its
+purpose (`explicit`); only those heads run, and it is never scored.
 
 The selection is written once to a committed file, with its seed and the
 source of the diff sizes, and never redrawn; a run records the file's hash,
@@ -100,6 +101,33 @@ def draw(corpora: list[dict], sizes: dict[tuple[str, str], int], targets: dict[s
         own = {head: lines for (repo, head), lines in sizes.items() if repo == corpus["repo"]}
         repos[corpus["repo"]] = draw_repo(corpus, own, targets[corpus["repo"]], rng)
     return {"seed": seed, "buckets": [list(b) for b in BUCKETS], "sizes_from": source, "repos": repos}
+
+
+def explicit(corpora: list[dict], heads: dict[str, set[str]], purpose: str) -> dict:
+    """A selection of exact heads (a diagnostic): the pull requests holding them, and only those heads."""
+    repos = {}
+    for corpus in sorted(corpora, key=lambda c: c["repo"]):
+        wanted = heads.get(corpus["repo"], set())
+        if not wanted:
+            repos[corpus["repo"]] = skipped("no heads listed for this diagnostic")
+            continue
+        holding = [pr for pr in corpus["prs"] if wanted & set(pr_heads(pr))]
+        found = {h for pr in holding for h in pr_heads(pr)} & wanted
+        if found != wanted:
+            raise SubsampleError(f"{corpus['repo']}: not in the corpus: {sorted(h[:12] for h in wanted - found)}")
+        repos[corpus["repo"]] = {"rule": f"explicit heads: {purpose}", "prs": sorted(pr["number"] for pr in holding),
+                                 "heads": len(found), "head_shas": sorted(found)}
+    unknown = set(heads) - set(repos)
+    if unknown:
+        raise SubsampleError(f"repos not in the corpus: {sorted(unknown)}")
+    return {"seed": None, "purpose": purpose, "repos": repos}
+
+
+def selected_heads(selection: dict | None) -> frozenset[str] | None:
+    """The exact heads an explicit selection runs, or None when whole pull requests run."""
+    if selection is None or not any("head_shas" in r for r in selection["repos"].values()):
+        return None
+    return frozenset(h for r in selection["repos"].values() for h in r.get("head_shas", []))
 
 
 def sizes_from_run(run_dir: Path) -> dict[tuple[str, str], int]:

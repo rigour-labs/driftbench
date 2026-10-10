@@ -43,6 +43,9 @@ on:
       subsample:
         description: A committed selection file (bench subsample), e.g. subsamples/run-2.yaml; empty = every pull request
         default: ""
+      diagnostic:
+        description: A diagnostic run's purpose (never scored, tagged diagnostic-*); empty = a normal run
+        default: ""
 
 permissions:
   contents: read
@@ -94,9 +97,11 @@ jobs:
           PAID: ${{ steps.paid.outputs.paid }}
           MAX_HEADS: ${{ inputs.max_heads }}
           SUBSAMPLE: ${{ inputs.subsample }}
+          DIAGNOSTIC: ${{ inputs.diagnostic }}
         run: |
           paid_args=(--max-heads "$MAX_HEADS")
           if [ -n "$SUBSAMPLE" ]; then paid_args+=(--subsample "$SUBSAMPLE"); fi
+          if [ -n "$DIAGNOSTIC" ]; then paid_args+=(--diagnostic "$DIAGNOSTIC"); fi
           if [ "$PAID" = "true" ]; then
             paid_args+=(--model "$MODEL" --max-usd "$MAX_USD" --provider "$PROVIDER")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
@@ -190,9 +195,11 @@ jobs:
           OPENROUTER_API_KEY: ${{ needs.start.outputs.paid == 'true' && inputs.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || '' }}
           MAX_HEADS: ${{ inputs.max_heads }}
           SUBSAMPLE: ${{ inputs.subsample }}
+          DIAGNOSTIC: ${{ inputs.diagnostic }}
         run: |
           paid_args=(--max-heads "$MAX_HEADS")
           if [ -n "$SUBSAMPLE" ]; then paid_args+=(--subsample "$SUBSAMPLE"); fi
+          if [ -n "$DIAGNOSTIC" ]; then paid_args+=(--diagnostic "$DIAGNOSTIC"); fi
           if [ "$PAID" = "true" ]; then
             # this job's share of the run's cap: in proportion to its selected heads, or even without a selection
             share=$(python3 - <<'PY'
@@ -303,9 +310,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PROVIDER: ${{ inputs.provider }}
           MAX_HEADS: ${{ inputs.max_heads }}
+          DIAGNOSTIC: ${{ inputs.diagnostic }}
         run: |
           mkdir -p "results/$NAME"
-          if [ "$MAX_HEADS" = "0" ]; then
+          if [ "$MAX_HEADS" = "0" ] && [ -z "$DIAGNOSTIC" ]; then
             python -m bench score --run "work/runs/$NAME" --out "results/$NAME"
             python -m bench calibrate draw --run "work/runs/$NAME" --results "results/$NAME" --seed "$GITHUB_RUN_ID"
             python -m bench report --run "work/runs/$NAME" --results "results/$NAME"
@@ -352,9 +360,16 @@ jobs:
           CORPUS_TAG: ${{ inputs.corpus_tag }}
           ENTRANTS: ${{ inputs.entrants }}
           MAX_HEADS: ${{ inputs.max_heads }}
+          DIAGNOSTIC: ${{ inputs.diagnostic }}
         run: |
           tar -czf "runs-$NAME.tar.gz" -C "out/work/runs" "$NAME"
           {
+            if [ -n "$DIAGNOSTIC" ]; then
+              echo "**DIAGNOSTIC run, never scored: it is not a result.** Purpose: $DIAGNOSTIC"
+              echo
+              python3 -c 'import json, sys; print("Limit: " + json.load(open(sys.argv[1]))["diagnostic"]["limit"])' "out/work/runs/$NAME/run.json"
+              echo
+            fi
             if [ -s "out/results/$NAME/check-failed.txt" ]; then
               echo "**CHECK FAILED: do not publish.** The records are kept for inspection; a repo job whose records failed the check uploads them with a 3-day retention (90 when they pass):"
               echo
@@ -383,7 +398,10 @@ jobs:
             echo "- this run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo "- commit: ${GITHUB_SHA}"
           } > notes.md
-          if [ "$MAX_HEADS" != "0" ]; then
+          if [ -n "$DIAGNOSTIC" ]; then
+            gh release create "diagnostic-$NAME" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
+              --title "diagnostic-$NAME" --notes-file notes.md "runs-$NAME.tar.gz" "out/results/$NAME/spend.md"
+          elif [ "$MAX_HEADS" != "0" ]; then
             gh release create "smoke-$NAME" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
               --title "smoke-$NAME" --notes-file notes.md "runs-$NAME.tar.gz" "out/results/$NAME/spend.md"
           else

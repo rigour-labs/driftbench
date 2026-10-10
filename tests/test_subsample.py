@@ -107,3 +107,19 @@ def test_run_json_records_the_selection_and_the_cap_shares(tmp_path):
     assert manifest["subsample"]["sha256"] and set(manifest["subsample"]["repos"]) == {"o/a", "o/b"}
     shares_now = manifest["paid"]["cap_shares"]
     assert round(sum(shares_now.values()), 2) == 50.0 and shares_now["o/a"] > shares_now["o/b"]
+
+
+def test_an_explicit_selection_lists_exact_heads_and_their_prs():
+    from bench.subsample import explicit, selected_heads
+    a, b = corpus("o/a", 6), corpus("o/b", 4)
+    wanted = {"o/a": {"2h0", "5h0", "5h1"}}                  # PR 2 has one head, PR 5 has two
+    selection = explicit([a, b], wanted, "why the reviewer missed these")
+    assert selection["repos"]["o/a"] == {"rule": "explicit heads: why the reviewer missed these", "prs": [2, 5],
+                                         "heads": 3, "head_shas": ["2h0", "5h0", "5h1"]}
+    assert selection["repos"]["o/b"]["rule"].startswith("not run in this round")
+    assert selected_heads(selection) == frozenset({"2h0", "5h0", "5h1"})
+    assert selected_heads({"repos": {"o/a": {"prs": [1], "heads": 1}}}) is None
+    with pytest.raises(SubsampleError, match="not in the corpus"):
+        explicit([a], {"o/a": {"nope"}}, "x")
+    with pytest.raises(SubsampleError, match="repos not in the corpus"):
+        explicit([a], {"o/z": {"1h0"}}, "x")

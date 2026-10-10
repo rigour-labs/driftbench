@@ -1,0 +1,58 @@
+seed: null
+purpose: tell, for the 27 run-2 points Claude Code raised and Rigour's reviewer didn't,
+  whether the reviewer considered the issue and held it back (dropped, unverified,
+  disputed, dismissed) or never raised it
+repos:
+  immich-app/immich:
+    rule: 'explicit heads: tell, for the 27 run-2 points Claude Code raised and Rigour''s
+      reviewer didn''t, whether the reviewer considered the issue and held it back
+      (dropped, unverified, disputed, dismissed) or never raised it'
+    prs:
+    - 30262
+    - 30909
+    - 31367
+    - 31557
+    - 31606
+    - 31772
+    - 32088
+    heads: 14
+    head_shas:
+    - 00c42a2ecd93fcdc7073f3e0785b310a5124d776
+    - 1a57ccc75ead65b87c8cb7117593ead86dfb3a59
+    - 37a0acda7dc0badf705c526605e1e2fed10a7b5a
+    - 3a84a5ba609f48a743153069ed86f31489795ca1
+    - 60cebddef5dc76f63579efea69799ff961a63b4d
+    - 71cfed1cf6472ea5ee97aa8a22bd444a6df09e11
+    - 7c41cb05d5c832b58792206e4e9f69f4198094bf
+    - 7e50a9d2caaee53a2b44e45c5c42df555c065d52
+    - af67c54f599bb567e79b16921ea13183bdea2dc1
+    - f600aa3151ce40708adc0f2c7e7281d6008d29bd
+    - fc27371af8cb252c4179f219a01353db24513226
+    - fec1b03a08a3f4e19e4c15645dfb15dc51011271
+    - ff9756f1aad2fafb87bdcd256755ff7bdb6f5d1c
+    - ffd9559d7407bf1aa6a37016e231ce8f6f01c4a6
+  tailscale/tailscale:
+    rule: 'explicit heads: tell, for the 27 run-2 points Claude Code raised and Rigour''s
+      reviewer didn''t, whether the reviewer considered the issue and held it back
+      (dropped, unverified, disputed, dismissed) or never raised it'
+    prs:
+    - 21362
+    - 21447
+    - 21451
+    - 21485
+    - 21595
+    - 21618
+    - 21665
+    heads: 7
+    head_shas:
+    - 0467e3af07c6a5ab49436884d2c1b3dc6f2fa448
+    - 15fe950e5e31844d8f0430c6951597ddbc5eeea1
+    - 701b52dbc12f4df8d8da5e3e100684aa02129ea1
+    - 95a687b9465b769b327219b94f013ee41840edd7
+    - b1ae5a062bb5f20f0e3e54592c68a40da7b41235
+    - c24e779f784b3f9fbf0ec60b32629e7f48d9e54c
+    - f46e9dfdeeb9da52cda5410267f3d7f624785b90
+  zulip/zulip:
+    rule: 'not run in this round: no heads listed for this diagnostic'
+    prs: []
+    heads: 0

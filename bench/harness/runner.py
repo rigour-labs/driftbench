@@ -36,6 +36,7 @@ class RunConfig:
     budget: Budget | None = None  # the hard dollar stop shared by every paid entrant
     max_heads: int = 0  # smoke runs only: review this many heads per entrant per repo (0 = every head)
     min_changed_lines: int = SMOKE_MIN_CHANGED_LINES  # smoke runs only: skip heads smaller than this
+    only_heads: frozenset[str] | None = None  # an explicit selection: run these heads and no others
 
 
 def record_path_for(run_dir: Path, tool: str, repo: str, pr: int, head: str) -> Path:
@@ -151,6 +152,8 @@ def run_corpus(adapter: Adapter, checkout: RepoCheckout, corpus: dict, config: R
         for head, cases in heads_to_run(cases_for_pr(pr)).items():
             if config.max_heads and counts["written"] + counts["skipped"] >= config.max_heads:
                 return counts
+            if config.only_heads is not None and head not in config.only_heads:
+                continue
             path = record_path(config, adapter, corpus["repo"], pr["number"], head)
             if path.exists():
                 counts["skipped"] += 1
