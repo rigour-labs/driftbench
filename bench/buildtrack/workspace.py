@@ -28,8 +28,10 @@ def git(repo: Path, *args: str, env: dict[str, str] | None = None) -> str:
 
 
 def parent(checkout: RepoCheckout, task: dict) -> str:
-    """The merge base of the task's first head and its base commit."""
-    for sha in (task["base_sha"], task["first_head"]):
+    """The merge base of the task's first head and its base commit. Every commit the task reads is fetched
+    here, the merged head too: a squash-merged pull request's head is on no branch, and `git show` on a
+    missing commit misreports it as a missing path."""
+    for sha in (task["base_sha"], task["first_head"], task["merged_head"]):
         if not checkout.ensure_commit(sha, task["pr"]):
             raise GitError(f"commit {sha[:12]} of #{task['pr']} is unavailable")
     return checkout.merge_base(task["base_sha"], task["first_head"])

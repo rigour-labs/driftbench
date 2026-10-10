@@ -43,7 +43,7 @@ def history(tmp_path):
 
 def test_the_agent_starts_at_the_parent_with_no_history_no_remote_and_nothing_later(history):
     checkout, shas, tmp = history
-    start = parent(checkout, {"pr": 1, "base_sha": shas["later"], "first_head": shas["first"]})
+    start = parent(checkout, {"pr": 1, "base_sha": shas["later"], "first_head": shas["first"], "merged_head": shas["second"]})
     assert start == shas["base"]
     repo = snapshot(checkout, start, tmp / "task")
     assert git(repo, "rev-list", "--all").strip().count("\n") == 0          # one commit, nothing else
@@ -114,3 +114,21 @@ def test_an_agent_run_records_its_diff_even_when_the_transcript_is_unreadable(hi
     assert ok["cost_usd"] == 0.42 and "c.go" in ok["diff"] and ok["timed_out"] is False
     broken = run_agent(["sh", "-c", "echo not-json"], repo, {"PATH": "/usr/bin:/bin"}, timeout_s=30)
     assert "unreadable transcript" in broken["error"] and "c.go" in broken["diff"]
+
+
+def test_every_commit_a_task_reads_is_fetched_before_it_starts():
+    """Dry run 38067790727: a squash-merged pull request's head was never fetched, so its test files 'did not
+    exist'. The parent step fetches the base, the first head and the merged head."""
+    class Checkout:
+        def __init__(self):
+            self.fetched = []
+
+        def ensure_commit(self, sha, pr):
+            self.fetched.append(sha)
+            return True
+
+        def merge_base(self, a, b):
+            return "parent"
+    checkout = Checkout()
+    assert parent(checkout, {"pr": 9, "base_sha": "b", "first_head": "f", "merged_head": "m"}) == "parent"
+    assert checkout.fetched == ["b", "f", "m"]

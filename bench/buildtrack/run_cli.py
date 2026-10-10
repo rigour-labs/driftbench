@@ -94,7 +94,21 @@ def setup(args: argparse.Namespace) -> tuple[dict, BuildConfig, RepoCheckout]:
     return drawn, config, checkout
 
 
+def ready(task: dict, drawn: dict, config: BuildConfig, checkout: RepoCheckout, client: GitHubClient) -> dict:
+    """{parent, check, text} for a task that can run, or {reason[, detail]} for one passed over."""
+    found = statement(client, drawn["repo"], task["pr"])
+    if found.get("sha256") != task["statement"]["sha256"]:
+        return {"reason": "the statement no longer matches its hash"}
+    parent = parent_of(checkout, task)
+    check = discrimination(checkout, task, parent, config.toolchain, config.scratch / f"ref-{task['pr']}",
+                           base_env({"PATH": os.environ.get("PATH", ""), "HOME": str(config.scratch)}, config))
+    if not check["discriminates"]:
+        return {"reason": "hidden tests do not discriminate", "detail": check}
+    return {"parent": parent, "check": check, "text": found["text"]}
+
+
 def run_tasks(drawn: dict, config: BuildConfig, checkout: RepoCheckout, client: GitHubClient, budget: Budget) -> list:
+    """Tasks in order until `count` have run; a task that can't be prepared or fails is listed, and the run goes on."""
     done, over = 0, []
     for task in drawn["tasks"]:
         if done >= drawn["count"]:
@@ -103,18 +117,17 @@ def run_tasks(drawn: dict, config: BuildConfig, checkout: RepoCheckout, client: 
         if not config.dry_run and budget.spent + room > budget.max_usd:
             over.append(passed_over(task, f"the cap leaves less than both arms' bounds (${budget.spent:.2f} spent)"))
             break
-        found = statement(client, drawn["repo"], task["pr"])
-        if found.get("sha256") != task["statement"]["sha256"]:
-            over.append(passed_over(task, "the statement no longer matches its hash"))
+        try:
+            found = ready(task, drawn, config, checkout, client)
+            if "reason" in found:
+                over.append(passed_over(task, found["reason"], found.get("detail")))
+                continue
+            record = run_task(checkout, task, found["parent"], arms.prompt_for(found["text"]), config, budget)
+        except (ArmError, GitError, GitHubError, OSError) as exc:
+            print(f"build: #{task['pr']}: {exc}", file=sys.stderr)
+            over.append(passed_over(task, f"error: {str(exc)[:200]}"))
             continue
-        parent = parent_of(checkout, task)
-        check = discrimination(checkout, task, parent, config.toolchain, config.scratch / f"ref-{task['pr']}",
-                               base_env({"PATH": os.environ.get("PATH", ""), "HOME": str(config.scratch)}, config))
-        if not check["discriminates"]:
-            over.append(passed_over(task, "hidden tests do not discriminate", check))
-            continue
-        record = run_task(checkout, task, parent, arms.prompt_for(found["text"]), config, budget)
-        write(config.out / "tasks" / f"{task['pr']}.json", {**record, "discrimination": check})
+        write(config.out / "tasks" / f"{task['pr']}.json", {**record, "discrimination": found["check"]})
         done += 1
     return over
 
