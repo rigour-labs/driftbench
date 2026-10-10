@@ -17,7 +17,8 @@ REVIEWER_REPORT = {
     "reviewer": {"outcome": "findings", "items": [{"file": "a.py", "line": 7, "class": "contract", "issue": "x"}],
                  "advisory": [{"file": "b.py", "line": 2, "class": "style", "issue": "y"}], "notes": [],
                  "cost_usd": 0.42, "tokens": {"input": 1000, "output": 200}, "cached": False, "pr": None,
-                 "record": {"judges": [{"reviewer": "claude", "model": "m", "cost_usd": 0.42}],
+                 "blind": True,
+                 "record": {"judges": [{"reviewer": "claude", "model": "m", "cost_usd": 0.42}], "blind": True,
                             "reported": {"human_reviews": 0}}},
 }
 
@@ -46,10 +47,21 @@ def test_rigour_reviewer_leak_cached_and_unavailable():
 def test_rigour_reviewer_command_and_config():
     adapter = rigour_reviewer.RigourReviewer("model-x", orchestrated=True)
     request = ReviewInput("/w", "b" * 40, "h" * 40, "/d", None, 600, {"HOME": "/home"})
-    assert adapter.command(request, "/home/rigour-bench.yml")[-5:] == ["--reviewer", "--single", "-c",
+    assert adapter.command(request, "/home/rigour-bench.yml")[-6:] == ["--reviewer", "--single", "--blind", "-c",
                                                                        "/home/rigour-bench.yml", "--orchestrator"]
     config = rigour_reviewer.reviewer_config("model-x", 600)["review"]["reviewer"]
     assert config["models"] == {"claude": "model-x"} and config["timeout_ms"] == 600_000 and config["mode"] == "single"
+
+
+def test_a_review_not_marked_blind_is_a_leak():
+    """--blind means no pull request context; a report that doesn't say so can't be trusted to be time-correct."""
+    for change in ({"blind": False}, {"blind": None}, {"record": {**REVIEWER_REPORT["reviewer"]["record"], "blind": None}}):
+        report = copy.deepcopy(REVIEWER_REPORT)
+        report["reviewer"].update(change)
+        assert rigour_reviewer.to_output(report).leak_signals == 1
+    no_record = copy.deepcopy(REVIEWER_REPORT)
+    del no_record["reviewer"]["record"]
+    assert rigour_reviewer.to_output(no_record).leak_signals == 0          # e.g. nothing to review: no record
 
 
 def stream(result: dict, tools: list[dict]) -> list[dict]:
@@ -184,6 +196,7 @@ def test_the_pinned_rigour_reports_spent_usd_and_it_is_read():
     A recorded reviewer report needs a paid run; this checks the key exists and is the one we read first."""
     keys = (FIXTURES / "rigour-reviewer-json-keys.txt").read_text()
     assert "spent_usd: result.spentUsd" in keys and "cost_usd: result.costUsd" in keys
+    assert "blind: !!result.blind" in keys                         # the pinned reviewer reports --blind
     report = copy.deepcopy(REVIEWER_REPORT)
     report["reviewer"].update(spent_usd=1.37, cost_usd=0.42)       # all runs vs the verdict's judges only
     assert rigour_reviewer.to_output(report).cost_usd == 1.37

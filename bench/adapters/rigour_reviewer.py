@@ -1,4 +1,4 @@
-"""Rigour with its reviewer: `rigour review --base <mb> --json --reviewer --single -c <config>` (paid).
+"""Rigour with its reviewer: `rigour review --base <mb> --json --reviewer --single --blind -c <config>` (paid).
 
 Runs the deterministic gates and then the reviewer, which drives the pinned
 Claude Code CLI with the run's model (set through a config file written into
@@ -13,10 +13,12 @@ Blocking follows Rigour: gate failures and reviewer `items` block;
 `advisory` and `notes` don't. A reviewer that reports `unavailable` is an
 error, not a block.
 
-Time-correctness: the reviewer looks up the pull request and its human
-reviews through `gh`. In the sandbox that lookup fails (no token, no login, no
-remote). Every head checks the reviewer's own record: any human review seen,
-or a pull request found, is a leak signal and the head is not scored.
+Time-correctness: `--blind` makes the reviewer review the change alone, with
+no pull request lookup, description or human reviews, so it needs no `gh`,
+and the sandbox gives it none. Every head checks the reviewer's own report:
+a review not marked blind (in the reviewer section and in its record), any
+human review seen, or a pull request found is a leak signal, and the head is
+not scored.
 """
 from __future__ import annotations
 
@@ -47,9 +49,11 @@ def reviewer_findings(reviewer: dict) -> list[Finding]:
 
 
 def leak_signals(reviewer: dict) -> int:
+    """Signs the review could have seen pull request context: not blind, human reviews seen, a pull request found."""
     record = reviewer.get("record") or {}
     seen = int(((record.get("reported") or {}).get("human_reviews")) or 0)
-    return seen + (1 if reviewer.get("pr") else 0)
+    not_blind = reviewer.get("blind") is not True or (bool(record) and record.get("blind") is not True)
+    return seen + (1 if reviewer.get("pr") else 0) + (1 if not_blind else 0)
 
 
 def model_runs(reviewer: dict) -> int | None:
@@ -97,7 +101,7 @@ class RigourReviewer:
 
     def command(self, request: ReviewInput, config: Path) -> list[str]:
         return ["npx", "--yes", f"@rigour-labs/cli@{VERSION}", "review", "--base", request.base_sha, "--json",
-                "--reviewer", "--single", "-c", str(config), *(["--orchestrator"] if self.orchestrated else [])]
+                "--reviewer", "--single", "--blind", "-c", str(config), *(["--orchestrator"] if self.orchestrated else [])]
 
     def review(self, request: ReviewInput) -> ReviewOutput:
         env = paid_env(request, self.provider)
