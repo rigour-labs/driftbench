@@ -246,3 +246,16 @@ def test_what_the_rigour_reviewer_held_back_is_kept_with_full_messages():
     bare = rigour_reviewer.to_output({"status": "PASS", "reviewer": {**report["reviewer"], "dropped": None,
                                                                       "shown": "n/a"}})
     assert bare.held_back["counts"]["dropped"] == 0 and bare.held_back["shown"] is None
+
+
+def test_how_the_rigour_reviewer_ran_is_kept_so_an_empty_verdict_can_be_explained():
+    """Diagnostic 38049830406: 8 of 21 heads served nothing, and the record could not say whether the reviewer read
+    the whole diff. Its record, mode (passes, reads beyond the slice), tokens and turn counts are kept as reported."""
+    from tests.fixture_files import load_json
+    report = load_json("rigour-reviewer-held-back.json")
+    mode = {"asked": "single", "ran": "orchestrator", "ran_passes": [{"hunks": 4, "chars": 9000, "readBeyondSlice": 2}]}
+    reviewer = {**report["reviewer"], "mode": mode, "num_turns": 7}
+    out = rigour_reviewer.to_output({**report, "reviewer": reviewer})
+    assert out.trace["record"] == report["reviewer"]["record"] and out.trace["mode"] == mode
+    assert out.trace["num_turns"] == 7 and out.trace["tokens"] == report["reviewer"]["tokens"]
+    assert "items" not in out.trace and "dropped" not in out.trace          # findings live in findings and held_back

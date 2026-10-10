@@ -58,6 +58,13 @@ in one bucket: `served` (raised this time), `held_back:<list>` (considered
 and filtered out), or `absent` (never raised). It is a diagnosis, never a
 result.
 
+An `absent` point on a head where the reviewer served nothing needs one
+more question: did it read the change and find nothing, or stop early?
+Each paid record keeps the reviewer's own account of how it ran under
+`paid_output.trace` (its record, with judges and lessons served; its
+mode, with the passes, their hunks and characters, and reads beyond the
+slice; tokens; turn counts where reported), release tarball only.
+
 ```bash
 OPENROUTER_API_KEY=... python -m bench issues diagnose --run work/runs/<diagnostic> \
     --judgments results/<earlier run>/issue-judgments.yaml --out diagnosis.yaml --model <non-Claude ID> --max-usd 1
