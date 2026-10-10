@@ -25,8 +25,10 @@ verdicts are `calibration.yaml` (merged), `calibration-claude.yaml` and
   repeated its verdict on 19 of 20 re-asks.
 - **Rigour's location matches, read:** of 16 spot-checked, 6 were the same
   issue, 2 partly, 8 not.
-- **Status:** the spot-check sample is incomplete (2 acted-on entries got
-  no valid verdict from the model, twice), so the headline is unvalidated.
+- **Status:** the spot-check sample is complete. Two acted-on entries got no
+  valid verdict from the model (twice), so the maintainer judged them; a
+  human verdict wins. Acted-on decisions agree with their checks on 24 of 26
+  (1 disputed and left out).
 
 ## Files kept in the run's release
 

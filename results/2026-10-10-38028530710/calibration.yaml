@@ -201,8 +201,8 @@ entries:
   pr: 21374
   basis: direct
   acted_on: true
-  verdict: null
-  verdict_by: null
+  verdict: 'yes'
+  verdict_by: human
 - kind: acted_on
   repo: tailscale/tailscale
   point: 21405-inline-4063082387-0
@@ -249,8 +249,8 @@ entries:
   pr: 29013
   basis: ancestor
   acted_on: true
-  verdict: null
-  verdict_by: null
+  verdict: 'yes'
+  verdict_by: human
 - kind: acted_on
   repo: immich-app/immich
   point: 29013-inline-3830387992-0
