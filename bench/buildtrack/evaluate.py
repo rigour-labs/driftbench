@@ -5,7 +5,8 @@
   outcome is pass, fail, no-build or no-tests (every test skipped or none ran).
 - Discriminating: the hidden tests fail or don't build at the parent and pass
   on the merged head; otherwise the task checks nothing and is passed over.
-- Rigour's own event log (arm B): what its hooks checked and blocked.
+- Rigour's own event log (arm B): what it did during the run (brief and lessons served, edit checks,
+  blocks, stop reviews) and what the agent fixed after a block.
 """
 from __future__ import annotations
 
@@ -74,13 +75,40 @@ def discriminates(at_parent: dict, at_merged: dict) -> bool:
     return at_parent["outcome"] in ("fail", "no-build") and at_merged["outcome"] == "pass"
 
 
+def fixed_after_block(lines: list[dict]) -> dict:
+    """Blocks the agent then cleared: an edit check that blocked a file and a later one on that file that passed;
+    a stop review that blocked and a later one that didn't."""
+    open_files: set[str] = set()
+    fixed_files: set[str] = set()
+    stop_blocked = stop_cleared = False
+    for e in lines:
+        if e.get("type") == "hook_check":
+            files = set(e.get("files") or [])
+            if e.get("blocked"):
+                open_files |= files
+            else:
+                fixed_files |= files & open_files
+        elif e.get("type") == "stop_review":
+            stop_blocked = stop_blocked or bool(e.get("blocked"))
+            stop_cleared = stop_cleared or (stop_blocked and not e.get("blocked"))
+    return {"files_blocked": len(open_files), "files_fixed": len(fixed_files),
+            "stop_blocked": stop_blocked, "stop_cleared": stop_cleared}
+
+
 def rigour_events(repo: Path) -> dict:
-    """Arm B: Rigour's event log summarised, numbers only (what was checked, blocked, by kind)."""
+    """Arm B: what Rigour did during the run, from its own event log, numbers only: every event by type and how
+    many blocked, the checks that fired (by gate), lessons served, and what the agent fixed after a block."""
     path = repo / EVENTS
     lines = parse_json_lines(path.read_text(encoding="utf-8"), str(EVENTS)) if path.exists() else []
     by_type: dict[str, dict[str, int]] = {}
+    gates: dict[str, int] = {}
     for e in lines:
         entry = by_type.setdefault(str(e.get("type")), {"events": 0, "blocked": 0})
         entry["events"] += 1
         entry["blocked"] += 1 if e.get("blocked") else 0
-    return {"events": len(lines), "by_type": by_type}
+        for finding in e.get("findings") or []:
+            if isinstance(finding, dict):
+                gates[str(finding.get("gate"))] = gates.get(str(finding.get("gate")), 0) + 1
+    served = sum(len(e.get("lessons") or []) for e in lines if e.get("type") == "lessons_served")
+    return {"events": len(lines), "by_type": by_type, "gates": gates, "lessons_served": served,
+            "after_block": fixed_after_block(lines)}

@@ -19,6 +19,7 @@ from bench.buildtrack.judge import ENTRANT, MAX_TOKENS, judge_point, prompt_sha2
 from bench.buildtrack.report import summary
 from bench.collect.github import GitHubClient, GitHubError
 from bench.harness.budget import Budget
+from bench.harness.publish import PAID_OUTPUT
 from bench.labels.openrouter import chat
 from bench.labels.prelabel_cli import CLAUDE_MARKERS
 from bench.points.points_file import read_points
@@ -73,7 +74,7 @@ def targets(tasks: list[dict], args: argparse.Namespace) -> list[tuple[dict, str
             continue
         points = {p["id"]: p for p in read_points(args.points / f"{slug_of(task['repo'])}.json")["points"]}
         texts = TextSource(GitHubClient(args.cache), task["repo"])
-        diffs = {arm: task["arms"][arm]["agent"].get("diff") or "" for arm in ARMS}
+        diffs = {arm: (task["arms"][arm]["agent"].get(PAID_OUTPUT) or {}).get("diff") or "" for arm in ARMS}
         for point_id in task["points"]:
             comment = point_text(texts, points[point_id]) if point_id in points else None
             if comment is not None:

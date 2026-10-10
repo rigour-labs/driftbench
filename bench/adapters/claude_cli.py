@@ -39,17 +39,22 @@ def check_model_id(model: str, provider: str) -> None:
         raise ValueError(f"{model!r}: through OpenRouter, give a full versioned anthropic/ model ID, not an alias")
 
 
-def paid_env(request: ReviewInput, provider: str = "anthropic") -> dict[str, str]:
-    """The sandbox env plus the provider's variables, and nothing else from this machine."""
+def provider_env(base: dict[str, str], provider: str = "anthropic") -> dict[str, str]:
+    """`base` plus the provider's variables, and nothing else from this machine."""
     if provider == "openrouter":
         key = os.environ.get(OPENROUTER_KEY)
         if not key:
             raise AdapterError(f"{OPENROUTER_KEY} is not set; a paid entrant can't run through OpenRouter without it")
-        return {**request.env, "ANTHROPIC_BASE_URL": OPENROUTER_BASE_URL, "ANTHROPIC_AUTH_TOKEN": key, KEY_NAME: ""}
+        return {**base, "ANTHROPIC_BASE_URL": OPENROUTER_BASE_URL, "ANTHROPIC_AUTH_TOKEN": key, KEY_NAME: ""}
     key = os.environ.get(KEY_NAME)
     if not key:
         raise AdapterError(f"{KEY_NAME} is not set; a paid entrant can't run without it")
-    return {**request.env, KEY_NAME: key}
+    return {**base, KEY_NAME: key}
+
+
+def paid_env(request: ReviewInput, provider: str = "anthropic") -> dict[str, str]:
+    """The sandbox env plus the provider's variables, and nothing else from this machine."""
+    return provider_env(request.env, provider)
 
 
 def require_claude_cli(env: dict[str, str]) -> None:

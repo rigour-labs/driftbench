@@ -81,8 +81,10 @@ def test_what_rigour_setup_installed_is_recorded(tmp_path):
     (home / ".claude" / "settings.json").write_text(json.dumps({"hooks": {"Stop": [{"hooks": []}]}}))
     (home / ".claude.json").write_text(json.dumps({"mcpServers": {"rigour": {"command": "npx"}}, "userID": "x"}))
     (repo / ".git" / "rigour-enabled").write_text("")
-    assert arms.installed(home, repo) == {"hooks": {"Stop": [{"hooks": []}]}, "mcp_servers": {"rigour": {"command": "npx"}},
-                                          "switched_on": True}
+    assert arms.installed(home, repo) == {"hooks": {"Stop": [{"matcher": None, "commands": []}]},
+                                          "mcp_servers": {"rigour": {"command": "npx"}}, "switched_on": True}
+    summary = arms.hook_summary({"Stop": [{"hooks": [{"command": "x" * 500}]}]})["Stop"][0]["commands"][0]
+    assert len(summary["head"]) == 120 and len(summary["sha256"]) == 64
 
 
 def test_hidden_tests_run_per_go_package_and_unknown_repos_refuse():

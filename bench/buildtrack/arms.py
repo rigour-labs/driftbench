@@ -10,6 +10,7 @@ RIGOUR_REVIEW_LESSONS. Arm A's HOME is empty and it has no MCP servers.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -18,6 +19,7 @@ from bench.adapters.tool_access import NETWORK_DENIED
 from bench.buildtrack.toolchains import Toolchain
 
 ARMS = ("alone", "rigour")
+RIGOUR_VERSION = "6.13.0-rc.9"  # rigour next 6ec7900: every phase-1 fix (hooks routed for Claude Code, MCP pinned)
 AGENT_TOOLS = ("Read", "Grep", "Glob", "Edit", "Write", "MultiEdit", "TodoWrite",
                "Bash(git diff:*)", "Bash(git status:*)", "Bash(git log:*)", "Bash(git show:*)")
 AGENT_DENIED = (*NETWORK_DENIED, "Bash(git push:*)", "Bash(git remote:*)", "Bash(git fetch:*)", "Bash(npm:*)",
@@ -62,9 +64,17 @@ def read_json(path: Path) -> dict:
         raise ArmError(f"unreadable {path}: {exc}") from exc
 
 
+def hook_summary(hooks: dict) -> dict:
+    """Per event, each installed hook's matcher, its command's sha256 and its first 120 characters."""
+    return {event: [{"matcher": entry.get("matcher"),
+                     "commands": [{"sha256": hashlib.sha256(str(h.get("command")).encode()).hexdigest(),
+                                   "head": str(h.get("command"))[:120]} for h in entry.get("hooks", [])]}
+                    for entry in entries] for event, entries in hooks.items()}
+
+
 def installed(home: Path, repo: Path) -> dict:
     """What a run records about arm B's setup (never secrets: these files hold commands, not keys)."""
-    return {"hooks": read_json(home / ".claude" / "settings.json").get("hooks") or {},
+    return {"hooks": hook_summary(read_json(home / ".claude" / "settings.json").get("hooks") or {}),
             "mcp_servers": read_json(home / ".claude.json").get("mcpServers") or {},
             "switched_on": (repo / ".git" / "rigour-enabled").exists()}
 
