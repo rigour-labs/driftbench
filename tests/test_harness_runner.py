@@ -226,3 +226,23 @@ def test_records_keep_model_runs_leak_signals_and_numeric_diagnostics(setup):
     record = read(config, Reporting(), origin["head1"])
     assert record["model_runs"] == 3 and record["leak_signals"] == 0
     assert record["diagnostics"] == {"result_chars": 120, "citation_like": 0}
+
+
+def test_a_paid_entrants_whole_answer_is_kept_and_free_entrants_get_none(setup):
+    corpus, checkout, config, origin = setup
+
+    class PaidTool:
+        name, version, paid, reads_history = "paid-tool", "1", True, False
+
+        def review(self, request):
+            return ReviewOutput([Finding("app.py", 1, False, 'Use "x" here: Found: secret code', "r")], "pass",
+                                cost_usd=0.1, model_runs=1, review_text="Full answer, quoting `code()` at length.")
+    from bench.harness.budget import Budget
+    paid = dataclasses.replace(config, budget=Budget(5.0, {"paid-tool": 1.0}))   # a paid entrant needs a budget
+    run_corpus(PaidTool(), checkout, corpus, paid)
+    record = read(paid, PaidTool(), origin["head1"])
+    assert record["findings"][0]["message"] == "Use here:"                          # reduced, as before
+    assert record["paid_output"]["review_text"] == "Full answer, quoting `code()` at length."
+    assert record["paid_output"]["findings"][0]["message"] == 'Use "x" here: Found: secret code'
+    run_corpus(EveryHunk(), checkout, corpus, config)
+    assert "paid_output" not in read(config, EveryHunk(), origin["head1"])

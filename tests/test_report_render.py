@@ -131,3 +131,15 @@ def test_the_spot_check_sits_under_the_headline_table_and_the_basis_note_follows
     assert basis_note({"ancestor": {"agree": 30}, "range": {"agree": 2, "disagree": 28}}).startswith(
         "Per-basis agreement differs clearly")
     assert basis_note({"direct": {"agree": 3}}) == ""
+
+
+def test_an_entrant_citing_no_place_gets_a_note_under_the_headline():
+    from bench.report.markdown import uncited_lines
+    from bench.score.metrics import uncited
+    records = [{"diagnostics": {"citation_like": 0}}, {"diagnostics": {"citation_like": 2}},
+               {"diagnostics": {"citation_like": 0}}, {}]
+    counts = uncited(records)
+    assert counts == {"uncited_heads": 2, "diagnosed_heads": 3} and uncited([{}]) == {}
+    lines = uncited_lines({"claude-code-review": counts, "rigour-reviewer": {}})
+    assert lines[0] == ("- Claude Code's /code-review cites no file:line in headless output (2 of 3 heads), so it "
+                        "can't score on location there; see the issue-level comparison.")

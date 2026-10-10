@@ -15,7 +15,7 @@ import json
 import sys
 from pathlib import Path
 
-from bench.harness.publish import MESSAGE_LIMIT
+from bench.harness.publish import MESSAGE_LIMIT, PAID_OUTPUT
 
 TEXT_KEYS = {"body", "text", "title", "comment", "diff", "patch", "content", "raw"}
 MAX_STRING = 400
@@ -25,6 +25,8 @@ def problems(value: object, where: str) -> list[str]:
     found: list[str] = []
     if isinstance(value, dict):
         for key, item in value.items():
+            if key == PAID_OUTPUT:  # a paid entrant's own answer, kept in full by design (bench/harness/publish.py)
+                continue
             if key in TEXT_KEYS and isinstance(item, str):
                 found.append(f"{where}.{key}: text-bearing key")
             elif key == "message" and isinstance(item, str) and len(item) > MESSAGE_LIMIT:

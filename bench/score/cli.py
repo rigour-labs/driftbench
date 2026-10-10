@@ -15,6 +15,7 @@ from bench.collect.corpus import CorpusError, read_corpus
 from bench.collect.github import GitHubClient, GitHubError
 from bench.harness.cli import read_manifest
 from bench.harness.runner import RecordError
+from bench.subsample import recorded_selection, restrict, restrict_points
 from bench.points.points_file import PointsError, read_points
 from bench.repos import slug_of
 from bench.score.linemap import FileVersions
@@ -51,6 +52,8 @@ def is_smoke(run_dir: Path) -> bool:
 def cmd_score(args: argparse.Namespace) -> int:
     try:
         smoke = is_smoke(args.run)
+        manifest = read_manifest(args.run / "run.json") if (args.run / "run.json").exists() else {}
+        selection = recorded_selection(manifest)
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 1
@@ -64,9 +67,11 @@ def cmd_score(args: argparse.Namespace) -> int:
         ledger_path = args.run / "ledger.jsonl"
         ledger_path.write_text("", encoding="utf-8")
         for corpus_path in sorted(args.corpus.glob("*.json")):
-            corpus = read_corpus(corpus_path)
-            points_file = read_points(args.points / corpus_path.name)
+            corpus = restrict(read_corpus(corpus_path), selection)
+            points_file = restrict_points(read_points(args.points / corpus_path.name), corpus)
             summary, ledger = score_repo(corpus, points_file, args.run, tools, FileVersions(client, corpus["repo"]))
+            if selection is not None:
+                summary["subsample"] = manifest["subsample"]["repos"].get(corpus["repo"])
             write_summary(summary, args.run / "scores" / f"{slug_of(corpus['repo'])}.json")
             write_summary(published_summary(summary), out / f"{slug_of(corpus['repo'])}.json")
             with ledger_path.open("a", encoding="utf-8") as handle:

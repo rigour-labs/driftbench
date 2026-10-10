@@ -17,7 +17,7 @@ from bench.harness.diffstat import changed_lines, parse_hunks
 from bench.harness.budget import Budget
 from bench.harness.gitrepo import GitError, RepoCheckout
 from bench.harness.paid import paid_gate, settle_review
-from bench.harness.publish import published_finding
+from bench.harness.publish import PAID_OUTPUT, paid_output, published_finding
 from bench.harness.sandbox import env_keys, sandbox
 from bench.harness.types import Adapter, ReviewInput, ReviewOutput
 from bench.repos import slug_of
@@ -102,6 +102,8 @@ def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, conf
         "leak_signals": output.leak_signals,
         **({"charged": output.charged} if output.charged else {}),
         **({"diagnostics": output.diagnostics} if output.diagnostics else {}),
+        **({PAID_OUTPUT: paid_output(output.review_text, [dataclasses.asdict(f) for f in output.findings])}
+           if adapter.paid else {}),
     }
 
 

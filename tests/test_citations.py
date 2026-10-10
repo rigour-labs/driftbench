@@ -33,7 +33,14 @@ def test_only_changed_files_count_and_prefixes_are_resolved():
 def test_diagnostics_are_numbers_only_and_tell_a_miss_from_silence():
     blob = diagnostics((FIXTURES / "cc-review-blob-links.md").read_text(), CHANGED, 7)
     assert blob == {"result_chars": blob["result_chars"], "citation_like": 2, "link_like": 2, "cited_changed": 2,
-                    "num_turns": 7}
+                    "files_named": 2, "num_turns": 7}
     silent = diagnostics((FIXTURES / "cc-review-no-findings.md").read_text(), CHANGED, 3)
     assert silent["citation_like"] == 0 and silent["cited_changed"] == 0 and silent["result_chars"] > 0
     assert all(isinstance(v, int) for v in blob.values())
+
+
+def test_files_named_counts_changed_files_mentioned_without_a_line():
+    from bench.adapters.citations import files_named
+    text = "The retry loop in loop.go never stops; window.go looks fine. Unrelated: myloop.gopher."
+    assert files_named(text, CHANGED) == 2
+    assert files_named("pkg/worker/loop.go is touched", CHANGED) == 1 and files_named("nothing here", CHANGED) == 0

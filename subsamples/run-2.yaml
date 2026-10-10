@@ -1,0 +1,70 @@
+seed: 20261010
+buckets:
+- - 0
+  - 50
+- - 50
+  - 200
+- - 200
+  - 600
+- - 600
+  - null
+sizes_from: changed_lines in the records of release run-2026-10-09-37942795105
+repos:
+  immich-app/immich:
+    rule: whole pull requests until about 32 heads, stratified by largest diff, seeded
+    prs:
+    - 29375
+    - 30262
+    - 30769
+    - 30909
+    - 31039
+    - 31363
+    - 31367
+    - 31418
+    - 31557
+    - 31606
+    - 31753
+    - 31772
+    - 31793
+    - 31822
+    - 31851
+    - 31887
+    - 31989
+    - 32088
+    - 32113
+    - 32181
+    heads: 39
+  tailscale/tailscale:
+    rule: whole pull requests until about 32 heads, stratified by largest diff, seeded
+    prs:
+    - 13686
+    - 20794
+    - 21133
+    - 21172
+    - 21174
+    - 21356
+    - 21362
+    - 21374
+    - 21393
+    - 21401
+    - 21412
+    - 21441
+    - 21447
+    - 21451
+    - 21457
+    - 21467
+    - 21485
+    - 21518
+    - 21521
+    - 21595
+    - 21611
+    - 21618
+    - 21664
+    - 21665
+    - 21672
+    - 21694
+    heads: 33
+  zulip/zulip:
+    rule: 'not run in this round: budget: zulip''s approved heads need the full corpus'
+    prs: []
+    heads: 0

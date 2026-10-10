@@ -337,7 +337,7 @@ explicit approval and a dollar cap, and is never part of the headline.
 
 ## Reporting rules
 
-- Per tool, per repository. Pooled numbers only alongside per-repo ones.
+- Per tool, per repository. Pooled numbers only alongside per-repo ones. Subsamples: docs/SUBSAMPLES.md.
 - A repository is reported only with **at least 20 acted-on points and at
   least 10 approved heads** (trusted approvals, not overridden; counted from
   the corpus). Below that, the page says *insufficient data*, the summary
@@ -389,8 +389,8 @@ explicit approval and a dollar cap, and is never part of the headline.
   and the label commit and blob hashes.
 - **Tools' own output is reduced to rule, location and a short message
   without code** (at most 80 characters; anything quoted or after "Found:"
-  removed). A tool's raw output is not stored. The projects' code is never
-  republished, and neither are the diffs handed to tools.
+  removed). Paid entrants' whole answers and full findings are kept in the run's release tarball only,
+  for a later issue-level comparison (quoted code stays its project's, under its licence). Diffs are never kept.
 - The frozen corpus holds IDs, SHAs, anchors and timestamps, and a SHA-256
   and length for each review or comment text, never the text itself. A run
   fetches text by ID and checks it against the hash. Text edited or deleted

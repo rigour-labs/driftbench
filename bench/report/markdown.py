@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from bench.labels.model_agreement import MIN_RATE_N
+from bench.subsample import SKIPPED
 from bench.score.match import WINDOWS
 from bench.score.metrics import wilson
 
@@ -69,10 +70,22 @@ def block_row(name: str, metrics: dict) -> str:
     return "| " + " | ".join(cells) + " |"
 
 
+def selection_line(summary: dict) -> str:
+    chosen = summary.get("subsample")
+    if not chosen:
+        return ""
+    if chosen["rule"] == "full corpus":
+        return "Selection: full corpus. "
+    if chosen["rule"].startswith(SKIPPED):
+        return f"Selection: {chosen['rule']}. "
+    return (f"Selection: a seeded subsample of {chosen['prs']} PRs and {chosen['heads']} heads ({chosen['rule']}); "
+            "every count below is over it, so intervals are wider than a full run's. ")
+
+
 def corpus_line(summary: dict) -> str:
     c = summary["corpus"]
     checks = ", ".join(f"{k} {v}" for k, v in c["review_commit_checks"].items())
-    return (f"{c['prs']} PRs, {c['rounds']} rounds, {c['points_location_scorable']} location-scorable points "
+    return selection_line(summary) + (f"{c['prs']} PRs, {c['rounds']} rounds, {c['points_location_scorable']} location-scorable points "
             f"({c['points_acted_on']} acted on, {c['acted_on_unknown']} unknown), {c['kept_not_location_scorable']} "
             f"kept points not location-scorable, {c['approved_heads']} approved heads. Review commits: {checks}.")
 
@@ -141,6 +154,9 @@ def model_line(agreement: dict | None) -> list[str]:
 
 def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", calibration: dict | None = None,
                  agreement: dict | None = None) -> list[str]:
+    if (summary.get("subsample") or {}).get("rule", "").startswith(SKIPPED):
+        return [f"## {summary['repo']}", "", f"Pinned at `{summary['pin'][:12]}`. {selection_line(summary)}"
+                "No entrant reviewed it in this run, so it has no scores here; earlier runs' results for it stand.", ""]
     lines = [f"## {summary['repo']}", "", f"Pinned at `{summary['pin'][:12]}`. {corpus_line(summary)}", ""]
     if not summary["reportable"]:
         mins, c = summary["minimums"], summary["corpus"]
@@ -149,6 +165,7 @@ def repo_section(summary: dict, classes: dict[str, dict], class_note: str = "", 
                         f"{mins['approved_heads']}). No scores are reported for this repository, and it "
                         "is left out of the calibration sample.", ""]
     lines += [MAIN_HEADER, "|---" * MAIN_COLUMNS + "|", *(tool_row(n, m) for n, m in summary["tools"].items()), ""]
+    lines += uncited_lines(summary["tools"])
     lines += spot_check_lines(summary["repo"], calibration or {})
     note = range_note(summary, calibration or {})
     if note:
@@ -170,6 +187,18 @@ def judged_by(judges: list[str]) -> str:
     if all(j.startswith("model:") for j in judges):
         return "AI verdict, non-Claude model"
     return "hand-checked" if judges == ["human"] else "human and AI verdicts"
+
+
+def uncited_lines(tools: dict[str, dict]) -> list[str]:
+    """Under the headline: an entrant whose answers cite no place can't score on location, whatever they say."""
+    lines = []
+    for name, metrics in tools.items():
+        if metrics.get("uncited_heads"):
+            label = "Claude Code's /code-review" if name == "claude-code-review" else name
+            lines.append(f"- {label} cites no file:line in headless output ({metrics['uncited_heads']} of "
+                         f"{metrics['diagnosed_heads']} heads), so it can't score on location there; see the "
+                         "issue-level comparison.")
+    return lines + [""] if lines else []
 
 
 def spot_check_lines(repo: str, calibration: dict) -> list[str]:

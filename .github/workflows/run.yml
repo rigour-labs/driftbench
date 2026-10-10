@@ -7,8 +7,8 @@ name: run
 # name exactly which corpus it used. Labels must already be committed on the branch this runs on:
 # `bench report` withholds per-class results otherwise. Paid entrants run only
 # with `model`, a `max_usd` cap above 0 and a per-head bound for each
-# (`head_bounds`); the harness refuses them otherwise. The cap is split evenly
-# across the per-repo jobs. The provider's secret (ANTHROPIC_API_KEY, or
+# (`head_bounds`); the harness refuses them otherwise. The cap is split across the
+# per-repo jobs in proportion to their selected heads (evenly without a `subsample`). The provider's secret (ANTHROPIC_API_KEY, or
 # OPENROUTER_API_KEY for `provider: openrouter`) reaches only the paid review
 # step. The diffs handed to tools (work/runs/*/_scratch) contain the
 # projects' code and are never uploaded.
@@ -39,6 +39,9 @@ on:
         default: "0"
       repos:
         description: Only these repos (space separated, e.g. "tailscale/tailscale"); empty = every repo in the corpus
+        default: ""
+      subsample:
+        description: A committed selection file (bench subsample), e.g. subsamples/run-2.yaml; empty = every pull request
         default: ""
 
 permissions:
@@ -90,8 +93,10 @@ jobs:
           PROVIDER: ${{ inputs.provider }}
           PAID: ${{ steps.paid.outputs.paid }}
           MAX_HEADS: ${{ inputs.max_heads }}
+          SUBSAMPLE: ${{ inputs.subsample }}
         run: |
           paid_args=(--max-heads "$MAX_HEADS")
+          if [ -n "$SUBSAMPLE" ]; then paid_args+=(--subsample "$SUBSAMPLE"); fi
           if [ "$PAID" = "true" ]; then
             paid_args+=(--model "$MODEL" --max-usd "$MAX_USD" --provider "$PROVIDER")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
@@ -184,11 +189,20 @@ jobs:
           ANTHROPIC_API_KEY: ${{ needs.start.outputs.paid == 'true' && inputs.provider == 'anthropic' && secrets.ANTHROPIC_API_KEY || '' }}
           OPENROUTER_API_KEY: ${{ needs.start.outputs.paid == 'true' && inputs.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || '' }}
           MAX_HEADS: ${{ inputs.max_heads }}
+          SUBSAMPLE: ${{ inputs.subsample }}
         run: |
           paid_args=(--max-heads "$MAX_HEADS")
+          if [ -n "$SUBSAMPLE" ]; then paid_args+=(--subsample "$SUBSAMPLE"); fi
           if [ "$PAID" = "true" ]; then
-            # this job's share of the run's cap: the cap split evenly across the repo jobs
-            share=$(python3 -c "import json, os; print(round(float(os.environ['MAX_USD']) / len(json.loads(os.environ['REPOS'])), 4))")
+            # this job's share of the run's cap: in proportion to its selected heads, or even without a selection
+            share=$(python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from bench.subsample import cap_shares, read_selection
+          selection = read_selection(Path(os.environ["SUBSAMPLE"])) if os.environ["SUBSAMPLE"] else None
+          print(cap_shares(selection, json.loads(os.environ["REPOS"]), float(os.environ["MAX_USD"]))[os.environ["REPO"]])
+          PY
+          )
             paid_args+=(--model "$MODEL" --max-usd "$share" --provider "$PROVIDER")
             for bound in $HEAD_BOUNDS; do paid_args+=(--head-bound "$bound"); done
           fi

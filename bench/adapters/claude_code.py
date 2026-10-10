@@ -74,6 +74,13 @@ def token_counts(result: dict) -> tuple[int | None, int | None]:
     return inputs or None, outputs or None
 
 
+def model_runs(result: dict, output_tokens: int | None) -> int:
+    """Turns the run took; at least 1 when it produced output tokens. /code-review can report num_turns 0 while
+    its agents ran, and a model that ran must never pass as free (bench/harness/paid.py)."""
+    turns = int(result.get("num_turns") or 0)
+    return turns if turns else (1 if output_tokens else 0)
+
+
 def to_output(stream: list[dict], changed_paths: set[str]) -> ReviewOutput:
     result = next((e for e in reversed(stream) if e.get("type") == "result"), None)
     if result is None:
@@ -85,8 +92,8 @@ def to_output(stream: list[dict], changed_paths: set[str]) -> ReviewOutput:
     text = str(result.get("result") or "")
     return ReviewOutput(findings=citations(text, changed_paths), verdict="pass",
                         cost_usd=result.get("total_cost_usd"), input_tokens=inputs, output_tokens=outputs,
-                        model_runs=result.get("num_turns"), leak_signals=leak_signals(stream),
-                        diagnostics=diagnostics(text, changed_paths, result.get("num_turns")))
+                        model_runs=model_runs(result, outputs), leak_signals=leak_signals(stream),
+                        diagnostics=diagnostics(text, changed_paths, result.get("num_turns")), review_text=text)
 
 
 class ClaudeCodeReview:
