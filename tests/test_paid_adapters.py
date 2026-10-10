@@ -214,7 +214,19 @@ def test_claude_code_tokens_come_from_model_usage_and_diagnostics_are_recorded()
                              "m2": {"inputTokens": 10, "outputTokens": 5}}}
     out = claude_code.to_output([result], {"src/a.py"})
     assert (out.input_tokens, out.output_tokens, out.model_runs) == (1160, 25, 5)
-    assert out.diagnostics == {"result_chars": 21, "citation_like": 1, "link_like": 0, "cited_changed": 1, "num_turns": 5}
+    assert out.diagnostics == {"result_chars": 21, "citation_like": 1, "link_like": 0, "cited_changed": 1,
+                               "files_named": 1, "num_turns": 5}
     plain = claude_code.to_output([{**result, "modelUsage": None, "usage": {"input_tokens": 7, "output_tokens": 3}}],
                                   {"src/a.py"})
     assert (plain.input_tokens, plain.output_tokens) == (7, 3)
+
+
+def test_claude_code_with_zero_turns_but_output_counts_as_a_model_run():
+    """/code-review reported num_turns 0 while its agents ran (re-smoke 38027582432): it must never pass as free."""
+    from bench.harness.paid import unreported
+    result = {"type": "result", "is_error": False, "result": "review text", "total_cost_usd": 0, "num_turns": 0,
+              "modelUsage": {"m": {"inputTokens": 500, "outputTokens": 40}}}
+    out = claude_code.to_output([result], {"src/a.py"})
+    assert out.model_runs == 1 and unreported(out)               # a $0 report from a model that ran: charged the bound
+    idle = claude_code.to_output([{**result, "modelUsage": {}, "usage": {}}], {"src/a.py"})
+    assert idle.model_runs == 0

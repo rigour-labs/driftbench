@@ -55,8 +55,16 @@ def citations(text: str, changed: set[str]) -> list[Finding]:
     return findings
 
 
+def files_named(text: str, changed: set[str]) -> int:
+    """How many changed files the answer names at all, by path or file name, with or without a line."""
+    return sum(1 for path in changed if path in text or re.search(rf"(?<![\w./-]){re.escape(path.rsplit('/', 1)[-1])}"
+                                                               rf"(?![\w-])", text))
+
+
 def diagnostics(text: str, changed: set[str], num_turns: int | None) -> dict:
-    """Numbers only: the answer's length, citation-like and link-like strings, and how many were usable."""
+    """Numbers only: the answer's length, citation-like and link-like strings, how many were usable, and how many
+    changed files it names without a usable line."""
     found = places(text)
     return {"result_chars": len(text), "citation_like": len(found), "link_like": len(LINK_RE.findall(text)),
-            "cited_changed": len(citations(text, changed)), "num_turns": num_turns}
+            "cited_changed": len(citations(text, changed)), "files_named": files_named(text, changed),
+            "num_turns": num_turns}
