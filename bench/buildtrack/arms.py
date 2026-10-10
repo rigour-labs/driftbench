@@ -19,7 +19,7 @@ from bench.adapters.tool_access import NETWORK_DENIED
 from bench.buildtrack.toolchains import Toolchain
 
 ARMS = ("alone", "rigour")
-RIGOUR_VERSION = "6.13.0-rc.9"  # rigour next 6ec7900: every phase-1 fix (hooks routed for Claude Code, MCP pinned)
+RIGOUR_VERSION = "7.0.0-rc.2"  # rigour next f5c9452: phase-1 fixes, change-scoped file-size in hooks, camelCase secrets
 AGENT_TOOLS = ("Read", "Grep", "Glob", "Edit", "Write", "MultiEdit", "TodoWrite",
                "Bash(git diff:*)", "Bash(git status:*)", "Bash(git log:*)", "Bash(git show:*)")
 AGENT_DENIED = (*NETWORK_DENIED, "Bash(git push:*)", "Bash(git remote:*)", "Bash(git fetch:*)", "Bash(npm:*)",
