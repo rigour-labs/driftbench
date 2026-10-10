@@ -1,0 +1,4 @@
+# Diagnostic runs only (bench/harness/override.py): Rigour's defaults with its security checks set to block.
+gates:
+  security:
+    block: true

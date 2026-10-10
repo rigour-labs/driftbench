@@ -13,7 +13,9 @@ from bench.adapters.rigour import VERSION as RIGOUR_VERSION
 from bench.adapters.tool_access import ToolAccessError, check_parity, pinned_rigour_source, tool_record
 from bench.harness.budget import Budget, BudgetError
 from bench.collect.corpus import CorpusError, read_corpus
+from bench.harness import override
 from bench.harness.gitrepo import GitError, RepoCheckout
+from bench.harness.override import add_override_args
 from bench.harness.prompts import prompt_record
 from bench.harness.runner import SMOKE_MIN_CHANGED_LINES, RunConfig, run_corpus
 from bench.labels.fingerprint import label_fingerprint
@@ -56,6 +58,7 @@ def add_paid_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--subsample", type=Path, help="a committed selection file: only its pull requests run")
     parser.add_argument("--diagnostic", metavar="PURPOSE",
                         help="a diagnostic run (never scored): what it is for, recorded in run.json and its notes")
+    add_override_args(parser)
     parser.add_argument("--max-heads", type=int, default=0,
                         help=f"smoke run: only the first N heads per entrant per repo with at least "
                              f"{SMOKE_MIN_CHANGED_LINES} changed lines; never scored")
@@ -79,7 +82,8 @@ def paid_settings(args: argparse.Namespace) -> tuple[PaidSettings | None, Budget
 def cmd_run(args: argparse.Namespace) -> int:
     try:
         paid, budget = paid_settings(args)
-        adapters = select_adapters(args.entrants, paid)
+        override.check(args)
+        adapters = override.apply(args, select_adapters(args.entrants, paid))
         for adapter in (a for a in adapters if a.paid):
             budget.per_head_bound(adapter.name)  # BudgetError now, not mid-run, if a paid entrant has no bound
         if any(a.paid for a in adapters):
@@ -176,7 +180,10 @@ DIAGNOSTIC_LIMIT = ("The entrants are language models, so a re-run can serve dif
 
 def diagnostic_record(args: argparse.Namespace) -> dict | None:
     """A diagnostic run's purpose and limit, fixed in run.json so it can never be taken for a result."""
-    return {"purpose": args.diagnostic, "limit": DIAGNOSTIC_LIMIT} if args.diagnostic else None
+    if not args.diagnostic:
+        return None
+    rigour = override.record(args)
+    return {"purpose": args.diagnostic, "limit": DIAGNOSTIC_LIMIT, **({"rigour": rigour} if rigour else {})}
 
 
 def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None = None,
@@ -208,7 +215,8 @@ def run_manifest(out: Path, adapters: list, labels_dir: Path, paid: dict | None 
 def cmd_manifest(args: argparse.Namespace) -> int:
     try:
         paid, _ = paid_settings(args)
-        adapters = select_adapters(args.entrants, paid)
+        override.check(args)
+        adapters = override.apply(args, select_adapters(args.entrants, paid))
         paid_run = paid_record(args, adapters)
         if paid_run:
             paid_run["prompts"] = prompt_record([a.name for a in adapters if a.paid], args.rigour_core)

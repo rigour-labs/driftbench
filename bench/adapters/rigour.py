@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 
 from bench.harness.types import AdapterError, Finding, ReviewInput, ReviewOutput
 
@@ -18,8 +19,9 @@ VERSION = "6.13.0-rc.4"  # built from rigour next 772ed9a
 NON_BLOCKING_LISTS = ("advisory", "file_findings", "context_findings")
 
 
-def command(request: ReviewInput) -> list[str]:
-    return ["npx", "--yes", f"@rigour-labs/cli@{VERSION}", "review", "--base", request.base_sha, "--json"]
+def command(request: ReviewInput, version: str = VERSION, config: Path | None = None) -> list[str]:
+    return ["npx", "--yes", f"@rigour-labs/cli@{version}", "review", "--base", request.base_sha, "--json",
+            *(["-c", str(config)] if config else [])]
 
 
 def to_finding(item: dict, blocking: bool) -> Finding:
@@ -48,9 +50,13 @@ class RigourDeterministic:
     reads_history = False
     env_extra: tuple[str, ...] = ()
 
+    def __init__(self, version: str = VERSION, config: Path | None = None):
+        self.version = version   # another version or config only in diagnostic runs (bench/harness/override.py)
+        self.config = config
+
     def review(self, request: ReviewInput) -> ReviewOutput:
         try:
-            result = subprocess.run(command(request), cwd=request.workdir, env=request.env, capture_output=True,
+            result = subprocess.run(command(request, self.version, self.config), cwd=request.workdir, env=request.env, capture_output=True,
                                     text=True, timeout=request.timeout_s, check=False)
         except subprocess.TimeoutExpired as exc:
             raise AdapterError(f"timed out after {request.timeout_s}s") from exc

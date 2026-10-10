@@ -46,6 +46,12 @@ on:
       diagnostic:
         description: A diagnostic run's purpose (never scored, tagged diagnostic-*); empty = a normal run
         default: ""
+      rigour_version:
+        description: Diagnostic runs only - the free Rigour entrant at this exact version; empty = the pin
+        default: ""
+      rigour_config:
+        description: Diagnostic runs only - the free Rigour entrant with this rigour.yml (a path in the repo)
+        default: ""
 
 permissions:
   contents: read
@@ -107,10 +113,14 @@ jobs:
           MAX_HEADS: ${{ inputs.max_heads }}
           SUBSAMPLE: ${{ inputs.subsample }}
           DIAGNOSTIC: ${{ inputs.diagnostic }}
+          RIGOUR_VERSION: ${{ inputs.rigour_version }}
+          RIGOUR_CONFIG: ${{ inputs.rigour_config }}
         run: |
           paid_args=(--max-heads "$MAX_HEADS")
           if [ -n "$SUBSAMPLE" ]; then paid_args+=(--subsample "$SUBSAMPLE"); fi
           if [ -n "$DIAGNOSTIC" ]; then paid_args+=(--diagnostic "$DIAGNOSTIC"); fi
+          if [ -n "$RIGOUR_VERSION" ]; then paid_args+=(--rigour-version "$RIGOUR_VERSION"); fi
+          if [ -n "$RIGOUR_CONFIG" ]; then paid_args+=(--rigour-config "$RIGOUR_CONFIG"); fi
           if [ "$PAID" = "true" ]; then
             paid_args+=(--model "$MODEL" --max-usd "$MAX_USD" --provider "$PROVIDER")
             paid_args+=(--rigour-core "$RUNNER_TEMP/rigour/node_modules/@rigour-labs/core")
@@ -206,10 +216,14 @@ jobs:
           MAX_HEADS: ${{ inputs.max_heads }}
           SUBSAMPLE: ${{ inputs.subsample }}
           DIAGNOSTIC: ${{ inputs.diagnostic }}
+          RIGOUR_VERSION: ${{ inputs.rigour_version }}
+          RIGOUR_CONFIG: ${{ inputs.rigour_config }}
         run: |
           paid_args=(--max-heads "$MAX_HEADS")
           if [ -n "$SUBSAMPLE" ]; then paid_args+=(--subsample "$SUBSAMPLE"); fi
           if [ -n "$DIAGNOSTIC" ]; then paid_args+=(--diagnostic "$DIAGNOSTIC"); fi
+          if [ -n "$RIGOUR_VERSION" ]; then paid_args+=(--rigour-version "$RIGOUR_VERSION"); fi
+          if [ -n "$RIGOUR_CONFIG" ]; then paid_args+=(--rigour-config "$RIGOUR_CONFIG"); fi
           if [ "$PAID" = "true" ]; then
             # this job's share of the run's cap: in proportion to its selected heads, or even without a selection
             share=$(python3 - <<'PY'
@@ -329,6 +343,8 @@ jobs:
           PROVIDER: ${{ inputs.provider }}
           MAX_HEADS: ${{ inputs.max_heads }}
           DIAGNOSTIC: ${{ inputs.diagnostic }}
+          RIGOUR_VERSION: ${{ inputs.rigour_version }}
+          RIGOUR_CONFIG: ${{ inputs.rigour_config }}
         run: |
           mkdir -p "results/$NAME"
           if [ "$MAX_HEADS" = "0" ] && [ -z "$DIAGNOSTIC" ]; then
@@ -379,6 +395,8 @@ jobs:
           ENTRANTS: ${{ inputs.entrants }}
           MAX_HEADS: ${{ inputs.max_heads }}
           DIAGNOSTIC: ${{ inputs.diagnostic }}
+          RIGOUR_VERSION: ${{ inputs.rigour_version }}
+          RIGOUR_CONFIG: ${{ inputs.rigour_config }}
         run: |
           tar -czf "runs-$NAME.tar.gz" -C "out/work/runs" "$NAME"
           {
