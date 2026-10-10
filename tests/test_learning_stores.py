@@ -56,3 +56,16 @@ try {{ m.judgeLimits({json.dumps(source.replace("JUDGE_FILE_LESSONS, JUDGE", "LI
 console.log(JSON.stringify({{ limits: m.judgeLimits({json.dumps(source)}), changed }}));""")
     assert got["limits"] == {"standards": 15, "limit": 30, "perFile": 3}
     assert "no longer calls lessonsForDiff" in got["changed"]
+
+
+def test_comments_and_reviews_are_paged_exactly_with_none_repeated_or_missing():
+    comments = [{"id": i, "created_at": f"2026-01-0{1 + i % 9}T{i % 24:02d}:{i % 60:02d}:00Z"} for i in range(150)]
+    crawl = {"repo": "o/r", "prs": [], "reviews": {"1": {"comments": comments, "reviews": []}}}
+    got = node(f"""
+const f = m.cachedFetch({json.dumps(crawl)}, '2026-01-20T00:00:00Z');
+const pages = [];
+for (let p = 1; p <= 4; p++) pages.push(await (await f(`https://cached.invalid/repos/o/r/pulls/1/comments?per_page=100&page=${{p}}`)).json());
+const first = await (await f('https://cached.invalid/repos/o/r/pulls/1/comments?per_page=100')).json();
+console.log(JSON.stringify({{ sizes: pages.map(p => p.length), ids: pages.flat().map(c => c.id), first: first.length }}));""")
+    assert got["sizes"] == [100, 50, 0, 0] and got["first"] == 100         # no page parameter is page 1
+    assert sorted(got["ids"]) == list(range(150))                          # none repeated, none missing

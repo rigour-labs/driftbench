@@ -2,7 +2,8 @@
 
 The cutoff is the pull request's `created_at`: every head of one pull request
 shares one store, and nothing from the pull request itself (any round) can be
-in it. The diff is `git diff <merge base>...<head>`, the one `rigour review
+in it. Main as the learner sees it is the last first-parent commit on the
+default branch before the cutoff, so no later fix or revert is ever read. The diff is `git diff <merge base>...<head>`, the one `rigour review
 --base <merge base>` reads.
 """
 from __future__ import annotations
@@ -34,11 +35,20 @@ def write_diff(checkout: RepoCheckout, pr: dict, head: str, out: Path) -> str | 
     return None
 
 
+def main_before(checkout: RepoCheckout, cutoff: str) -> str:
+    """The last first-parent commit on the default branch committed before the cutoff."""
+    sha = checkout.git("rev-list", "-1", "--first-parent", f"--before={cutoff}", "origin/HEAD").stdout.strip()
+    if not sha:
+        raise GitError(f"no commit on the default branch before {cutoff}")
+    return sha
+
+
 def prepare(checkout: RepoCheckout, corpus: dict, diffs: Path) -> list[dict]:
-    """Every pull request's cutoff and heads, each head with its diff file or its error."""
+    """Every pull request's cutoff, main as of the cutoff, and heads, each head with its diff file or its error."""
     checkout.ensure_clone()
     prepared = []
     for pr in cutoffs(corpus):
+        pr["main_ref"] = main_before(checkout, pr["cutoff"])
         heads = []
         for head in pr["heads"]:
             path = diffs / f"{head}.diff"

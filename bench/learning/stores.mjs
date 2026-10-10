@@ -9,7 +9,6 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 
 const API = 'https://cached.invalid';
-const PAGE = 100;
 const MODES = ['verified', 'all'];
 
 /** The judge's lesson limits, read from the installed reviewer so the pre-check serves exactly what it would. */
@@ -28,20 +27,22 @@ export function judgeLimits(source) {
 export function cachedFetch(crawl, cutoff) {
   const base = `${API}/repos/${crawl.repo}`;
   const listing = crawl.prs.filter(pr => pr.merged_at < cutoff).sort((a, b) => b.merged_at.localeCompare(a.merged_at));
-  const before = (items, key) => items.filter(i => i[key] && i[key] < cutoff).sort((a, b) => a[key].localeCompare(b[key])).slice(0, PAGE);
+  const before = (items, key) => items.filter(i => i[key] && i[key] < cutoff).sort((a, b) => a[key].localeCompare(b[key]));
   const answer = (data) => ({ ok: true, status: 200, json: async () => data });
   return async (url) => {
     const u = new URL(url);
     const rest = `${u.origin}${u.pathname}`.slice(base.length);
     if (!`${u.origin}${u.pathname}`.startsWith(base)) throw new Error(`unexpected request ${url}`);
-    if (rest === '/pulls') {
-      const page = Number(u.searchParams.get('page') ?? '1');
-      return answer(listing.slice((page - 1) * PAGE, page * PAGE));
-    }
+    const size = Number(u.searchParams.get('per_page') ?? '30');
+    const page = (items) => {
+      const n = Number(u.searchParams.get('page') ?? '1');
+      return answer(items.slice((n - 1) * size, n * size));
+    };
+    if (rest === '/pulls') return page(listing);
     const match = /^\/pulls\/(\d+)\/(comments|reviews)$/.exec(rest);
     const entry = match && crawl.reviews[match[1]];
     if (!entry) throw new Error(`unexpected request ${url}`);
-    return answer(match[2] === 'comments' ? before(entry.comments, 'created_at') : before(entry.reviews, 'submitted_at'));
+    return page(match[2] === 'comments' ? before(entry.comments, 'created_at') : before(entry.reviews, 'submitted_at'));
   };
 }
 
@@ -59,17 +60,18 @@ function served(core, clone, diff, limits) {
 }
 
 async function buildStore(core, crawl, clone, pr, outDir, limits) {
+  if (!pr.main_ref) throw new Error(`pull request ${pr.pr} has no main_ref: run bench learning prepare`);
   const file = path.join(outDir, 'stores', `${pr.pr}.json`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.rmSync(file, { force: true });
   process.env.RIGOUR_REVIEW_LESSONS = file;
   const learned = await core.learnFromReviews(clone, {
     fetch: cachedFetch(crawl, pr.cutoff), token: 'cached', repo: crawl.repo, apiUrl: API, until: pr.cutoff,
-    limit: crawl.limit, mainRef: 'origin/HEAD',
+    limit: crawl.limit, mainRef: pr.main_ref,
   });
   const heads = Object.fromEntries(pr.heads.map(h => [h.sha, h.error ? { error: h.error }
     : served(core, clone, fs.readFileSync(h.diff, 'utf8'), limits)]));
-  return { pr: pr.pr, cutoff: pr.cutoff, store: path.relative(outDir, file), learned, heads };
+  return { pr: pr.pr, cutoff: pr.cutoff, main_ref: pr.main_ref, store: path.relative(outDir, file), learned, heads };
 }
 
 async function main([coreDir, crawlFile, clone, headsFile, outDir]) {

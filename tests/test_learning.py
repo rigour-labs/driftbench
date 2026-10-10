@@ -104,3 +104,26 @@ def test_a_leaking_store_is_never_served_and_the_totals_count_served_heads(tmp_p
     assert result["totals"] == {"prs": 2, "heads": 4, "errors": 2, "leaking_prs": 1, "edited_after_lessons": 1,
                                 "heads_served_verified": 1, "heads_served_all": 2,
                                 "lessons_served_verified": 1, "lessons_served_all": 2}
+
+
+def test_main_as_the_learner_sees_it_is_the_last_commit_before_the_cutoff(tmp_path):
+    """No fix or revert merged after the cutoff can reach a store through the learner's outcome check."""
+    import subprocess
+    from bench.harness.gitrepo import RepoCheckout
+    from bench.learning.heads import main_before
+    src = tmp_path / "src"
+    git = lambda *a, at="": subprocess.run(["git", "-C", str(src), *a], check=True, capture_output=True, text=True,
+                                           env={"GIT_COMMITTER_DATE": at, "GIT_AUTHOR_DATE": at, "HOME": str(tmp_path),
+                                                "GIT_CONFIG_NOSYSTEM": "1", "PATH": "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin"})
+    subprocess.run(["git", "init", "-q", "-b", "main", str(src)], check=True)
+    git("config", "user.email", "t@t")
+    git("config", "user.name", "t")
+    shas = {}
+    for day in ("05", "15", "25"):
+        (src / "a.txt").write_text(day)
+        git("add", "a.txt")
+        git("commit", "-qm", f"fix: day {day}", at=f"2026-01-{day}T00:00:00Z")
+        shas[day] = git("rev-parse", "HEAD").stdout.strip()
+    checkout = RepoCheckout(str(src), tmp_path / "clone", blobless=False)
+    checkout.ensure_clone()
+    assert main_before(checkout, CUTOFF) == shas["15"]                     # the fix on the 25th is never read

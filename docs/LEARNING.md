@@ -34,9 +34,11 @@ injected fetch that serves only:
 
 People comment on merged pull requests too. The learner's own listing keeps
 those later comments when given `--until`, which is a Rigour bug, so the bench
-filters them itself. The learner also runs git in a full clone, reading the
-commits a comment was written on and the outcomes on main before the cutoff
-(`git log --before`, by committer date).
+filters them itself. The learner also runs git in a full clone
+(`work/repos/<repo>`, made by `prepare`), reading the commits a comment was
+written on and the outcomes on main. Main is pinned to the last first-parent
+commit before the cutoff (by committer date), so a later fix or revert is never
+read.
 
 The crawl and the stores hold review text. They stay in the Actions cache and
 on the runner, never in an artifact or a release.
