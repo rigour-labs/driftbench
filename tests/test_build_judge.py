@@ -91,3 +91,19 @@ def test_judge_and_report_commands_run_over_a_build_run_and_resume(tmp_path, mon
     assert main(["build", "report", "--run", str(run)]) == 0
     out = judge_cli.read_json(run / "summary.json")
     assert out["paired_points"]["alone_only"] + out["paired_points"]["rigour_only"] == 1 and out["tasks"] == 1
+
+
+def test_a_task_that_fails_is_listed_and_the_run_goes_on(tmp_path, monkeypatch):
+    from bench.buildtrack import run_cli
+    from bench.harness.gitrepo import GitError
+    def ready(task, *rest):
+        if task["pr"] == 1:
+            raise GitError("git show: missing")
+        return {"parent": "p", "check": {"discriminates": True}, "text": "t"}
+    monkeypatch.setattr(run_cli, "ready", ready)
+    monkeypatch.setattr(run_cli, "run_task", lambda *a: {"pr": 2})
+    config = type("C", (), {"dry_run": True, "out": tmp_path, "task_bound": 1.0})()
+    drawn = {"count": 1, "tasks": [{"pr": 1}, {"pr": 2}, {"pr": 3}]}
+    over = run_cli.run_tasks(drawn, config, None, None, Budget(1.0, {"build-alone": 1.0, "build-rigour": 1.0}))
+    assert over == [{"pr": 1, "reason": "error: git show: missing"}] and (tmp_path / "tasks" / "2.json").exists()
+    assert not (tmp_path / "tasks" / "3.json").exists()                              # count reached
