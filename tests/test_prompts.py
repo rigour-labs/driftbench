@@ -24,7 +24,7 @@ def test_both_entrants_are_pinned_by_package_integrity_and_neither_text_is_kept(
     cc = record["claude-code-review"]
     assert cc["command"] == "/code-review" and cc["package"].endswith("@2.1.285")
     assert cc["package"].startswith("@anthropic-ai/claude-code-") and cc["integrity"] == f"sha512-{cc['package']}"
-    assert record["rigour-reviewer"] == {"package": "@rigour-labs/core@6.12.1", "integrity": "sha512-@rigour-labs/core@6.12.1",
+    assert record["rigour-reviewer"] == {"package": "@rigour-labs/core@6.13.0-rc.4", "integrity": "sha512-@rigour-labs/core@6.13.0-rc.4",
                                          "prompt_version": "rigour-prompt-sha256"}
     assert "never extracted" in cc["text"] and len(json.dumps(record)) < 1000
     assert calls[-1][:2] == ["node", "--input-type=module"] and "prompt.js" in calls[-1][-1]
@@ -48,11 +48,11 @@ def test_installed_files_are_hashed_from_the_global_install_and_the_npx_cache(tm
     native = tmp_path / "g" / "@anthropic-ai" / "claude-code" / "node_modules" / "@anthropic-ai" / "claude-code-linux-x64"
     native.mkdir(parents=True)
     (native / "claude").write_bytes(b"binary")
-    for version in ("6.12.0", "6.12.1"):
+    for version in ("6.12.1", "6.13.0-rc.4"):
         core = tmp_path / "npx" / version / "node_modules" / "@rigour-labs" / "core"
         (core / prompts.PROMPT_JS).parent.mkdir(parents=True)
         (core / "package.json").write_text(json.dumps({"version": version}))
         (core / prompts.PROMPT_JS).write_text(f"prompt {version}")
     found = prompts.installed(tmp_path / "g", tmp_path / "npx")
     assert found["claude-code-review"] == {"claude": hashlib.sha256(b"binary").hexdigest()}
-    assert found["rigour-reviewer"] == {str(prompts.PROMPT_JS): hashlib.sha256(b"prompt 6.12.1").hexdigest()}
+    assert found["rigour-reviewer"] == {str(prompts.PROMPT_JS): hashlib.sha256(b"prompt 6.13.0-rc.4").hexdigest()}
