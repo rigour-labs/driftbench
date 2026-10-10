@@ -1,0 +1,263 @@
+model: openai/gpt-6.1-sol
+spent_usd: 0.08719
+unjudged:
+  'acted_on:21374-inline-4061749558-0::': 'invalid output: verdict not one of (''yes'',
+    ''no'')'
+  'acted_on:29013-inline-3844907702-0::': 'invalid output: verdict not one of (''yes'',
+    ''no'')'
+verdicts:
+  'acted_on:20794-inline-3843817949-0::':
+    cost_usd: 0.001038
+    reason: No code changed near the anchor to remove the duplicated network-change
+      monitoring described by the reviewer.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:20836-inline-3861423511-0::':
+    cost_usd: 0.00143
+    reason: The VIPServices().Get call now uses t.Context(), exactly as suggested
+      by the reviewer.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21017-inline-4011253447-0::':
+    cost_usd: 0.007381
+    reason: The diff removes the method but does not show its netmap-presence check
+      being replaced with Self().Valid().
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:21017-inline-4087809067-0::':
+    cost_usd: 0.001184
+    reason: The change removes ExitNodePolicyOverrideChange, not either of the potentially
+      redundant NetworkConfiguredChange and OnNetMapToggle hooks.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:21017-inline-4087845336-0::':
+    cost_usd: 0.00061
+    reason: There was no change near the anchor to rename `ApplyNetMap` to `SetNetMap`.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:21038-inline-3991561782-0::':
+    cost_usd: 0.0039685
+    reason: The test is now table-driven and covers rejected CRLF/LF hostnames plus
+      accepted DNS, IPv4, and IPv6 hostnames.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21362-inline-4064189669-0::':
+    cost_usd: 0.001396
+    reason: The helper now uses packet.Generate and packet.Parsed.Decode instead of
+      StuffForTesting, preserving the underlying packet buffer.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21366-inline-4051022049-0::':
+    cost_usd: 0.001382
+    reason: The loop now has a finite iteration budget and returns pending queue flags,
+      preventing endless draining and allowing pong checks between batches.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21374-inline-4061749558-0::':
+    cost_usd: 0.0021322
+    reason: 'invalid output: verdict not one of (''yes'', ''no'')'
+    served_model: openai/gpt-6.1-sol
+    verdict: null
+  'acted_on:21405-inline-4063082387-0::':
+    cost_usd: 0.002002
+    reason: Both readFrom and writeTo now consistently order the address parameters
+      as remote, local.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21463-inline-4097137595-0::':
+    cost_usd: 0.0049835
+    reason: The change adds a current-user-only pipe listener with an explicit owner
+      and restrictive DACL, providing secure access for user-specific operation.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21472-inline-4099738881-0::':
+    cost_usd: 0.001324
+    reason: The change removes the retry loop that logged every 500ms, eliminating
+      the repetitive status-failure messages.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21485-inline-4123540613-0::':
+    cost_usd: 0.00115
+    reason: The change only updates comment links and does not remove or address the
+      lock around reading clients.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:21595-inline-4147516282-0::':
+    cost_usd: 0.001702
+    reason: ensureGokrazy now uses prepareImageOnce and propagates its error instead
+      of relying on a per-call error set inside sync.Once.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21606-inline-4184818418-0::':
+    cost_usd: 0.001024
+    reason: The hook now immediately returns nil when e.conn25.isConfigured() is false,
+      adding the requested fast path.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21615-inline-4161388459-0::':
+    cost_usd: 0.00189
+    reason: The hooks were renamed to distinct, purpose-specific names, removing the
+      misleading locked/unlocked naming relationship.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21615-inline-4161521434-0::':
+    cost_usd: 0.000866
+    reason: The added s.idle condition sets s.started = now when transitioning from
+      idle to active.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21618-inline-4161513729-0::':
+    cost_usd: 0.000968
+    reason: The dial call now uses t.Context() instead of context.Background(), as
+      requested.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21672-inline-4199463472-0::':
+    cost_usd: 0.000644
+    reason: No code changed near the anchor to adopt the suggested DHCPClientDHCPd
+      naming.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  'acted_on:21672-inline-4199514440-0::':
+    cost_usd: 0.002206
+    reason: The change adopts the suggested fmt.Appendf call with a multiline raw
+      string and VnetNICName substitution.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21672-inline-4199630481-0::':
+    cost_usd: 0.00097
+    reason: The failure message now explains that the DHCP lease check failed and
+      labels the captured output.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:21694-inline-4211772915-0::':
+    cost_usd: 0.00103
+    reason: The revised comment clarifies that the version requests the server to
+      enable the attribute, rather than implying a client assumption or panic if unset.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:29013-inline-3830387992-0::':
+    cost_usd: 0.00118
+    reason: The change simplifies the storage-label logic by combining conditions
+      and removing a nested branch.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:29013-inline-3844907702-0::':
+    cost_usd: 0.002738
+    reason: 'invalid output: verdict not one of (''yes'', ''no'')'
+    served_model: openai/gpt-6.1-sol
+    verdict: null
+  'acted_on:30262-inline-3757971976-0::':
+    cost_usd: 0.002168
+    reason: The change removes the redundant range and year checks and uses the shared
+      date-clamping helper instead.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:31254-inline-3972113160-0::':
+    cost_usd: 0.001576
+    reason: The change removes the questioned comment along with the native library
+      verification step.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  'acted_on:31606-inline-4025429895-0::':
+    cost_usd: 0.001382
+    reason: The change inverts the file check to return early when non-null, then
+      throws for non-remote assets and logs the fallback warning.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  location:21172-inline-4069565145-0:rigour-reviewer:0:
+    cost_usd: 0.001436
+    reason: Both identify that a single ProxyClass lookup failure aborts the entire
+      mapping instead of continuing to other Connectors.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  location:21374-inline-4061796798-0:rigour-reviewer:0:
+    cost_usd: 0.002564
+    reason: The finding concerns permanent watch failures during startup but does
+      not explicitly identify the unbounded retry behavior questioned by the review.
+    served_model: openai/gpt-6.1-sol
+    verdict: partly
+  location:21485-inline-4123540613-0:rigour-reviewer:1:
+    cost_usd: 0.001758
+    reason: The review questions unnecessary locking for lock-free reads, while the
+      finding concerns a zero-valued key filter being treated as no filter.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:21664-inline-4191135163-0:rigour-reviewer:0:
+    cost_usd: 0.00144
+    reason: Both flag that the comment fails to explain why macOS is excluded from
+      fake logcatcher support.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  location:21694-inline-4211772915-0:rigour-reviewer:1:
+    cost_usd: 0.002216
+    reason: Both flag the unclear capability-version comment about the client expecting
+      the attribute to be enabled by default.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  location:21694-inline-4211930933-0:rigour-reviewer:1:
+    cost_usd: 0.00226
+    reason: "Both flag the capability-version comment\u2019s wording about NodeAttrCacheNetworkMaps\
+      \ being enabled by default."
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  location:30262-inline-3757982013-0:rigour-reviewer:0:
+    cost_usd: 0.001232
+    reason: Both flag the force unwrap of nullable asset.fileCreatedAt on line 216.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  location:30262-inline-3758034817-0:rigour-reviewer:2:
+    cost_usd: 0.002272
+    reason: The review comment states no substantive issue to match the finding's
+      concern about the claimed date-heal ordering.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:30909-inline-3833034674-0:rigour-reviewer:1:
+    cost_usd: 0.001636
+    reason: The review questions marking all-skipped runs complete, while the finding
+      concerns returning false when all candidates fail.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:30909-inline-3850725214-0:rigour-reviewer:0:
+    cost_usd: 0.001412
+    reason: Both identify the redundant candidate fetch because uploadCandidates already
+      fetches the candidates internally.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'yes'
+  location:30909-inline-3854623577-0:rigour-reviewer:1:
+    cost_usd: 0.001554
+    reason: The finding concerns distinguishing transient from permanent failures,
+      while the review concerns skipped retries when some uploads succeed and others
+      fail.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:30909-inline-3862893388-0:rigour-reviewer:1:
+    cost_usd: 0.00153
+    reason: The finding concerns enqueueing before activeWorker is released, while
+      the review questions redundant retry paths and tags.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:31039-inline-3865751032-0:rigour-reviewer:4:
+    cost_usd: 0.002
+    reason: The finding alleges a comment-code mismatch but does not identify the
+      transaction-ordering and read-to-write upgrade race questioned by the review.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:31557-inline-4039953848-0:rigour-reviewer:2:
+    cost_usd: 0.001828
+    reason: The finding identifies the same flag assignment but does not explain when
+      the flag should remain false or be reset.
+    served_model: openai/gpt-6.1-sol
+    verdict: partly
+  location:31557-inline-4039969723-0:rigour-reviewer:0:
+    cost_usd: 0.002312
+    reason: The finding describes a one-time background-launch query, not the issue
+      that `_launchChecked` must be checked regardless of `_wasPaused`.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'
+  location:31557-inline-4040032645-0:rigour-reviewer:0:
+    cost_usd: 0.001516
+    reason: The finding concerns querying the background-launch flag only once, while
+      the review requests a comment explaining why a full sync is necessary.
+    served_model: openai/gpt-6.1-sol
+    verdict: 'no'

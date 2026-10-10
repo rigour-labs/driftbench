@@ -280,8 +280,8 @@ def issue_judge_section(issues: dict | None) -> list[str]:
     if not issues:
         return []
     same = issues["consistency"]
-    rate = f"{same['same']} of {same['asked']} verdicts repeated" if same["asked"] else "not measured"
+    rate = f"{same['same']} of {same['asked']}" if same["asked"] else "none (not measured)"
     return ["## Issue judge", "", f"The issue-level comparison is an AI judge, {issues['model']} (outside the Claude "
             "family, since Rigour's reviewer runs on Claude), shown both entrants' reviews as A and B in a seeded "
-            f"random order per point, with nothing naming them. Asked again on a seeded sample, it gave the same "
+            f"random order per point, with nothing naming them. Asked again on a seeded sample, it repeated its "
             f"verdict on {rate}. Its verdicts and reasons are in issue-judgments.yaml.", ""]

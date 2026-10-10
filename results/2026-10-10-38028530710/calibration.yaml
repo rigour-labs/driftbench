@@ -1,0 +1,366 @@
+seed: 38028530710
+short:
+- 'short: 16 of 50 location matches'
+- 'short: 2 of 5 acted-on (direct no)'
+entries:
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 31557-inline-4039953848-0
+  pr: 31557
+  head_sha: fec1b03a08a3f4e19e4c15645dfb15dc51011271
+  finding: 2
+  verdict: partly
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 30262-inline-3757982013-0
+  pr: 30262
+  head_sha: f600aa3151ce40708adc0f2c7e7281d6008d29bd
+  finding: 0
+  verdict: 'yes'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: tailscale/tailscale
+  point: 21694-inline-4211772915-0
+  pr: 21694
+  head_sha: 88d4e0cc3156a04bbf096925fb3cc33c827e2a4e
+  finding: 1
+  verdict: 'yes'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: tailscale/tailscale
+  point: 21485-inline-4123540613-0
+  pr: 21485
+  head_sha: 701b52dbc12f4df8d8da5e3e100684aa02129ea1
+  finding: 1
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 30262-inline-3758034817-0
+  pr: 30262
+  head_sha: f600aa3151ce40708adc0f2c7e7281d6008d29bd
+  finding: 2
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 30909-inline-3850725214-0
+  pr: 30909
+  head_sha: 3a84a5ba609f48a743153069ed86f31489795ca1
+  finding: 0
+  verdict: 'yes'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 30909-inline-3862893388-0
+  pr: 30909
+  head_sha: fc27371af8cb252c4179f219a01353db24513226
+  finding: 1
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 31557-inline-4040032645-0
+  pr: 31557
+  head_sha: fec1b03a08a3f4e19e4c15645dfb15dc51011271
+  finding: 0
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 31039-inline-3865751032-0
+  pr: 31039
+  head_sha: 3d962a8cdd65eb4da870a21e76967bb73f810ae6
+  finding: 4
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: tailscale/tailscale
+  point: 21374-inline-4061796798-0
+  pr: 21374
+  head_sha: 9dad6d385c40d005345e667d1d47580c0b186960
+  finding: 0
+  verdict: partly
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: tailscale/tailscale
+  point: 21172-inline-4069565145-0
+  pr: 21172
+  head_sha: bb391426cd3dc61a24bd092d5e834c181164fc28
+  finding: 0
+  verdict: 'yes'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 31557-inline-4039969723-0
+  pr: 31557
+  head_sha: fec1b03a08a3f4e19e4c15645dfb15dc51011271
+  finding: 0
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 30909-inline-3833034674-0
+  pr: 30909
+  head_sha: 37a0acda7dc0badf705c526605e1e2fed10a7b5a
+  finding: 1
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: tailscale/tailscale
+  point: 21664-inline-4191135163-0
+  pr: 21664
+  head_sha: 478c562be8fb0893e21be46e70581a5a1e5daef5
+  finding: 0
+  verdict: 'yes'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: immich-app/immich
+  point: 30909-inline-3854623577-0
+  pr: 30909
+  head_sha: 3a84a5ba609f48a743153069ed86f31489795ca1
+  finding: 1
+  verdict: 'no'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: location
+  tool: rigour-reviewer
+  repo: tailscale/tailscale
+  point: 21694-inline-4211930933-0
+  pr: 21694
+  head_sha: 88d4e0cc3156a04bbf096925fb3cc33c827e2a4e
+  finding: 1
+  verdict: 'yes'
+  verdict_by: 'model: openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21672-inline-4199630481-0
+  pr: 21672
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21672-inline-4199514440-0
+  pr: 21672
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21694-inline-4211772915-0
+  pr: 21694
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21615-inline-4161388459-0
+  pr: 21615
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21606-inline-4184818418-0
+  pr: 21606
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21463-inline-4097137595-0
+  pr: 21463
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21374-inline-4061749558-0
+  pr: 21374
+  basis: direct
+  acted_on: true
+  verdict: null
+  verdict_by: null
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21405-inline-4063082387-0
+  pr: 21405
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 20836-inline-3861423511-0
+  pr: 20836
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21615-inline-4161521434-0
+  pr: 21615
+  basis: direct
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21672-inline-4199463472-0
+  pr: 21672
+  basis: direct
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21595-inline-4147516282-0
+  pr: 21595
+  basis: direct
+  acted_on: false
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: immich-app/immich
+  point: 29013-inline-3844907702-0
+  pr: 29013
+  basis: ancestor
+  acted_on: true
+  verdict: null
+  verdict_by: null
+- kind: acted_on
+  repo: immich-app/immich
+  point: 29013-inline-3830387992-0
+  pr: 29013
+  basis: ancestor
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: immich-app/immich
+  point: 31606-inline-4025429895-0
+  pr: 31606
+  basis: ancestor
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: immich-app/immich
+  point: 30262-inline-3757971976-0
+  pr: 30262
+  basis: ancestor
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21472-inline-4099738881-0
+  pr: 21472
+  basis: ancestor
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21017-inline-4011253447-0
+  pr: 21017
+  basis: range
+  acted_on: true
+  verdict: null
+  verdict_by: null
+  disputed: true
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21618-inline-4161513729-0
+  pr: 21618
+  basis: range
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21362-inline-4064189669-0
+  pr: 21362
+  basis: range
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: immich-app/immich
+  point: 31254-inline-3972113160-0
+  pr: 31254
+  basis: range
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21038-inline-3991561782-0
+  pr: 21038
+  basis: range
+  acted_on: true
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21017-inline-4087845336-0
+  pr: 21017
+  basis: range
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21366-inline-4051022049-0
+  pr: 21366
+  basis: range
+  acted_on: false
+  verdict: 'yes'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 20794-inline-3843817949-0
+  pr: 20794
+  basis: range
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21017-inline-4087809067-0
+  pr: 21017
+  basis: range
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'
+- kind: acted_on
+  repo: tailscale/tailscale
+  point: 21485-inline-4123540613-0
+  pr: 21485
+  basis: range
+  acted_on: false
+  verdict: 'no'
+  verdict_by: 'consensus: claude-opus-5-5 + openai/gpt-6.1-sol'

@@ -66,7 +66,7 @@ def test_results_per_entrant_and_self_consistency_reach_the_page():
     lines = "\n".join(issue_lines(table))
     assert "AI judge, non-Claude, blind to entrant" in lines and "| claude-code-review | 33% (1/3" in lines
     section = "\n".join(issue_judge_section({"model": "example-org/example-model", "consistency": same, "repos": {}}))
-    assert "outside the Claude family" in section and "1 of 2 verdicts repeated" in section
+    assert "outside the Claude family" in section and "repeated its verdict on 1 of 2" in section
 
 
 def test_words_that_identify_an_entrant_are_redacted():
