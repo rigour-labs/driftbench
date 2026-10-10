@@ -37,32 +37,48 @@ commit, ref or branch exists in its checkout.
 ## Arms
 
 Both arms run the same pinned Claude Code CLI and model, through the same
-provider, with the same tools (edit, write, read, search, and shell limited
-to the repository's own build and test commands), the same isolation (no
-MCP servers but Rigour's own in arm 2, no web, no GitHub, no network beyond
-a pre-filled dependency cache), and the same turn limit, timeout and dollar
-bound per task.
+provider, with the same agent tools: edit, write, read, search, and shell
+limited to the repository's own build and test commands. Both have the same
+isolation (no web, no GitHub, no network beyond a pre-filled dependency
+cache) and the same per-task turn limit, timeout and dollar bound.
 
 | Arm | Setup in the task's checkout |
 |---|---|
-| A, agent alone | the repository as it was, including its own `CLAUDE.md` / `AGENTS.md` at the parent commit |
-| B, agent with Rigour | the same, plus `rigour setup` (personal: hooks, brief, memory), and the team's lessons |
+| A, agent alone | the repository as it was at the parent commit, including its own `CLAUDE.md` / `AGENTS.md` (what a team already has) |
+| B, agent with Rigour | the same files, plus exactly what `rigour setup` installs by default: hooks, the brief, and Rigour's MCP server; plus the team's lessons |
 
-In arm B, Rigour is pinned to an exact version, and is configured only by
-its defaults with no tuning on these tasks. Its pieces work as follows:
+**The one intended difference** is Rigour itself:
 
-- **Lessons:** time-correct, built by the run-4 machinery (docs/LEARNING.md)
-  from pull requests merged before the task's pull request was opened. The
-  cutoff is the same, main is pinned before it, and the leak assertions are
-  the same. The store is served in the shipped default mode, `verified`.
-- **Brief:** `rigour brief` with the task statement as its goal.
-- **Hooks:** run as installed. Every check the hooks ran, everything they
+- its hooks, which Claude Code runs on its own, outside the agent's tool
+  permissions;
+- its MCP tools (brief, recall, remember, context scope), which arm B's
+  agent has as extra tools;
+- its lessons.
+
+Arm A has no MCP servers. Everything else is identical.
+
+In arm B, Rigour works as follows:
+
+- **Version:** pinned to an exact release that routes Claude Code's hooks
+  correctly. The pre-tool data-loss check and the first-edit brief must run
+  as Claude Code hooks; an earlier release candidate sent them to another
+  tool's mode, where they passed everything.
+- **Configuration:** its defaults only, with no tuning on these tasks. The
+  installed hooks and `.mcp.json` are recorded per task.
+- **Lessons:** time-correct, built by the run-4 machinery
+  (docs/LEARNING.md) from pull requests merged before the task's pull
+  request was opened. The cutoff is the same, main is pinned before it,
+  and the leak assertions are the same. The store is served in the shipped
+  default mode, `verified`.
+- **Brief:** as installed by default, with the task statement as the goal.
+- **Hooks:** run as installed. Every check they ran, everything they
   flagged, and whether the agent changed the flagged code afterwards are
   recorded from Rigour's own event log.
 - **Semantic search:** installed from a pre-filled cache. It is never
   downloaded during a task, and if it cannot be used, the run records that.
 
-Any model call Rigour makes during the task counts toward arm B's cost.
+**Cost:** every model call Rigour makes during a task counts toward arm B's
+cost and its per-task bound, which is the same bound as arm A's.
 
 ## Measures
 
