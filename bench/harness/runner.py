@@ -104,7 +104,7 @@ def run_head(adapter: Adapter, checkout: RepoCheckout, pr: dict, head: str, conf
         **({"charged": output.charged} if output.charged else {}),
         **({"diagnostics": output.diagnostics} if output.diagnostics else {}),
         **({PAID_OUTPUT: paid_output(output.review_text, [dataclasses.asdict(f) for f in output.findings],
-                                     output.held_back)}
+                                     output.held_back, output.trace)}
            if adapter.paid else {}),
     }
 

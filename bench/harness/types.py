@@ -45,6 +45,7 @@ class ReviewOutput:
     diagnostics: dict | None = None  # numbers only, never text: how the tool's answer was read
     review_text: str = ""          # paid entrants: the tool's whole answer, kept in the run's release only
     held_back: dict | None = None  # paid entrants: what the tool considered but didn't serve (release only)
+    trace: dict | None = None      # paid entrants: how the tool ran (judges, passes, lessons served; release only)
 
 
 class AdapterError(RuntimeError):

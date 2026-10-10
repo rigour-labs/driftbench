@@ -84,6 +84,16 @@ def held_back(reviewer: dict) -> dict:
             "counts": {key: len(entries) for key, entries in lists.items()}}
 
 
+TRACE = ("record", "mode", "tokens", "passes", "turns", "num_turns", "tool_calls", "cached")
+
+
+def trace(reviewer: dict) -> dict:
+    """How the review ran, as the reviewer reports it: its record (judges, lessons served), its mode (what was asked
+    and what ran, passes with hunks, chars and reads beyond the slice), tokens and any turn counts. Kept so an empty
+    verdict can be told from a review that stopped early or ran out of room."""
+    return {key: reviewer[key] for key in TRACE if key in reviewer}
+
+
 def to_output(report: dict) -> ReviewOutput:
     reviewer = report.get("reviewer")
     if not isinstance(reviewer, dict):
@@ -97,7 +107,8 @@ def to_output(report: dict) -> ReviewOutput:
     return ReviewOutput(findings=gates + reviewer_findings(reviewer), verdict="fail" if blocks else "pass",
                         cost_usd=spent_usd(reviewer), input_tokens=tokens.get("input"),
                         output_tokens=tokens.get("output"), model_runs=model_runs(reviewer),
-                        leak_signals=leak_signals(reviewer), held_back=held_back(reviewer))
+                        leak_signals=leak_signals(reviewer), held_back=held_back(reviewer),
+                        trace=trace(reviewer))
 
 
 class RigourReviewer:
