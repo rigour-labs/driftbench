@@ -1,0 +1,112 @@
+{
+ "21366": {
+  "alone": {
+   "errors": [
+    "# tailscale.com/derp/derpserver [tailscale.com/derp/derpserver.test]",
+    "derp/derpserver/derpserver_test.go:209:67: undefined: derp.LoanedBytes",
+    "derp/derpserver/derpserver_test.go:347:83: undefined: derp.LoanedBytes"
+   ],
+   "fail": 0,
+   "outcome": "no-build",
+   "pass": 0,
+   "skip": 0
+  },
+  "rigour": {
+   "errors": [
+    "# tailscale.com/derp/derpserver [tailscale.com/derp/derpserver.test]",
+    "derp/derpserver/derpserver_test.go:209:67: undefined: derp.LoanedBytes",
+    "derp/derpserver/derpserver_test.go:347:83: undefined: derp.LoanedBytes"
+   ],
+   "fail": 0,
+   "outcome": "no-build",
+   "pass": 0,
+   "skip": 0
+  }
+ },
+ "21369": {
+  "alone": {
+   "fail": 0,
+   "outcome": "pass",
+   "pass": 184,
+   "skip": 3
+  },
+  "rigour": {
+   "fail": 0,
+   "outcome": "pass",
+   "pass": 184,
+   "skip": 3
+  }
+ },
+ "21485": {
+  "alone": {
+   "errors": [
+    "# tailscale.com/derp/derpserver [tailscale.com/derp/derpserver.test]",
+    "derp/derpserver/debugclients_test.go:59:6: c2b.packetsRecv undefined (type *sclient has no field or method packetsRecv)",
+    "derp/derpserver/debugclients_test.go:60:6: c2b.bytesRecv undefined (type *sclient has no field or method bytesRecv)"
+   ],
+   "fail": 1,
+   "outcome": "no-build",
+   "pass": 69,
+   "skip": 0
+  },
+  "rigour": {
+   "errors": [
+    "# tailscale.com/derp/derpserver [tailscale.com/derp/derpserver.test]",
+    "derp/derpserver/debugclients_test.go:59:6: c2b.packetsRecv undefined (type *sclient has no field or method packetsRecv)",
+    "derp/derpserver/debugclients_test.go:60:6: c2b.bytesRecv undefined (type *sclient has no field or method bytesRecv)"
+   ],
+   "fail": 1,
+   "outcome": "no-build",
+   "pass": 69,
+   "skip": 0
+  }
+ },
+ "21615": {
+  "alone": {
+   "errors": [
+    "# tailscale.com/wgengine/magicsock [tailscale.com/wgengine/magicsock.test]",
+    "wgengine/magicsock/exitnode_test.go:21:13: undefined: HookExitNodeHeartbeatStateLocked",
+    "wgengine/magicsock/exitnode_test.go:29:20: undefined: HookExitNodeCheckResponsiveness"
+   ],
+   "fail": 0,
+   "outcome": "no-build",
+   "pass": 0,
+   "skip": 0
+  },
+  "rigour": {
+   "errors": [
+    "# tailscale.com/wgengine/magicsock [tailscale.com/wgengine/magicsock.test]",
+    "wgengine/magicsock/exitnode_test.go:21:13: undefined: HookExitNodeHeartbeatStateLocked",
+    "wgengine/magicsock/exitnode_test.go:29:20: undefined: HookExitNodeCheckResponsiveness"
+   ],
+   "fail": 0,
+   "outcome": "no-build",
+   "pass": 0,
+   "skip": 0
+  }
+ },
+ "21672": {
+  "alone": {
+   "errors": [
+    "# tailscale.com/tstest/natlab/vmtest [tailscale.com/tstest/natlab/vmtest.test]",
+    "tstest/natlab/vmtest/dhcpclient_test.go:95:6: TestWriteLinuxDHCPClientSetup redeclared in this block",
+    "tstest/natlab/vmtest/dhcpcd_test.go:52:6: other declaration of TestWriteLinuxDHCPClientSetup"
+   ],
+   "fail": 0,
+   "outcome": "no-build",
+   "pass": 0,
+   "skip": 0
+  },
+  "rigour": {
+   "errors": [
+    "# tailscale.com/tstest/natlab/vmtest [tailscale.com/tstest/natlab/vmtest.test]",
+    "tstest/natlab/vmtest/dhcpclient_test.go:57:6: TestWriteLinuxDHCPClientSetup redeclared in this block",
+    "tstest/natlab/vmtest/dhcpcd_test.go:52:6: other declaration of TestWriteLinuxDHCPClientSetup"
+   ],
+   "fail": 0,
+   "outcome": "no-build",
+   "pass": 0,
+   "skip": 0
+  }
+ }
+}
