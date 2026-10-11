@@ -112,3 +112,16 @@ def test_a_hooks_message_is_its_own_reason_not_its_json():
     assert hooks.said('{"decision": "block", "reason": "a.go:6 hardcoded secret"}', "") == "a.go:6 hardcoded secret"
     assert hooks.said('{"continue": false, "user_message": "1 issue found"}', "") == "1 issue found"
     assert hooks.said("", "info: scanning\n[rigour/security] a.go:6: secret\n") == "[rigour/security] a.go:6: secret"
+
+
+def test_every_brief_is_counted_from_rigours_task_threads_even_when_empty(tmp_path):
+    """Pilot 38109978788: an empty brief writes nothing to events.jsonl; the task thread always records it."""
+    from bench.buildtrack.evaluate import rigour_threads
+    threads = tmp_path / ".git" / "rigour" / "threads"
+    threads.mkdir(parents=True)
+    (threads / "main-ab12.jsonl").write_text("\n".join(json.dumps(e) for e in (
+        {"kind": "brief", "session": "s", "items": 0}, {"kind": "brief", "items": 2, "ids": ["l1", "l2"]},
+        {"kind": "edit-check", "findings": 0})) + "\n")
+    assert rigour_threads(tmp_path) == {"events": 3, "kinds": {"brief": 2, "edit-check": 1}, "briefs": 2,
+                                        "brief_items": 2, "empty_briefs": 1}
+    assert rigour_threads(tmp_path / "none")["briefs"] == 0

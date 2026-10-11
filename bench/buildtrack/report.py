@@ -47,6 +47,8 @@ def arm_numbers(tasks: list[dict], arm: str) -> dict:
         numbers["rigour_blocks"] = sum(sum(t.get("blocked", 0) for t in
                                            ((r.get("rigour") or {}).get("events", {}).get("by_type") or {}).values())
                                        for r in runs)
+        numbers["briefs"] = sum((r.get("rigour") or {}).get("threads", {}).get("briefs", 0) for r in runs)
+        numbers["brief_items"] = sum((r.get("rigour") or {}).get("threads", {}).get("brief_items", 0) for r in runs)
         numbers["false_blocks"] = sum((t.get("reference") or {}).get("false_blocks", {}).get("false_blocks", 0)
                                       for t in tasks)
     return numbers
