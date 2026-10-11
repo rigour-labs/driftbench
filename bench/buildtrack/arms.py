@@ -19,7 +19,7 @@ from bench.adapters.tool_access import NETWORK_DENIED
 from bench.buildtrack.toolchains import Toolchain
 
 ARMS = ("alone", "rigour")
-RIGOUR_VERSION = "7.0.0-rc.2"  # rigour next f5c9452: phase-1 fixes, change-scoped file-size in hooks, camelCase secrets
+RIGOUR_VERSION = "7.0.0-rc.3"  # rigour next 04c908b: phase-1 fixes, file size a note by default, camelCase secrets
 AGENT_TOOLS = ("Read", "Grep", "Glob", "Edit", "Write", "MultiEdit", "TodoWrite",
                "Bash(git diff:*)", "Bash(git status:*)", "Bash(git log:*)", "Bash(git show:*)")
 AGENT_DENIED = (*NETWORK_DENIED, "Bash(git push:*)", "Bash(git remote:*)", "Bash(git fetch:*)", "Bash(npm:*)",
