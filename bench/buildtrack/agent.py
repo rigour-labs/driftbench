@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 
 from bench.adapters.claude_code import events, leak_signals, model_runs, token_counts, tool_calls
+from bench.buildtrack.shell import shell_use
 from bench.buildtrack.workspace import final_diff
 from bench.harness.types import AdapterError
 
@@ -30,7 +31,7 @@ def transcript_numbers(stream: list[dict]) -> dict:
         names[str(call.get("name"))] = names.get(str(call.get("name")), 0) + 1
     return {"cost_usd": result.get("total_cost_usd"), "input_tokens": inputs, "output_tokens": outputs,
             "turns": model_runs(result, outputs), "stop": result.get("subtype"), "is_error": bool(result.get("is_error")),
-            "tool_calls": names, "leak_signals": leak_signals(stream)}
+            "tool_calls": names, "shell": shell_use(calls), "leak_signals": leak_signals(stream)}
 
 
 def run_agent(command: list[str], repo: Path, env: dict[str, str], timeout_s: int) -> dict:

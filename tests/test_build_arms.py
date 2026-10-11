@@ -103,7 +103,8 @@ CALL = {"type": "assistant", "message": {"content": [{"type": "tool_use", "name"
 def test_the_record_keeps_cost_tokens_turns_tool_use_and_leaks():
     out = transcript_numbers([CALL, RESULT])
     assert out == {"cost_usd": 0.42, "input_tokens": 1000, "output_tokens": 50, "turns": 7, "stop": "success",
-                   "is_error": False, "tool_calls": {"Edit": 1, "WebFetch": 1}, "leak_signals": 1}
+                   "is_error": False, "tool_calls": {"Edit": 1, "WebFetch": 1},
+                   "shell": {"commands": 0, "programs": {}, "writing": 0, "how": {}}, "leak_signals": 1}
 
 
 def test_an_agent_run_records_its_diff_even_when_the_transcript_is_unreadable(history):

@@ -36,10 +36,19 @@ def test_long_diffs_are_cut_and_bad_answers_are_charged_but_not_counted():
     budget = Budget(1.0, {judge.ENTRANT: 0.01})
     long = "+" * (judge.DIFF_CHARS + 5)
     out = judge.judge_point(POINT, "c", {"alone": long, "rigour": ""}, 7, call, budget)
-    assert out["cut"] == ["alone"] and "invalid output" in out["error"] and budget.spent == 0.002
+    assert out["cut"] == ["alone"] and "invalid output" in out["error"] and out["attempts"] == 2   # asked once more
+    assert budget.spent == 0.004 and out["cost_usd"] == 0.004
     unpriced = judge.judge_point(POINT, "c", {"alone": "x", "rigour": "y"}, 7, lambda m: {"content": None, "cost_usd": None},
                                  budget)
-    assert "charged at the bound" in unpriced["error"] and budget.spent == 0.012
+    assert "charged at the bound" in unpriced["error"] and budget.spent == 0.014
+
+
+def test_an_invalid_answer_is_asked_once_more_and_a_valid_retry_counts():
+    answers = iter([{"content": "not json", "cost_usd": 0.001},
+                    {"content": json.dumps({"A": {"verdict": "avoided"}, "B": {"verdict": "repeated"}}), "cost_usd": 0.002}])
+    out = judge.judge_point(POINT, "c", {"alone": "+a", "rigour": "+b"}, 7, lambda m: next(answers),
+                            Budget(1.0, {judge.ENTRANT: 0.01}))
+    assert "error" not in out and out["attempts"] == 2 and out["cost_usd"] == 0.003 and len(out["verdicts"]) == 2
 
 
 def verdicts(alone: str, rigour: str) -> dict:

@@ -62,12 +62,28 @@ def parse_json_lines(text: str, source: str) -> list[dict]:
     return parsed
 
 
+ERROR_LINES = 3
+ERROR_CHARS = 160
+
+
+def first_errors(events: list[dict], stderr: str) -> list[str]:
+    """The first build or test error lines: build output, failing output, then stderr."""
+    lines = [str(e.get("Output") or "").strip() for e in events
+             if e.get("Action") in ("build-output", "output") and e.get("Output")
+             and (e.get("Action") == "build-output" or ".go:" in str(e.get("Output")))]
+    lines += [line.strip() for line in stderr.splitlines() if line.strip()]
+    return [line[:ERROR_CHARS] for line in lines if line][:ERROR_LINES]
+
+
 def run_tests(toolchain: Toolchain, test_files: list[str], repo: Path, env: dict[str, str]) -> dict:
     result = subprocess.run(toolchain.test_command(test_files), cwd=repo, env={**env, **toolchain.env},
                             capture_output=True, text=True, timeout=TEST_TIMEOUT_S, check=False)
-    found = outcome(parse_json_lines(result.stdout, "go test"))
+    events = parse_json_lines(result.stdout, "go test")
+    found = outcome(events)
     if found["outcome"] == "no-tests" and result.returncode != 0:
         found["outcome"] = "no-build"
+    if found["outcome"] in ("no-build", "fail"):
+        found["errors"] = first_errors(events, result.stderr or "")
     return found
 
 
