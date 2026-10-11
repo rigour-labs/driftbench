@@ -15,7 +15,7 @@ from pathlib import Path
 
 from bench.harness.types import AdapterError, Finding, ReviewInput, ReviewOutput
 
-VERSION = "6.13.0-rc.4"  # built from rigour next 772ed9a
+VERSION = "7.0.0"
 NON_BLOCKING_LISTS = ("advisory", "file_findings", "context_findings")
 
 
