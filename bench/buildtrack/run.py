@@ -17,7 +17,7 @@ from pathlib import Path
 
 from bench.buildtrack import arms, hooks
 from bench.buildtrack.agent import run_agent
-from bench.buildtrack.evaluate import files_at, rigour_events, run_tests, write_files
+from bench.buildtrack.evaluate import files_at, rigour_events, rigour_threads, run_tests, write_files
 from bench.buildtrack.reference import false_blocks, prepare_deps
 from bench.buildtrack.toolchains import Toolchain
 from bench.buildtrack.workspace import final_diff, snapshot
@@ -69,7 +69,7 @@ def run_arm(arm: str, checkout: RepoCheckout, task: dict, parent: str, prompt: s
         # the agent's own work, kept in full like a paid answer (release tarball only; bench/harness/publish.py)
         record["agent"][PAID_OUTPUT] = {"diff": record["agent"].pop("diff")}
         if arm == "rigour":
-            record["rigour"] = {"events": rigour_events(repo)}
+            record["rigour"] = {"events": rigour_events(repo), "threads": rigour_threads(repo)}
         write_files(repo, files_at(checkout, task["merged_head"], task["test_files"]))
         record["tests"] = run_tests(config.toolchain, task["test_files"], repo, env)
         return record

@@ -6,7 +6,8 @@
 - Discriminating: the hidden tests fail or don't build at the parent and pass
   on the merged head; otherwise the task checks nothing and is passed over.
 - Rigour's own event log (arm B): what it did during the run (brief and lessons served, edit checks,
-  blocks, stop reviews) and what the agent fixed after a block.
+  blocks, stop reviews) and what the agent fixed after a block; and its task threads, where every brief
+  lands, empty ones included.
 """
 from __future__ import annotations
 
@@ -21,6 +22,7 @@ from bench.harness.gitrepo import RepoCheckout
 TEST_TIMEOUT_S = 1200
 BUILD_FAILED = ("[build failed]", "[setup failed]")
 EVENTS = Path(".rigour") / "events.jsonl"
+THREADS = Path(".git") / "rigour" / "threads"   # every brief lands here, empty ones too
 
 
 def files_at(checkout: RepoCheckout, sha: str, paths: list[str]) -> dict[str, str]:
@@ -128,3 +130,18 @@ def rigour_events(repo: Path) -> dict:
     served = sum(len(e.get("lessons") or []) for e in lines if e.get("type") == "lessons_served")
     return {"events": len(lines), "by_type": by_type, "gates": gates, "lessons_served": served,
             "after_block": fixed_after_block(lines)}
+
+
+def rigour_threads(repo: Path) -> dict:
+    """Arm B: Rigour's task-thread events, numbers only. A brief with no items writes nothing to the event log, but
+    always lands here (`kind: brief`, with `items`): briefs served and the items they carried."""
+    lines = []
+    for path in sorted((repo / THREADS).glob("*.jsonl")) if (repo / THREADS).is_dir() else []:
+        lines += parse_json_lines(path.read_text(encoding="utf-8"), str(THREADS / path.name))
+    kinds: dict[str, int] = {}
+    for e in lines:
+        kinds[str(e.get("kind"))] = kinds.get(str(e.get("kind")), 0) + 1
+    briefs = [e for e in lines if e.get("kind") == "brief"]
+    return {"events": len(lines), "kinds": kinds, "briefs": len(briefs),
+            "brief_items": sum(int(e.get("items") or 0) for e in briefs),
+            "empty_briefs": sum(1 for e in briefs if not e.get("items"))}
