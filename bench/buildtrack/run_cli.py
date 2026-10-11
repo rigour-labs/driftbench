@@ -94,7 +94,8 @@ def manifest(args: argparse.Namespace, drawn: dict, hookcheck: dict) -> dict:
             "max_turns": args.max_turns, "timeout_s": args.timeout, "seed": args.seed, "dry_run": args.dry_run,
             "prompt": arms.prompt_for("<statement>"), "tools": {"allowed": list(arms.AGENT_TOOLS),
                                                                 "denied": list(arms.AGENT_DENIED)},
-            "hookcheck": {k: hookcheck[k] for k in ("edit_blocked", "stop_blocked", "ok")}}
+            "hookcheck": {**{k: hookcheck[k] for k in ("edit_blocked", "stop_blocked", "ok")},
+                          "brief": hookcheck.get("brief")}}
 
 
 def usage(args: argparse.Namespace) -> dict | None:

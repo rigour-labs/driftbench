@@ -44,6 +44,9 @@ def test_hidden_tests_run_for_real_on_a_tiny_module(tmp_path):
     assert run_tests(GO, list(test), tmp_path, env)["outcome"] == "no-build"
 
 
+BRIEF = ("mkdir -p .git/rigour/threads; echo '{\"kind\":\"brief\",\"items\":0}' >> .git/rigour/threads/main-x.jsonl")
+
+
 def settings(home, script: str) -> None:
     """Installed hooks that run `script`, the shape `rigour setup` writes."""
     (home / ".claude").mkdir(parents=True)
@@ -51,6 +54,7 @@ def settings(home, script: str) -> None:
     (home / ".claude" / "settings.json").write_text(json.dumps({"hooks": {
         "PostToolUse": [{"matcher": "Write|Edit|MultiEdit", "hooks": hook}],
         "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "exit 2"}]}],
+        "UserPromptSubmit": [{"hooks": [{"type": "command", "command": BRIEF}]}],
         "Stop": [{"hooks": hook}]}}))
 
 
@@ -65,6 +69,7 @@ def test_the_pre_pilot_check_passes_only_when_both_hooks_block_uncommitted_work(
         found = hooks.hookcheck(repo, home, ENV)
         assert found["ok"] is ok and found["edit_blocked"] is ok and found["stop_blocked"] is ok
         assert "const awsKey = \"AKIA" in (repo / "rigour_hookcheck.go").read_text()
+        assert found["brief"]["hooks"] == 1 and found["brief"]["threads"]["empty_briefs"] == 1   # the brief ran, empty
 
 
 def test_hooks_are_found_by_event_and_tool_and_block_by_exit_or_answer(tmp_path):

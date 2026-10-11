@@ -22,7 +22,7 @@ import subprocess
 from pathlib import Path
 
 from bench.buildtrack.arms import read_json
-from bench.buildtrack.evaluate import parse_json_lines
+from bench.buildtrack.evaluate import parse_json_lines, rigour_threads
 from bench.harness.publish import short_message
 
 HOOK_TIMEOUT_S = 900
@@ -98,12 +98,27 @@ def on_files(repo: Path, home: Path, env: dict[str, str], files: dict[str, str],
     return {"edits": edits, "stop": stops}
 
 
+def prompt_payload(repo: Path, session: str) -> dict:
+    return {"hook_event_name": "UserPromptSubmit", "session_id": session, "cwd": str(repo),
+            "prompt": "Make the change this task describes in this repository.", "transcript_path": "/dev/null"}
+
+
+def brief(repo: Path, home: Path, env: dict[str, str]) -> dict:
+    """The session-start brief, run as Claude Code runs it on the agent's first prompt, then what Rigour's task
+    thread recorded (briefs land there even when empty)."""
+    runs = [run_hook(c, prompt_payload(repo, "hookcheck"), repo, env) for c in commands(home, "UserPromptSubmit")]
+    return {"hooks": len(runs), "failed": sum(1 for r in runs if r["exit"] not in (0, BLOCK_EXIT)),
+            "threads": rigour_threads(repo)}
+
+
 def hookcheck(repo: Path, home: Path, env: dict[str, str]) -> dict:
-    """The pre-pilot check: a planted, uncommitted secret must be blocked by the Stop hook and an edit hook."""
+    """The pre-pilot check: a planted, uncommitted secret must be blocked by the Stop hook and an edit hook. The
+    brief hook is run too and its thread record kept (a dry run has no agent prompt to fire it)."""
+    briefed = brief(repo, home, env)
     found = on_files(repo, home, env, {"rigour_hookcheck.go": planted()}, "hookcheck")
     edit = any(r["blocked"] for runs in found["edits"].values() for r in runs)
     stop = any(r["blocked"] for r in found["stop"])
-    return {**found, "edit_blocked": edit, "stop_blocked": stop, "ok": edit and stop}
+    return {**found, "brief": briefed, "edit_blocked": edit, "stop_blocked": stop, "ok": edit and stop}
 
 
 def false_blocks(repo: Path, home: Path, env: dict[str, str], merged_files: dict[str, str]) -> dict:
