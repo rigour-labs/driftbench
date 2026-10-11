@@ -8,7 +8,8 @@ answers:
 - repeated: the diff has the problem the reviewer pointed out;
 - avoided: the diff touches what the point is about and does not have it;
 - not_applicable: the diff has no code the point is about.
-A diff longer than DIFF_CHARS is cut, and the cut is recorded.
+A diff longer than DIFF_CHARS is cut, and the cut is recorded. An answer that
+is not the asked JSON is asked once more; both calls are charged.
 """
 from __future__ import annotations
 
@@ -24,6 +25,7 @@ from bench.labels.openrouter import OpenRouterError
 ENTRANT = "build-judge"
 MAX_TOKENS = 300
 DIFF_CHARS = 30000
+ATTEMPTS = 2  # an invalid answer is asked once more (docs/BUILD_TRACK.md)
 VERDICTS = ("repeated", "avoided", "not_applicable")
 SYSTEM = ("A human reviewer commented on a real pull request. The same change was later made twice more, "
           "independently, from the same starting code; those diffs are A and B. For each diff, decide whether it has the problem the reviewer "
@@ -80,18 +82,25 @@ def judge_point(point: dict, comment: str, diffs_by_arm: dict[str, str], seed: i
     labels = {arm: "AB"[i] for i, arm in enumerate(shown)}
     cuts = {arm: cut(diffs_by_arm[arm]) for arm in shown}
     record = {"order": shown, "cut": [arm for arm in shown if cuts[arm][1]], "verdicts": {}}
-    if not budget.allows_review(ENTRANT):
-        return {**record, "error": f"budget: ${budget.spent:.4f} spent of ${budget.max_usd:.2f}"}
-    reply = ask(call, messages_for(point, comment, {labels[a]: cuts[a][0] for a in shown}), point["id"])
-    if reply.get("cost_usd") is None:
-        budget.add_cost(ENTRANT, budget.per_head_bound(ENTRANT))
-        return {**record, "error": reply.get("error") or "OpenRouter reported no cost; charged at the bound"}
-    budget.add_cost(ENTRANT, reply["cost_usd"])
-    record["cost_usd"] = reply["cost_usd"]
-    try:
-        parsed = parse(reply["content"], list(labels.values()))
-    except JudgeError as exc:  # paid for, but no verdict
-        print(f"warning: {point['id']}: {exc}", file=sys.stderr)
-        return {**record, "error": str(exc)}
-    record["verdicts"] = {arm: parsed[labels[arm]] for arm in shown}
+    messages = messages_for(point, comment, {labels[a]: cuts[a][0] for a in shown})
+    record["cost_usd"], record["attempts"] = 0.0, 0
+    for _ in range(ATTEMPTS):  # an answer that is not the asked JSON is asked once more; every call is charged
+        if not budget.allows_review(ENTRANT):
+            return {**record, "error": f"budget: ${budget.spent:.4f} spent of ${budget.max_usd:.2f}"}
+        reply = ask(call, messages, point["id"])
+        record["attempts"] += 1
+        if reply.get("cost_usd") is None:
+            budget.add_cost(ENTRANT, budget.per_head_bound(ENTRANT))
+            return {**record, "error": reply.get("error") or "OpenRouter reported no cost; charged at the bound"}
+        budget.add_cost(ENTRANT, reply["cost_usd"])
+        record["cost_usd"] = round(record["cost_usd"] + reply["cost_usd"], 6)
+        try:
+            parsed = parse(reply["content"], list(labels.values()))
+        except JudgeError as exc:  # paid for, but no verdict
+            print(f"warning: {point['id']}: {exc}", file=sys.stderr)
+            record["error"] = str(exc)
+            continue
+        record.pop("error", None)
+        record["verdicts"] = {arm: parsed[labels[arm]] for arm in shown}
+        return record
     return record

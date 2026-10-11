@@ -100,3 +100,18 @@ def test_a_dry_run_runs_everything_but_the_agent(world):
     record = run.run_task(checkout, task, parent(checkout, task), "p", dry, budget)
     assert all(record["arms"][arm]["agent"]["dry_run"] for arm in arms.ARMS) and budget.spent == 0
     assert record["arms"]["alone"]["tests"]["outcome"] == "no-build"                  # nothing written: tests can't build
+
+
+def test_a_finished_run_is_retested_from_its_recorded_diffs_with_the_first_errors(world):
+    """Pilot 38109978788 kept only 'no-build': the retest re-runs the hidden tests on each recorded diff and keeps
+    the first error lines."""
+    from bench.buildtrack.retest import retest
+    checkout, task, config = world
+    start = parent(checkout, task)
+    record = run.run_task(checkout, task, start, "p", config, Budget(5.0, {f"build-{a}": 1.0 for a in arms.ARMS}))
+    record["arms"]["rigour"]["agent"]["paid_output"]["diff"] = ""        # as if this arm wrote nothing
+    env = run.base_env({"PATH": os.environ["PATH"], "HOME": str(config.scratch)}, config)
+    found = retest(checkout, [record], {task["pr"]: task}, config.toolchain, config.scratch / "retest", env)
+    assert found["1"]["alone"]["outcome"] == "pass"
+    nothing = found["1"]["rigour"]
+    assert nothing["outcome"] == "no-build" and any("undefined: Add" in line for line in nothing["errors"])

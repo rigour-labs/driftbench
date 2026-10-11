@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import sys
 from datetime import datetime, timezone
@@ -18,7 +19,9 @@ import yaml
 from bench.adapters.claude_cli import CLAUDE_CODE_VERSION, check_model_id, provider_env, require_claude_cli
 from bench.buildtrack import arms
 from bench.buildtrack.arms import ArmError
+from bench.buildtrack.judge_cli import read_tasks
 from bench.buildtrack.reference import discrimination
+from bench.buildtrack.retest import retest
 from bench.buildtrack.run import BuildConfig, base_env, passed_over, run_hookcheck, run_task, write
 from bench.buildtrack.statement import statement
 from bench.buildtrack.toolchains import ToolchainError, toolchain
@@ -49,6 +52,38 @@ def add_run_action(actions: argparse._SubParsersAction, root: Path) -> None:
     run.add_argument("--scratch", type=Path, default=root / "work" / "scratch")
     run.add_argument("--cache", type=Path, default=root / "work" / "cache", help="API cache (never published)")
     run.set_defaults(handler=cmd_run)
+
+
+def add_retest_action(actions: argparse._SubParsersAction, root: Path) -> None:
+    retest = actions.add_parser("retest", help="re-run a build run's hidden tests on its recorded diffs (free)")
+    retest.add_argument("--run", type=Path, required=True)
+    retest.add_argument("--tasks", type=Path, required=True)
+    retest.add_argument("--repos-dir", type=Path, default=root / "work" / "repos")
+    retest.add_argument("--scratch", type=Path, default=root / "work" / "scratch")
+    retest.set_defaults(handler=cmd_retest)
+
+
+def cmd_retest(args: argparse.Namespace) -> int:
+    try:
+        drawn = yaml.safe_load(args.tasks.read_text(encoding="utf-8"))
+        records = read_tasks(args.run)
+        checkout = RepoCheckout(f"https://github.com/{drawn['repo']}.git", args.repos_dir / slug_of(drawn["repo"]),
+                                blobless=False)
+        checkout.ensure_clone()
+        for record in records:
+            parent_of(checkout, next(t for t in drawn["tasks"] if t["pr"] == record["pr"]))
+        caches = args.scratch / "caches"
+        env = {"PATH": os.environ.get("PATH", ""), "HOME": str(args.scratch), "GOMODCACHE": str(caches / "gomod"),
+               "GOCACHE": str(caches / "gobuild")}
+        found = retest(checkout, records, {t["pr"]: t for t in drawn["tasks"]}, toolchain(drawn["repo"]),
+                       args.scratch / "retest", env)
+    except (ValueError, OSError, ArmError, GitError, ToolchainError) as exc:
+        print(f"build: {exc}", file=sys.stderr)
+        return 1
+    write(args.run / "retest.json", found)
+    print(json.dumps({pr: {arm: o.get("outcome") for arm, o in arms_.items() if isinstance(o, dict)}
+                      for pr, arms_ in found.items()}, sort_keys=True))
+    return 0
 
 
 def manifest(args: argparse.Namespace, drawn: dict, hookcheck: dict) -> dict:

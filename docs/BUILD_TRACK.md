@@ -89,6 +89,20 @@ In arm B, Rigour works as follows:
 **Cost:** every model call Rigour makes during a task counts toward arm B's
 cost and its per-task bound, which is the same bound as arm A's.
 
+## The agent's shell
+
+Claude Code matches an allowed Bash command by its prefix. In the pilot (run
+38109978788), that let agents write files through commands like
+`go build ./... && cat > new.go <<EOF`, with no Edit or Write call.
+
+Both arms now get the same guard, a PreToolUse hook passed as flag settings
+(`bench/buildtrack/shell_guard.py`). It allows one plain command from the
+designed list: go build, go test, go vet, gofmt without `-w`, and
+git diff/status/log/show. It refuses chaining, pipes, redirects and
+substitution, and tells the agent to edit files with Edit or Write. Every
+record also lists the programs each shell command ran and how any of them
+wrote (`shell` in the agent record).
+
 ## Measures
 
 Every judgement is made by the same non-Claude judge, blind, in a seeded
@@ -102,12 +116,22 @@ order (docs/ISSUES.md).
    counted apart. **Lower is better.** The judge sees both arms' diffs for
    the point as A and B in a seeded order, nothing naming an arm, and
    answers repeated, avoided or not_applicable for each; a diff over 30,000
-   characters is cut, and the cut is recorded (`bench build judge`, then
-   `bench build report`).
+   characters is cut, and the cut is recorded. An answer that is not the
+   asked JSON is asked once more, and both calls are charged
+   (`bench build judge`, then `bench build report`).
 2. **Tests.** The pull request's own changed test files, hidden from the
    agent, are applied to the agent's version, and the repository's test
-   command runs on them. The result is pass, fail or does not build. The
-   real merged pull request runs the same way as the reference.
+   command runs on them. The result is pass, fail or does not build, with
+   the first error lines kept. The real merged pull request runs the same way
+   as the reference.
+
+   **Design limit, seen in the pilot:** the hidden tests call the exact API
+   the human pull request added. An agent that makes the same change with
+   other names fails to build against them, even when its change is sound.
+   So this outcome measures agreement with the human's API more than
+   correctness, and it is reported as **API agreement**.
+   `bench build retest --run <run>` re-runs it on a finished run's recorded
+   diffs, free, and keeps the error lines.
 3. **What Rigour caught during the work (arm B).** The checks that flagged
    something, how many flags the agent then fixed, and how many it left.
 4. **False blocks (arm B).** Rigour's hooks and gates also run, unchanged,

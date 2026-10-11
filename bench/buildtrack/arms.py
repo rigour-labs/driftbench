@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 from bench.adapters.tool_access import NETWORK_DENIED
@@ -26,11 +28,18 @@ AGENT_DENIED = (*NETWORK_DENIED, "Bash(git push:*)", "Bash(git remote:*)", "Bash
                 "Bash(npx:*)", "Bash(pip:*)")
 RIGOUR_MCP_TOOLS = "mcp__rigour__*"
 NO_MCP = '{"mcpServers":{}}'
+GUARD = Path(__file__).resolve().parent / "shell_guard.py"
 SHARED_ENV = {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1", "npm_config_prefer_offline": "true"}
 
 
 class ArmError(RuntimeError):
     pass
+
+
+def guard_settings() -> str:
+    """Both arms' shell guard (bench/buildtrack/shell_guard.py), as flag settings Claude Code merges with the rest."""
+    command = f"{shlex.quote(sys.executable)} {shlex.quote(str(GUARD))}"
+    return json.dumps({"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": command}]}]}})
 
 
 def agent_command(arm: str, model: str, toolchain: Toolchain, max_turns: int, max_usd: float, prompt: str) -> list[str]:
@@ -40,7 +49,8 @@ def agent_command(arm: str, model: str, toolchain: Toolchain, max_turns: int, ma
     mcp = [] if arm == "rigour" else ["--strict-mcp-config", "--mcp-config", NO_MCP]
     return ["claude", "-p", prompt, "--model", model, "--output-format", "stream-json", "--verbose",
             "--max-turns", str(max_turns), "--max-budget-usd", f"{max_usd:.2f}", "--setting-sources", "user,project",
-            "--no-session-persistence", *mcp, "--allowedTools", *allowed, "--disallowedTools", *AGENT_DENIED]
+            "--no-session-persistence", "--settings", guard_settings(), *mcp, "--allowedTools", *allowed,
+            "--disallowedTools", *AGENT_DENIED]
 
 
 def agent_env(base: dict[str, str], toolchain: Toolchain, lessons: Path | None) -> dict[str, str]:

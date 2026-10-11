@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 
 from bench.buildtrack.judge_cli import add_judge_actions
-from bench.buildtrack.run_cli import add_run_action
+from bench.buildtrack.run_cli import add_retest_action, add_run_action
 from bench.buildtrack.tasks import select
 from bench.collect.corpus import CorpusError, read_corpus
 from bench.collect.github import GitHubClient, GitHubError
@@ -36,6 +36,7 @@ def add_build_parser(commands: argparse._SubParsersAction, root: Path) -> None:
     tasks.set_defaults(handler=cmd_tasks)
     add_judge_actions(actions, root)
     add_run_action(actions, root)
+    add_retest_action(actions, root)
 
 
 def cmd_tasks(args: argparse.Namespace) -> int:
