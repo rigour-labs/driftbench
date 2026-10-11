@@ -48,8 +48,11 @@ and $0.64 per task.
 - **Blocks:** none, so the agent had nothing to fix after a block.
 - **False blocks:** 0, on the 5 approved merged changes (checked before the
   run).
-- **Brief:** the hook was installed, but the event log has no brief entry, so
-  this pilot can't show whether a brief was served.
+- **Brief:** the brief ran empty: 0 lessons and 0 matching rules. Rigour
+  writes a served-lessons event only when a brief has at least one item, so
+  `.rigour/events.jsonl` has none, by design. The thread file that records
+  every brief, empty ones included (`.git/rigour/threads/*.jsonl`), was not
+  captured in this pilot. The next run captures it, so briefs are counted.
 - **No team lessons.** Rigour's default (`verified`) mode served 0 lessons:
   on public history, no person promotes a lesson and none recurred.
   `all` mode would have served 95 lessons on 22 of 29 heads; the pilot didn't
@@ -106,6 +109,10 @@ on 6.14.0-rc.1, 7.0.0-rc.2 and 7.0.0-rc.3, with defaults and with
 - The hidden-test outcome measures API agreement, not correctness.
 - The shell leak let some writes bypass Rigour's edit hook. It is closed now,
   so it doesn't apply to later runs.
+- The agent called Rigour's MCP tools only 3 times over 5 tasks
+  (`rigour_recall` once, `rigour_check` twice). With default prompting, it
+  mostly didn't reach for them. That's a finding to watch in real use, not a
+  bench defect.
 
 ## What the next run needs
 
