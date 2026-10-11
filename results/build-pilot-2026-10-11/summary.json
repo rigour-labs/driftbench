@@ -1,0 +1,67 @@
+{
+ "arms": {
+  "alone": {
+   "cost_per_task": 0.603,
+   "cost_usd": 3.0149,
+   "errors": 0,
+   "leaked": 0,
+   "points": {
+    "applicable": 10,
+    "ci95": [
+     0.1682,
+     0.6873
+    ],
+    "not_applicable": 4,
+    "rate": 0.4,
+    "repeated": 4
+   },
+   "tasks": 5,
+   "tests": {
+    "fail": 0,
+    "no-build": 4,
+    "no-tests": 0,
+    "pass": 1
+   },
+   "timed_out": 0,
+   "turns": 106,
+   "wall_s": 1498.4
+  },
+  "rigour": {
+   "cost_per_task": 0.6448,
+   "cost_usd": 3.2241,
+   "errors": 0,
+   "false_blocks": 0,
+   "leaked": 0,
+   "points": {
+    "applicable": 10,
+    "ci95": [
+     0.1682,
+     0.6873
+    ],
+    "not_applicable": 4,
+    "rate": 0.4,
+    "repeated": 4
+   },
+   "rigour_blocks": 0,
+   "rigour_events": 36,
+   "tasks": 5,
+   "tests": {
+    "fail": 0,
+    "no-build": 4,
+    "no-tests": 0,
+    "pass": 1
+   },
+   "timed_out": 0,
+   "turns": 121,
+   "wall_s": 1330.3
+  }
+ },
+ "judge_errors": 2,
+ "paired_points": {
+  "alone_only": 2,
+  "both": 2,
+  "neither": 4,
+  "rigour_only": 2
+ },
+ "tasks": 5
+}
